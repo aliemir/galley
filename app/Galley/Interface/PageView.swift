@@ -49,6 +49,7 @@ struct PageView: View {
         .padding(.horizontal, 12)
         .frame(height: MainView.bandHeight)
         .padding(.top, 2)
+        .background(alignment: .top) { TitleBand() }
         .background(alignment: .top) {
             // Lets text slide under the controls without colliding with them.
             LinearGradient(

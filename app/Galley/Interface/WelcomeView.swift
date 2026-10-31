@@ -54,6 +54,7 @@ struct WelcomeView: View {
         .padding(.horizontal, 40)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(palette.paper)
+        .overlay(alignment: .top) { TitleBand() }
     }
 
     private func hint(_ symbol: String, _ text: String) -> some View {

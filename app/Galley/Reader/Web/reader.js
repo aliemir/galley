@@ -78,6 +78,7 @@
       const first = $('#content > .sec:first-child > h1:first-child, #content > h1:first-child');
       if (first) $('.doc-header h1.derived')?.remove();
     }
+    resolveRawImages(d.base);
     applyChanges(d.changes || {});
     decorateSections(new Set(d.folded || []));
     decorateCode();
@@ -85,6 +86,17 @@
     index();
     layoutGutter();
     enhance(generation);
+  }
+
+  /// Images written as raw HTML (`<img src="diagram.png">`) resolve against
+  /// the document's folder, like markdown images do in Swift.
+  function resolveRawImages(base) {
+    if (!base) return;
+    for (const img of $$('#content img[src]')) {
+      const src = img.getAttribute('src');
+      if (/^[a-z][a-z0-9+.-]*:/i.test(src)) continue;
+      try { img.src = new URL(src, base).href; } catch (_) { /* leave it */ }
+    }
   }
 
   // — Changes ——————————————————————————————————————————————————————

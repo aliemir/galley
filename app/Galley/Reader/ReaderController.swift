@@ -35,6 +35,8 @@ struct PagePayload: Encodable {
 
     var id: String
     var html: String
+    /// `galley://file/…/` for the document's folder; raw HTML images resolve against it.
+    var base: String?
     var header: Header
     var changes: [String: Change]
     var folded: [String]

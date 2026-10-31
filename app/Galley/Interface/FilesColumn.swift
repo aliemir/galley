@@ -74,7 +74,7 @@ struct FilesColumn: View {
                     LazyVStack(alignment: .leading, spacing: 1) {
                         let feed = workspace.feed
                         if !feed.isEmpty, sort == .folders {
-                            SectionLabel(title: "Changed", count: feed.count)
+                            SectionLabel(title: "Unread", count: feed.count)
                                 .padding(.horizontal, -8)
                             ForEach(feed) { file in
                                 FileRow(file: file, workspace: workspace, depth: 0, showsLocation: true)
@@ -104,9 +104,12 @@ struct FilesColumn: View {
             .focusable()
             .focused($isFocused)
             .focusEffectDisabled()
+            .simultaneousGesture(TapGesture().onEnded { isFocused = true })
             .onKeyPress(.downArrow) { step(1, in: workspace); return .handled }
             .onKeyPress(.upArrow) { step(-1, in: workspace); return .handled }
-            .onKeyPress(.rightArrow) { model.setLevel(.page); return .handled }
+            .onKeyPress(.rightArrow) { model.focusPage(); return .handled }
+            .onKeyPress(.return) { model.focusPage(); return .handled }
+            .onKeyPress(.space) { model.reader.scrollPage(1); return .handled }
         }
     }
 

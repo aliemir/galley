@@ -63,7 +63,6 @@ struct MainView: View {
         window.styleMask.insert(.fullSizeContentView)
         window.isMovableByWindowBackground = false
         window.tabbingMode = .disallowed
-        window.setFrameAutosaveName("GalleyMainWindow")
         if gestures == nil { gestures = GestureMonitor(window: window, model: model) }
     }
 
@@ -91,11 +90,11 @@ private struct ColumnStack: View {
 
     var body: some View {
         GeometryReader { geometry in
-            let scale = columnScale(available: geometry.size.width)
+            let fit = fitting(available: geometry.size.width)
             HStack(spacing: 0) {
-                column(.workspaces, scale: scale) { WorkspacesColumn() }
-                column(.files, scale: scale) { FilesColumn() }
-                column(.outline, scale: scale) { OutlineColumn() }
+                column(.workspaces, scale: fit.scale, limit: fit.level) { WorkspacesColumn() }
+                column(.files, scale: fit.scale, limit: fit.level) { FilesColumn() }
+                column(.outline, scale: fit.scale, limit: fit.level) { OutlineColumn() }
                 PageView()
                     .frame(minWidth: 280, maxWidth: .infinity)
                     .layoutPriority(1)
@@ -103,26 +102,36 @@ private struct ColumnStack: View {
         }
     }
 
-    /// Columns give up some width before the page does.
-    private func columnScale(available: CGFloat) -> CGFloat {
-        let visible = PanelLevel.allCases.filter { $0 != .page && $0 <= model.level }
-        let needed = visible.reduce(0) { $0 + (Self.widths[$1] ?? 0) }
-        guard needed > 0 else { return 1 }
-        return min(1, max(0.72, (available - Self.minimumPage) / needed))
+    private static let minimumScale: CGFloat = 0.72
+
+    /// Columns give up some width before the page does; when even narrowed
+    /// columns do not fit, the outermost ones step aside (without changing
+    /// the chosen level, so they return when the window grows).
+    private func fitting(available: CGFloat) -> (scale: CGFloat, level: PanelLevel) {
+        var level = model.level
+        while level > .page {
+            let visible = PanelLevel.allCases.filter { $0 != .page && $0 <= level }
+            let needed = visible.reduce(0) { $0 + (Self.widths[$1] ?? 0) }
+            let scale = min(1, (available - Self.minimumPage) / needed)
+            if scale >= Self.minimumScale { return (scale, level) }
+            level = PanelLevel(rawValue: level.rawValue - 1) ?? .page
+        }
+        return (1, .page)
     }
 
     /// How much of a column shows: 1 when its level is in, 0 when out, and
     /// in between while a swipe is moving it.
-    private func fraction(_ column: PanelLevel) -> CGFloat {
+    private func fraction(_ column: PanelLevel, limit: PanelLevel) -> CGFloat {
+        if column > limit { return 0 }
         let progress = model.swipeProgress
         if progress > 0, column.rawValue == model.level.rawValue + 1 { return progress }
         if progress < 0, column == model.level { return 1 + progress }
         return model.level >= column ? 1 : 0
     }
 
-    private func column<Content: View>(_ level: PanelLevel, scale: CGFloat, @ViewBuilder content: () -> Content) -> some View {
+    private func column<Content: View>(_ level: PanelLevel, scale: CGFloat, limit: PanelLevel, @ViewBuilder content: () -> Content) -> some View {
         let width = (Self.widths[level] ?? 240) * scale
-        let fraction = fraction(level)
+        let fraction = fraction(level, limit: limit)
         return content()
             .frame(width: width)
             .frame(maxHeight: .infinity)
@@ -246,6 +255,21 @@ struct ColumnHeader<Accessory: View>: View {
         .padding(.trailing, 10)
         .frame(height: 40)
         .padding(.top, MainView.bandHeight)
+        .background(alignment: .top) { TitleBand() }
+    }
+}
+
+/// The empty strip under the traffic lights: drags the window, and a
+/// double-click zooms it, as a title bar would.
+struct TitleBand: View {
+    var body: some View {
+        Color.clear
+            .frame(height: MainView.bandHeight)
+            .frame(maxWidth: .infinity)
+            .contentShape(Rectangle())
+            .gesture(WindowDragGesture())
+            .onTapGesture(count: 2) { NSApp.keyWindow?.performZoom(nil) }
+            .allowsWindowActivationEvents(true)
     }
 }
 

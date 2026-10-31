@@ -132,9 +132,10 @@ final class AppModel {
         if baseline { workspace.rescan(baseline: true) }
     }
 
-    /// Saves everything; called when the app is about to quit.
+    /// Saves everything; called when the app is about to quit. Quitting
+    /// mid-page keeps the page unread unless the reader reached its end.
     func prepareToQuit() {
-        leaveCurrent()
+        leaveCurrent(markingRead: current?.reachedEnd == true)
         library.flush()
     }
 
@@ -377,6 +378,7 @@ final class AppModel {
 
         var badge: String?
         var badgeKind: String?
+        let isGone = workspace.hasScanned && workspace.file(document.file.id) == nil
         switch document.status {
         case .unread:
             let record = workspace.record?.files[document.file.id]
@@ -386,6 +388,10 @@ final class AppModel {
             badge = Self.changeSummary(document.changes)
         case .read:
             break
+        }
+        if isGone {
+            badge = "No longer on disk"
+            badgeKind = nil
         }
 
         var changes: [String: PagePayload.Change] = [:]
@@ -411,6 +417,7 @@ final class AppModel {
         return PagePayload(
             id: document.id,
             html: document.rendered.html,
+            base: ResourceURL.file(for: document.file.url.deletingLastPathComponent().path + "/", relativeTo: nil),
             header: .init(
                 meta: meta,
                 badge: badge,
@@ -447,11 +454,12 @@ final class AppModel {
 
     /// Records the open document as read if the reader actually looked at it,
     /// and saves where they were.
-    private func leaveCurrent() {
+    private func leaveCurrent(markingRead: Bool? = nil) {
         guard let current, let workspace = currentWorkspace else { return }
+        // A real look: reached the end, or stayed long enough to read some.
+        // "Mark as Unread" pushes `openedAt` into the future to opt out.
         let lookedAtIt = current.reachedEnd || Date().timeIntervalSince(current.openedAt) > 2.5
-        let record = workspace.record?.files[current.file.id]
-        if lookedAtIt, record?.markedUnread != true || Date().timeIntervalSince(current.openedAt) > 2.5 {
+        if markingRead ?? lookedAtIt, workspace.file(current.file.id) != nil {
             workspace.markRead(current.file.id, text: current.source)
         }
         library.updateWorkspace(workspace.id) { record in
@@ -595,6 +603,12 @@ final class AppModel {
     }
 
     var isReaderAtBottom: Bool { readerAtBottom }
+
+    /// Moves keyboard focus into the page, so arrows and Space scroll it.
+    func focusPage() {
+        let webView = reader.webView
+        webView.window?.makeFirstResponder(webView)
+    }
 
     func scrollToHeading(_ id: String) {
         reader.scrollToHeading(id)

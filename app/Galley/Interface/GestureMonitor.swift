@@ -23,6 +23,8 @@ final class GestureMonitor {
     private var pullArmed = false
     private var pull: CGFloat = 0
     private var wheelPull: CGFloat = 0
+    /// After a pull opens the next page, its momentum must not scroll it.
+    private var swallowMomentum = false
     private var wheelReset: Task<Void, Never>?
 
     /// Points of finger travel for a full column reveal.
@@ -50,11 +52,15 @@ final class GestureMonitor {
         if event.phase.isEmpty, event.momentumPhase.isEmpty {
             return handleWheel(event)
         }
-        // Momentum after a horizontal swipe must not scroll the page sideways.
+        // Momentum after a horizontal swipe must not scroll the page sideways,
+        // nor momentum from a pull scroll the page it just opened.
         if !event.momentumPhase.isEmpty {
-            return axis == .horizontal ? nil : event
+            return axis == .horizontal || swallowMomentum ? nil : event
         }
 
+        if event.phase.contains(.began) || event.phase.contains(.mayBegin) {
+            swallowMomentum = false
+        }
         if event.phase.contains(.began) {
             axis = nil
             fingerX = 0
@@ -94,7 +100,10 @@ final class GestureMonitor {
                 pullArmed = false
                 pull = 0
                 model.reader.setPull(0)
-                if ready { model.goToNext() }
+                if ready {
+                    swallowMomentum = true
+                    model.goToNext()
+                }
             }
         }
         return event
@@ -121,7 +130,7 @@ final class GestureMonitor {
         } else {
             withAnimation(.galleyPanel) { model.swipeProgress = 0 }
         }
-        axis = nil
+        // `axis` stays horizontal until the next gesture, so its momentum is swallowed.
     }
 
     // MARK: Pull
