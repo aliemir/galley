@@ -49,7 +49,7 @@ nonisolated struct MarkdownRenderer {
         let builder = HTMLBuilder(baseURL: baseURL, preprocessor: preprocessor)
         var html = ""
         if let frontMatter { html += builder.frontMatter(frontMatter) }
-        html += builder.blocks(document.children)
+        html += builder.sections(document.children)
         html += builder.footnoteSection()
         return RenderedDocument(
             html: html,
@@ -123,6 +123,30 @@ nonisolated private final class HTMLBuilder {
 
     func blocks(_ children: MarkupChildren) -> String {
         children.map { block($0) }.joined(separator: "\n")
+    }
+
+    /// Top-level blocks, with each heading opening a `<section>` that runs
+    /// until the next heading of the same or a higher level, so sections can
+    /// fold in the page.
+    func sections(_ children: MarkupChildren) -> String {
+        var html = ""
+        var open: [Int] = []
+        for child in children {
+            if let heading = child as? Heading {
+                while let last = open.last, last >= heading.level {
+                    html += "</div></section>\n"
+                    open.removeLast()
+                }
+                let rendered = block(heading)
+                let id = outline.last?.id ?? ""
+                html += "<section class=\"sec\" data-level=\"\(heading.level)\" data-sec=\"\(HTML.attribute(id))\">\(rendered)<div class=\"sec-body\">\n"
+                open.append(heading.level)
+            } else {
+                html += block(child) + "\n"
+            }
+        }
+        html += String(repeating: "</div></section>\n", count: open.count)
+        return html
     }
 
     /// Registers a diff unit and returns its index.

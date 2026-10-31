@@ -33,6 +33,19 @@ struct RendererTests {
         #expect(doc.html.contains("<h3 id=\"deep-dive\""))
     }
 
+    @Test func headingsOpenNestedFoldableSections() {
+        let doc = renderer.render("intro\n\n# A\n\na\n\n## B\n\nb\n\n# C\n\nc")
+        let opens = doc.html.components(separatedBy: "<section").count - 1
+        let closes = doc.html.components(separatedBy: "</section>").count - 1
+        #expect(opens == 3)
+        #expect(closes == 3)
+        #expect(doc.html.contains("data-sec=\"b\""))
+        // B closes before C opens.
+        let bClose = doc.html.range(of: "</section>")!.lowerBound
+        let cOpen = doc.html.range(of: "data-sec=\"c\"")!.lowerBound
+        #expect(bClose < cOpen)
+    }
+
     @Test func everyLeafBlockIsAUnit() {
         let doc = renderer.render("# A\n\npara\n\n- one\n- two\n\n```swift\nlet x = 1\n```\n\n| a | b |\n|---|---|\n| 1 | 2 |")
         // heading, para, two list paragraphs, code, table head, one row

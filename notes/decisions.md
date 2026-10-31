@@ -95,3 +95,23 @@ run under a strict content security policy, and each is loaded only when a
 document actually contains a diagram, math or code. The reader's own script
 has no dependencies. `gemoji` is data only (shortcode → emoji JSON). Licenses
 are bundled in `Reader/Web/vendor/Acknowledgements.txt`.
+
+## 2026-11-01 — Outgoing-network entitlement, with a page that has no network
+
+**Chosen:** `ENABLE_OUTGOING_NETWORK_CONNECTIONS = YES`
+(`com.apple.security.network.client`).
+
+**Why:** in a sandboxed app WebKit's helper processes do not start without
+it — the reader page sat at 10% loading and never reached the `galley://`
+scheme handler. The app itself makes no requests, and the page cannot either:
+its content security policy is `default-src 'none'` with only `galley:` and
+`data:` allowed, and remote images render as a link chip instead of loading.
+The privacy policy can still say the app sends nothing anywhere.
+
+## 2026-11-01 — Debug-only automation and entitlements
+
+Debug builds carry `app/Galley-Debug.entitlements` (read `/`, write
+`/private/tmp/galley-debug/`) and `DebugAutomation`, driven by
+`tools/galley-debug.swift`. They exist so development and the store-media
+script can open fixture folders without the open panel and snapshot the
+window without Screen Recording permission. Release builds have neither.
