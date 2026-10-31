@@ -48,13 +48,26 @@ lights up.
 
 ## Milestones
 
-1. Package + renderer + web reader with themes and typography
-2. Workspaces, file tree, pretty names, folder watching, persistence
-3. Swipe column stack, outline with scroll-spy, keyboard map
-4. Change tracking + read state + "Changed" feed
-5. Continuous reading (pull to next, seam)
-6. Find in page, quick open — if time allows
-7. Personal highlights (text + context anchors, orphans)
+1. ✅ Package + renderer + web reader with themes and typography
+2. ✅ Workspaces, file tree, pretty names, folder watching, persistence
+3. ✅ Swipe column stack, outline with scroll-spy, keyboard map
+4. ✅ Change tracking + read state + Unread feed
+5. ✅ Continuous reading (pull to next, seam)
+6. ✅ Find in page, Go to File / Go to Section, printing
+7. ✅ Personal highlights (text + context anchors, orphans)
+8. ✅ Section folding (page and outline share one fold state)
 
-Tabs: deferred — single window with per-workspace state first; native window
-tabs later.
+## Next
+
+- **Tabs** — deferred on purpose: one window, per-workspace state first. Next
+  step is real tabs inside the page column (preview tab reused on single
+  click, pinned on double click), not native window tabs.
+- **Sample workspace on the welcome screen** — "Look at a sample" opening a
+  bundled read-only set (needs a folder reference so the tree survives the
+  bundle's flattening).
+- **Open a single .md file** (Finder "Open With", drag a file) — document
+  types in a partial `app/Info.plist`.
+- **Distribution** — Developer ID + notarization path; decide whether to keep
+  the sandbox.
+- **Store/site media** — the screenshot script on top of `DebugAutomation`.
+- **The agent CLI** — later, see `decisions.md`.

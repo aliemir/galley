@@ -181,6 +181,16 @@ xcodebuild -project app/Galley.xcodeproj -scheme Galley \
 xcodebuild -project app/Galley.xcodeproj -scheme Galley \
   -destination 'platform=macOS' test -only-testing:GalleyTests
 
+# run a debug build on a sample workspace, then drive and snapshot it
+open app/…/Debug/Galley.app --args -GalleyOpen app/Fixtures/Showcase
+swift tools/galley-debug.swift level.3 theme.sepia open.1 snapshot
+#   → /private/tmp/galley-debug/snapshot.png (chrome + page, no permissions)
+#   commands: level.N theme.<id> open.N next fold unfold scroll.N highlight
+#             palette dark light resize.small|large reset probe snapshot
+
+# regenerate the placeholder app icon
+swift tools/make-icon.swift app/Galley/Assets.xcassets/AppIcon.appiconset
+
 # backend — the API worker
 cd backend && npm run dev      # npm run deploy to ship
 
@@ -206,6 +216,17 @@ simulator ones).
   mouse and keyboard and may trigger an Accessibility prompt. Run unit tests
   (`-only-testing:GalleyTests`) by default; run UI tests only when
   they are the point, and say so first. Quit the app after `build-and-run`.
+- **WebKit needs the network entitlement in the sandbox.** Without
+  `ENABLE_OUTGOING_NETWORK_CONNECTIONS` the reader page never loads (stuck at
+  10%). The page itself has no network: its CSP allows only `galley:` and
+  `data:`. Debug builds also carry `app/Galley-Debug.entitlements`; adding any
+  entitlements file stops Xcode injecting its own Debug read exception, so
+  that file declares it.
+- **Debug output goes to stderr** (`debugLog`) — stdout is block-buffered when
+  the app is launched from a script, so `print` output is lost.
+- **Bundle resources are flattened.** Files under `app/Galley/Reader/Web/`
+  (including `vendor/fonts/`) land at the bundle root; the `galley://app/`
+  handler looks them up by name. Names must stay unique.
 - **App Sandbox is on, file access is read-only.** `ENABLE_APP_SANDBOX` and
   `ENABLE_USER_SELECTED_FILES = readonly` generate the entitlements from build
   settings — there is no `.entitlements` file yet. The app can read only
