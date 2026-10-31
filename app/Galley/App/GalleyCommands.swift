@@ -8,6 +8,15 @@ struct GalleyCommands: Commands {
         CommandGroup(replacing: .newItem) {
             Button("Open Folder…") { model.openFolderPanel() }
                 .keyboardShortcut("o")
+            Button("Go to File…") { model.isQuickOpenVisible.toggle() }
+                .keyboardShortcut("k")
+                .disabled(model.workspaces.isEmpty)
+            Button("Go to Section…") {
+                model.isQuickOpenVisible = true
+                model.quickOpenSeed = "#"
+            }
+            .keyboardShortcut("k", modifiers: [.command, .shift])
+            .disabled(model.current == nil)
         }
         CommandGroup(after: .newItem) {
             Divider()

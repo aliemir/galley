@@ -49,6 +49,9 @@ final class AppModel {
     /// column, negative hides the outermost one.
     var swipeProgress: Double = 0
 
+    var isQuickOpenVisible = false
+    /// Text the palette opens with: "#" jumps straight to sections.
+    var quickOpenSeed = ""
     var isFindVisible = false
     /// Bumped by ⌘F to refocus the field when the bar is already open.
     var findFocusRequest = 0
@@ -296,6 +299,17 @@ final class AppModel {
     var currentWorkspace: Workspace? {
         guard let current else { return nil }
         return workspaces.first { $0.id == current.workspaceID }
+    }
+
+    /// Opens a file in any workspace, switching to it first.
+    func open(_ file: DocumentFile, in workspace: Workspace) {
+        if selectedWorkspaceID != workspace.id {
+            leaveCurrent()
+            current = nil
+            selectedWorkspaceID = workspace.id
+            library.update { $0.selectedWorkspace = workspace.id }
+        }
+        open(file, transition: "none")
     }
 
     func open(_ file: DocumentFile, transition: String = "none") {

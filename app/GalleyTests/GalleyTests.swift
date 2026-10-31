@@ -184,3 +184,17 @@ struct DiffTests {
         #expect(changes.units.keys.sorted() == [0])
     }
 }
+
+struct FuzzyTests {
+    @Test func matchesWordStartsAndRanksThemFirst() {
+        let plan = Fuzzy.score("amp", in: "Auth migration plan")
+        let other = Fuzzy.score("amp", in: "Example mapping")
+        #expect(plan != nil)
+        #expect(other != nil)
+        #expect(plan! > other!)
+    }
+
+    @Test func rejectsMissingCharacters() {
+        #expect(Fuzzy.score("xyz", in: "Auth migration plan") == nil)
+    }
+}

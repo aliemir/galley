@@ -28,6 +28,19 @@ struct MainView: View {
             if !model.workspaces.isEmpty { PanelToggle().ignoresSafeArea() }
         }
         .overlay { if isDropTargeted { DropHighlight() } }
+        .overlay(alignment: .top) {
+            if model.isQuickOpenVisible {
+                ZStack(alignment: .top) {
+                    palette.paper.opacity(0.35)
+                        .ignoresSafeArea()
+                        .onTapGesture { model.isQuickOpenVisible = false }
+                    QuickOpenView()
+                        .padding(.top, 86)
+                }
+                .transition(.opacity)
+            }
+        }
+        .animation(.easeOut(duration: 0.14), value: model.isQuickOpenVisible)
         .onDrop(of: [.fileURL], isTargeted: $isDropTargeted) { providers in
             handleDrop(providers)
         }

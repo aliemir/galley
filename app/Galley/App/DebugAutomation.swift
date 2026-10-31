@@ -15,7 +15,7 @@ import WebKit
 final class DebugAutomation {
     static let prefix = "com.aliemir.galley.debug."
     static let commands = [
-        "snapshot", "probe", "reload", "reset", "next", "previous", "fold", "unfold", "change", "find.close", "resize.small", "resize.large",
+        "snapshot", "probe", "reload", "reset", "palette", "palette.close", "next", "previous", "fold", "unfold", "change", "find.close", "resize.small", "resize.large",
         "scroll.top", "scroll.bottom", "dark", "light", "system",
     ] + (1...4).map { "level.\($0)" }
         + Theme.all.map { "theme.\($0.id)" }
@@ -47,6 +47,7 @@ final class DebugAutomation {
             web.evaluateJavaScript("document.readyState + ' ' + typeof window.Reader + ' ' + document.body.innerHTML.length") { result, error in
                 debugLog("[probe] js=\(String(describing: result)) error=\(String(describing: error))")
             }
+        case "palette": model.isQuickOpenVisible = argument != "close"
         case "reset":
             for workspace in model.workspaces { model.removeWorkspace(workspace.id) }
         case "reload": model.reader.webView.load(URLRequest(url: URL(string: "galley://app/reader.html")!))
