@@ -54,3 +54,14 @@ Agent integration is out of scope for now; do not build hooks to agents yet.
 **Later, replacing "pipe to `claude -p`":** a small CLI that ships with the
 app, plus a skill for it, so agents run the CLI to pull the user's highlights
 and comments. The app stays passive; agents come to it.
+
+## 2026-10-31 — Placeholder name: Galley
+
+**Chosen (placeholder):** *Galley*, bundle id `com.aliemir.galley`. A galley
+proof is the printed copy of a text you read and mark up but never rewrite —
+the app's whole premise. The real name is still to be decided.
+
+**Renaming later** is a find-and-replace of `Galley` / `galley` across the repo
+plus `git mv` of `app/Galley*` — `rename.sh` is one-shot and has been deleted.
+Changing the bundle id resets the sandbox container (saved workspaces, read
+state, highlights), which costs nothing before the first release.

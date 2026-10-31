@@ -1,6 +1,6 @@
 //
 //  ContentView.swift
-//  MyAppProductName
+//  Galley
 //
 //  Created by Ali Emir Sen on 22.08.2026.
 //

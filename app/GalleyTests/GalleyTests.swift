@@ -1,14 +1,14 @@
 //
-//  MyAppProductNameTests.swift
-//  MyAppProductNameTests
+//  GalleyTests.swift
+//  GalleyTests
 //
 //  Created by Ali Emir Sen on 22.08.2026.
 //
 
 import Testing
-@testable import MyAppProductName
+@testable import Galley
 
-struct MyAppProductNameTests {
+struct GalleyTests {
 
     @Test func example() async throws {
         // Write your test here and use APIs like `#expect(...)` to check expected conditions.

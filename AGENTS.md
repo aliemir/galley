@@ -7,7 +7,7 @@ for App Store media.
 
 | Path | What |
 |---|---|
-| `app/` | The macOS app (native, Mac only — no iOS target). `app/MyAppProductName.xcodeproj` |
+| `app/` | The macOS app (native, Mac only — no iOS target). `app/Galley.xcodeproj` |
 | `backend/` | Cloudflare Worker — the app's API. Has its own `AGENTS.md` — read it before touching Workers code |
 | `website/` | Cloudflare Worker — privacy policy and support pages. Static assets + Tailwind v4. Own `AGENTS.md` |
 | `screenshot-generator/` | Remotion project — App Store screenshot stills and app preview videos. Own `AGENTS.md` |
@@ -16,7 +16,7 @@ for App Store media.
 | `notes/` | Idea, brainstorming, decisions, and `changelog.md`. Not shipped |
 | `tools/` | Build-time scripts that are not part of the app |
 | `check.sh` | Preflight — verifies the machine can build, sign and ship |
-| `rename.sh` | One-shot template rename. Delete after running |
+| ~~`rename.sh`~~ | One-shot template rename — already run (as the placeholder name **Galley**) and deleted |
 
 ## Template
 
@@ -27,7 +27,8 @@ once on a fresh clone and refuses to run twice.
 Bundle ids are always `com.aliemir.*`.
 
 `./check.sh` is the preflight. It has two modes and picks one itself, keyed on
-whether `app/MyAppProductName.xcodeproj` still exists:
+whether the template's placeholder project (`app/MyApp…ProductName.xcodeproj`)
+still exists:
 
 - **Template** (here) — toolchain only: full Xcode rather than Command Line
   Tools, the macOS SDK, `xcodebuildmcp`,
@@ -173,12 +174,12 @@ work is heading past it rather than stopping silently.
 ./check.sh            # --quiet for problems only
 
 # build
-xcodebuild -project app/MyAppProductName.xcodeproj -scheme MyAppProductName \
+xcodebuild -project app/Galley.xcodeproj -scheme Galley \
   -destination 'platform=macOS' build
 
 # test — unit tests only; drop -only-testing to include UI tests (see Gotchas)
-xcodebuild -project app/MyAppProductName.xcodeproj -scheme MyAppProductName \
-  -destination 'platform=macOS' test -only-testing:MyAppProductNameTests
+xcodebuild -project app/Galley.xcodeproj -scheme Galley \
+  -destination 'platform=macOS' test -only-testing:GalleyTests
 
 # backend — the API worker
 cd backend && npm run dev      # npm run deploy to ship
@@ -203,7 +204,7 @@ simulator ones).
   simulator for it, and do not add iOS back without being asked.
 - **UI tests drive the real desktop.** On macOS they move the user's actual
   mouse and keyboard and may trigger an Accessibility prompt. Run unit tests
-  (`-only-testing:MyAppProductNameTests`) by default; run UI tests only when
+  (`-only-testing:GalleyTests`) by default; run UI tests only when
   they are the point, and say so first. Quit the app after `build-and-run`.
 - **App Sandbox is on, file access is read-only.** `ENABLE_APP_SANDBOX` and
   `ENABLE_USER_SELECTED_FILES = readonly` generate the entitlements from build

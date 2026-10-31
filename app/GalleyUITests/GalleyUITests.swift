@@ -1,13 +1,13 @@
 //
-//  MyAppProductNameUITests.swift
-//  MyAppProductNameUITests
+//  GalleyUITests.swift
+//  GalleyUITests
 //
 //  Created by Ali Emir Sen on 22.08.2026.
 //
 
 import XCTest
 
-final class MyAppProductNameUITests: XCTestCase {
+final class GalleyUITests: XCTestCase {
 
     override func setUpWithError() throws {
         // Put setup code here. This method is called before the invocation of each test method in the class.

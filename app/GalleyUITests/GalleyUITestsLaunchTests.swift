@@ -1,13 +1,13 @@
 //
-//  MyAppProductNameUITestsLaunchTests.swift
-//  MyAppProductNameUITests
+//  GalleyUITestsLaunchTests.swift
+//  GalleyUITests
 //
 //  Created by Ali Emir Sen on 22.08.2026.
 //
 
 import XCTest
 
-final class MyAppProductNameUITestsLaunchTests: XCTestCase {
+final class GalleyUITestsLaunchTests: XCTestCase {
 
     override class var runsForEachTargetApplicationUIConfiguration: Bool {
         true
