@@ -1,13 +1,13 @@
 # AGENTS.md
 
-iOS app, two Cloudflare Workers (API + marketing site), and a Remotion project
+macOS app, two Cloudflare Workers (API + marketing site), and a Remotion project
 for App Store media.
 
 ## Layout
 
 | Path | What |
 |---|---|
-| `app/` | The iOS app. `app/MyAppProductName.xcodeproj` |
+| `app/` | The macOS app (native, Mac only — no iOS target). `app/MyAppProductName.xcodeproj` |
 | `backend/` | Cloudflare Worker — the app's API. Has its own `AGENTS.md` — read it before touching Workers code |
 | `website/` | Cloudflare Worker — privacy policy and support pages. Static assets + Tailwind v4. Own `AGENTS.md` |
 | `screenshot-generator/` | Remotion project — App Store screenshot stills and app preview videos. Own `AGENTS.md` |
@@ -30,7 +30,7 @@ Bundle ids are always `com.aliemir.*`.
 whether `app/MyAppProductName.xcodeproj` still exists:
 
 - **Template** (here) — toolchain only: full Xcode rather than Command Line
-  Tools, the simulator named in the build command, `xcodebuildmcp`,
+  Tools, the macOS SDK, `xcodebuildmcp`,
   `altool`/`notarytool`, brew/git/node/python/perl, and that git is not tracking
   a `.env` or a `.p8`. The `.env` values, the signing key and `npm install` are
   per-app, so they report as n/a — nothing to fill in in this repo.
@@ -112,10 +112,10 @@ frames and captions in `screenshot-generator/`. Write it the first time media
 is needed and check it in.
 That is what makes a locale cheap to add and a UI change cheap to absorb — the
 whole set rebuilds instead of being re-shot. Never hand-shoot one locale and
-eyeball the others. Which way the status bar goes — hidden, or pinned to
-identical values with `simctl status_bar override` — is the app's call, made
-once and applied to every shot in the set; a set with a drifting clock and
-battery looks careless. App preview videos are optional; render them the same way
+eyeball the others. Whether the menu bar is in frame — window-only captures,
+or full-screen with a fixed clock and the same menu extras — is the app's call,
+made once and applied to every shot in the set; a set with a drifting clock
+and a changing wallpaper looks careless. App preview videos are optional; render them the same way
 when the app wants them.
 
 ### Changelog and commits
@@ -144,8 +144,9 @@ and record the answer in `notes/decisions.md`:
 
 - **Domain** for the privacy/support URLs — decided per app, so ask before
   writing a URL into the listing.
-- **Devices** — iPhone only or universal. It decides which screenshot sets ASC
-  requires.
+- **Distribution** — Mac App Store (sandboxed, TestFlight for Mac), direct
+  download (Developer ID + notarization), or both. It decides whether the
+  sandbox can ever be dropped and which release path applies.
 - **Locales**, and which one is the base.
 - **Money** — free, paid, or IAP. Keep purchases on-device with StoreKit;
   `backend/` gets involved only when something genuinely cannot work without a
@@ -173,11 +174,11 @@ work is heading past it rather than stopping silently.
 
 # build
 xcodebuild -project app/MyAppProductName.xcodeproj -scheme MyAppProductName \
-  -destination 'platform=iOS Simulator,name=iPhone 17 Pro' build
+  -destination 'platform=macOS' build
 
-# test
+# test — unit tests only; drop -only-testing to include UI tests (see Gotchas)
 xcodebuild -project app/MyAppProductName.xcodeproj -scheme MyAppProductName \
-  -destination 'platform=iOS Simulator,name=iPhone 17 Pro' test
+  -destination 'platform=macOS' test -only-testing:MyAppProductNameTests
 
 # backend — the API worker
 cd backend && npm run dev      # npm run deploy to ship
@@ -191,19 +192,27 @@ npx remotion still  <Composition> out/shot.jpeg --image-format=jpeg
 npx remotion render <Composition> out/preview.mp4
 ```
 
-Prefer the `xcodebuildmcp` CLI over raw `xcodebuild`/`xcrun`/`simctl` where it
-covers the task — see the `xcodebuildmcp-cli` skill.
+Prefer the `xcodebuildmcp` CLI over raw `xcodebuild`/`xcrun` where it covers
+the task — see the `xcodebuildmcp-cli` skill (use its macOS commands, not the
+simulator ones).
 
 ## Gotchas
 
-- **One simulator at a time.** This machine cannot handle several booted
-  simulators — it freezes. Before booting or running, check
-  `xcrun simctl list devices booted` and shut down what is already up
-  (`xcrun simctl shutdown <udid>`, or `xcrun simctl shutdown all`); reuse the
-  booted one instead of booting a second. Never fan out builds or UI tests
-  across simulators in parallel, and never leave one booted after the task.
-  A second simulator is only acceptable when the thing being tested genuinely
-  needs two devices at once — say so before booting it, and shut it down after.
+- **Mac only, no simulator.** The app builds and runs natively on this Mac
+  (`-destination 'platform=macOS'`). There is no iOS target; do not boot a
+  simulator for it, and do not add iOS back without being asked.
+- **UI tests drive the real desktop.** On macOS they move the user's actual
+  mouse and keyboard and may trigger an Accessibility prompt. Run unit tests
+  (`-only-testing:MyAppProductNameTests`) by default; run UI tests only when
+  they are the point, and say so first. Quit the app after `build-and-run`.
+- **App Sandbox is on, file access is read-only.** `ENABLE_APP_SANDBOX` and
+  `ENABLE_USER_SELECTED_FILES = readonly` generate the entitlements from build
+  settings — there is no `.entitlements` file yet. The app can read only
+  folders the user picked (open panel or drag-and-drop), and only for that
+  launch: reopening workspaces after a relaunch needs a security-scoped
+  bookmark stored per workspace. Read-only is deliberate — the app never writes
+  to a markdown file. The sandbox also blocks spawning CLI tools, so the
+  "pipe to `claude -p`" idea needs a different shape (or direct distribution).
 - **There is no `Info.plist` file.** `GENERATE_INFOPLIST_FILE = YES`, so plist
   keys live as `INFOPLIST_KEY_*` build settings in `project.pbxproj`. To add a
   usage description or `ITSAppUsesNonExemptEncryption`, add the build setting —
