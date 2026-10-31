@@ -26,6 +26,12 @@ otherwise have to re-derive. Not worth one: typo fixes and formatting.
 
 ## 2026-11-01
 
+- Second review pass (independent read of the whole app): 15 defects fixed —
+  overlapping highlights, find offsets, exact-position restore, baseline
+  scans, wikilink crashes, `$$` edge cases, safe link handling, sandboxed
+  file drops, settings observers, tolerant library decoding (`d54193d`);
+  app-scoped bookmark entitlement for relaunch (`cc0c86c`).
+- Printing (⌘P) as ink on white (`10822dd`); 4,000-line render guard test.
 - Personal highlights: a pill over any selection (or ⌃⌘H), stored by the app
   and anchored by text plus context; survive rewrites, short ones need
   context; orphans stay listed in the outline column (`feat(app): …highlights`).
