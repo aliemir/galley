@@ -409,3 +409,22 @@ footer.next.end .title { font-style: normal; font-family: var(--font-ui); font-s
 /* — Empty and loading states ————————————————————————————————— */
 
 #page:empty { min-height: 100vh; }
+
+/* — Print: always ink on white paper, whatever the theme ———————————— */
+
+@media print {
+  :root {
+    --paper: #fff; --ink: #000; --ink-2: #333; --ink-3: #666; --accent: #000; --rule: #ccc;
+    --code-bg: #f4f4f4; --mark: #ffe680; --change-wash: transparent; --insert: transparent;
+    --code-keyword: #000; --code-string: #000; --code-number: #000; --code-type: #000; --code-function: #000;
+  }
+  html { font-size: 11pt; background: #fff; }
+  #page { max-width: none; padding: 0; }
+  #gutter, button.fold, pre > button.copy, button.pill, footer.next { display: none !important; }
+  .sec.folded > .sec-body { display: block; }
+  .sec.folded > :is(h1, h2, h3, h4, h5, h6)::after { content: none; }
+  a { color: inherit; text-decoration-color: #999; }
+  pre, table, figure, .callout, blockquote { break-inside: avoid; }
+  h1, h2, h3, h4 { break-after: avoid; }
+  .chg-added { box-shadow: none; }
+}

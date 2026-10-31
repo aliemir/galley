@@ -1,6 +1,7 @@
 import AppKit
 import Observation
 import SwiftUI
+import WebKit
 
 /// The document on the page.
 struct OpenDocument {
@@ -747,6 +748,17 @@ final class AppModel {
             try? await Task.sleep(for: .milliseconds(220))
             reader.scrollToHeading(heading)
         }
+    }
+
+    func printPage() {
+        guard current != nil, let window = reader.webView.window else { NSSound.beep(); return }
+        let info = NSPrintInfo.shared.copy() as! NSPrintInfo
+        info.topMargin = 54; info.bottomMargin = 54; info.leftMargin = 60; info.rightMargin = 60
+        info.isVerticallyCentered = false
+        let operation = reader.webView.printOperation(with: info)
+        operation.view?.frame = reader.webView.bounds
+        operation.jobTitle = current.map { settings.displayName(for: $0.file) } ?? "Galley"
+        operation.runModal(for: window, delegate: nil, didRun: nil, contextInfo: nil)
     }
 
     // MARK: Files

@@ -31,7 +31,11 @@ struct GalleyCommands: Commands {
                 .disabled(model.current == nil)
         }
         CommandGroup(replacing: .saveItem) {}
-        CommandGroup(replacing: .printItem) {}
+        CommandGroup(replacing: .printItem) {
+            Button("Print…") { model.printPage() }
+                .keyboardShortcut("p")
+                .disabled(model.current == nil)
+        }
 
         CommandGroup(after: .textEditing) {
             Divider()
