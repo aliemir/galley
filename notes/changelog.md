@@ -24,6 +24,24 @@ otherwise have to re-derive. Not worth one: typo fixes and formatting.
 
 <!-- newest entries go directly below this line -->
 
+## 2026-11-01
+
+- Personal highlights: a pill over any selection (or ⌃⌘H), stored by the app
+  and anchored by text plus context; survive rewrites, short ones need
+  context; orphans stay listed in the outline column (`feat(app): …highlights`).
+- Go to File (⌘K) and Go to Section (⇧⌘K) palette with fuzzy matching (`9ff55eb`).
+- Placeholder app icon drawn by `tools/make-icon.swift` (`51fe155`).
+- First review pass: read-marking rules on quit, gesture momentum, file list
+  keyboard focus, raw-HTML images, deleted files, narrow windows, window
+  dragging (`982be92`).
+- The reader itself: column stack with interactive swipes, WebKit page,
+  six themes and six typefaces, change marks, folding, pull-to-next, find,
+  state restoration, keyboard map (`04b3ca1`, `656904e`).
+- Document layer: swift-markdown renderer with GFM, callouts, KaTeX, Mermaid,
+  footnotes, emoji, wikilinks, front matter; block diff; pretty names (`be9ebde`).
+- Vendored KaTeX, Mermaid, highlight.js and gemoji data (`6c3ae99`).
+- Renamed the template to the placeholder name Galley (`936e95b`).
+
 ## 2026-10-31
 
 - Recorded: leaning to direct download (Developer ID), reading experience

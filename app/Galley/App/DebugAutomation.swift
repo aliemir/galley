@@ -15,7 +15,7 @@ import WebKit
 final class DebugAutomation {
     static let prefix = "com.aliemir.galley.debug."
     static let commands = [
-        "snapshot", "probe", "reload", "reset", "palette", "palette.close", "next", "previous", "fold", "unfold", "change", "find.close", "resize.small", "resize.large",
+        "snapshot", "probe", "reload", "reset", "palette", "palette.close", "highlight", "next", "previous", "fold", "unfold", "change", "find.close", "resize.small", "resize.large",
         "scroll.top", "scroll.bottom", "dark", "light", "system",
     ] + (1...4).map { "level.\($0)" }
         + Theme.all.map { "theme.\($0.id)" }
@@ -46,6 +46,19 @@ final class DebugAutomation {
             debugLog("[probe] url=\(web.url?.absoluteString ?? "nil") loading=\(web.isLoading) progress=\(web.estimatedProgress) window=\(web.window != nil) frame=\(web.frame)")
             web.evaluateJavaScript("document.readyState + ' ' + typeof window.Reader + ' ' + document.body.innerHTML.length") { result, error in
                 debugLog("[probe] js=\(String(describing: result)) error=\(String(describing: error))")
+            }
+        case "highlight":
+            // Selects a phrase in the second paragraph, then highlights it.
+            let select = """
+            const p = document.querySelectorAll('#content p')[1];
+            const walker = document.createTreeWalker(p, NodeFilter.SHOW_TEXT);
+            const node = walker.nextNode();
+            const range = document.createRange();
+            range.setStart(node, 4); range.setEnd(node, Math.min(node.length, 60));
+            const s = window.getSelection(); s.removeAllRanges(); s.addRange(range);
+            """
+            model.reader.webView.evaluateJavaScript(select) { _, _ in
+                MainActor.assumeIsolated { self.model.highlightSelection() }
             }
         case "palette": model.isQuickOpenVisible = argument != "close"
         case "reset":

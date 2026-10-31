@@ -11,7 +11,7 @@ struct OutlineColumn: View {
                     foldMenu
                 }
             }
-            if let current = model.current, !current.rendered.outline.isEmpty {
+            if let current = model.current, !current.rendered.outline.isEmpty || !current.highlights.isEmpty {
                 OutlineList(document: current)
             } else {
                 Text(model.current == nil ? "" : "No headings")
@@ -72,6 +72,14 @@ private struct OutlineList: View {
                             hasChange: changed.contains(entry.item.id)
                         )
                         .id(entry.item.id)
+                    }
+                    if !document.highlights.isEmpty {
+                        SectionLabel(title: "Highlights", count: document.highlights.count)
+                            .padding(.horizontal, -8)
+                            .padding(.top, items.isEmpty ? -8 : 10)
+                        ForEach(document.highlights) { highlight in
+                            HighlightRow(highlight: highlight, isOrphan: document.orphans.contains(highlight.id))
+                        }
                     }
                 }
                 .padding(.horizontal, 8)
@@ -176,5 +184,62 @@ private struct OutlineRow: View {
         .padding(.top, depth == 0 ? 3 : 0)
         .accessibilityElement(children: .combine)
         .accessibilityAddTraits(isCurrent ? .isSelected : [])
+    }
+}
+
+/// A highlight in the outline column. Orphans — whose text the agent has
+/// since removed — stay listed, quieter, until the reader lets them go.
+private struct HighlightRow: View {
+    let highlight: Highlight
+    let isOrphan: Bool
+    @Environment(AppModel.self) private var model
+    @Environment(\.palette) private var palette
+    @State private var isHovered = false
+
+    var body: some View {
+        HStack(alignment: .top, spacing: 8) {
+            RoundedRectangle(cornerRadius: 1.5)
+                .fill(isOrphan ? palette.ink3.opacity(0.5) : Color(css: palette.theme.mark))
+                .frame(width: 3)
+            VStack(alignment: .leading, spacing: 3) {
+                Text(highlight.text.trimmingCharacters(in: .whitespacesAndNewlines))
+                    .font(.system(size: 12, design: .serif))
+                    .foregroundStyle(isOrphan ? palette.ink3 : palette.ink2)
+                    .lineLimit(3)
+                    .strikethrough(isOrphan, color: palette.ink3.opacity(0.6))
+                if isOrphan {
+                    Text("No longer in the text")
+                        .font(.system(size: 10.5))
+                        .foregroundStyle(palette.ink3)
+                }
+            }
+            Spacer(minLength: 0)
+            if isHovered || isOrphan {
+                Button {
+                    model.removeHighlight(highlight.id)
+                } label: {
+                    Image(systemName: "xmark")
+                        .font(.system(size: 9, weight: .bold))
+                        .foregroundStyle(palette.ink3)
+                        .frame(width: 18, height: 18)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .help("Remove highlight")
+            }
+        }
+        .padding(.horizontal, 8)
+        .padding(.vertical, 6)
+        .background(RoundedRectangle(cornerRadius: 6, style: .continuous).fill(isHovered ? palette.hover : .clear))
+        .contentShape(Rectangle())
+        .onTapGesture { if !isOrphan { model.scrollToHighlight(highlight.id) } }
+        .onHover { isHovered = $0 }
+        .contextMenu {
+            Button("Copy Text") {
+                NSPasteboard.general.clearContents()
+                NSPasteboard.general.setString(highlight.text, forType: .string)
+            }
+            Button("Remove Highlight", role: .destructive) { model.removeHighlight(highlight.id) }
+        }
     }
 }

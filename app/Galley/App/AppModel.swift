@@ -14,6 +14,9 @@ struct OpenDocument {
     var anchor: ScrollAnchor?
     var reachedEnd = false
     var folded: Set<String>
+    var highlights: [Highlight] = []
+    /// Highlights whose text is no longer in the document.
+    var orphans: Set<String> = []
 
     var id: String { "\(workspaceID.uuidString)/\(file.id)" }
 }
@@ -359,7 +362,9 @@ final class AppModel {
             openedAt: isUpdate ? (current?.openedAt ?? Date()) : Date(),
             anchor: anchor,
             reachedEnd: isUpdate ? (current?.reachedEnd ?? false) : false,
-            folded: isUpdate ? (current?.folded ?? []) : Set(record?.folded ?? [])
+            folded: isUpdate ? (current?.folded ?? []) : Set(record?.folded ?? []),
+            highlights: record?.highlights ?? [],
+            orphans: isUpdate ? (current?.orphans ?? []) : []
         )
         if !isUpdate {
             currentHeading = nil
@@ -440,6 +445,7 @@ final class AppModel {
             ),
             changes: changes,
             folded: Array(document.folded),
+            highlights: document.highlights,
             scroll: document.anchor,
             next: nextPayload,
             endLabel: workspace.files.count > 1 ? "End of \(workspace.name)" : nil,
@@ -613,6 +619,12 @@ final class AppModel {
         case .copy(let text):
             NSPasteboard.general.clearContents()
             NSPasteboard.general.setString(text, forType: .string)
+        case let .highlight(text, prefix, suffix):
+            addHighlight(Highlight(text: text, prefix: prefix, suffix: suffix))
+        case .unhighlight(let id):
+            removeHighlight(id)
+        case .orphans(let ids):
+            if current?.orphans != Set(ids) { current?.orphans = Set(ids) }
         }
     }
 
@@ -641,6 +653,48 @@ final class AppModel {
         Task {
             if await !reader.jumpToChange(direction) { NSSound.beep() }
         }
+    }
+
+    // MARK: Highlights
+
+    func highlightSelection() {
+        Task {
+            guard let anchor = await reader.selectionAnchor() else { NSSound.beep(); return }
+            addHighlight(Highlight(text: anchor.text, prefix: anchor.prefix, suffix: anchor.suffix))
+        }
+    }
+
+    private func addHighlight(_ highlight: Highlight) {
+        guard current != nil else { return }
+        current?.highlights.append(highlight)
+        saveHighlights()
+    }
+
+    func removeHighlight(_ id: String) {
+        current?.highlights.removeAll { $0.id == id }
+        current?.orphans.remove(id)
+        saveHighlights()
+    }
+
+    func scrollToHighlight(_ id: String) {
+        reader.scrollToHighlight(id)
+    }
+
+    private func saveHighlights() {
+        guard let current, let workspace = currentWorkspace else { return }
+        library.updateWorkspace(workspace.id) { record in
+            record.files[current.file.id, default: FileRecord()].highlights = current.highlights.isEmpty ? nil : current.highlights
+        }
+        reader.setHighlights(current.highlights)
+    }
+
+    /// The open document's highlights as Markdown quotes, for pasting.
+    func copyHighlights() {
+        guard let current, !current.highlights.isEmpty else { NSSound.beep(); return }
+        let quotes = current.highlights.map { "> " + $0.text.replacingOccurrences(of: "\n", with: "\n> ") }
+        let text = "Highlights from \(current.file.relativePath):\n\n" + quotes.joined(separator: "\n\n")
+        NSPasteboard.general.clearContents()
+        NSPasteboard.general.setString(text, forType: .string)
     }
 
     // MARK: Links

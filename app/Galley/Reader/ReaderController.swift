@@ -40,6 +40,7 @@ struct PagePayload: Encodable {
     var header: Header
     var changes: [String: Change]
     var folded: [String]
+    var highlights: [Highlight]
     var scroll: ScrollAnchor?
     var next: Next?
     var endLabel: String?
@@ -75,6 +76,9 @@ enum ReaderEvent {
     case fold(id: String, folded: Bool)
     case folds([String])
     case copy(String)
+    case highlight(text: String, prefix: String, suffix: String)
+    case unhighlight(String)
+    case orphans([String])
 }
 
 // MARK: - Controller
@@ -142,6 +146,16 @@ final class ReaderController: NSObject {
     func foldAll(_ folded: Bool) { run("Reader.foldAll(\(folded))") }
     func scrollPage(_ direction: Int) { run("Reader.scrollPage(\(direction))") }
     func endFind() { run("Reader.endFind()") }
+    func setHighlights(_ highlights: [Highlight]) { call("setHighlights", highlights) }
+    func scrollToHighlight(_ id: String) { run("Reader.scrollToHighlight(\(Self.json(id)))") }
+
+    /// The current selection as a highlight anchor, if there is one.
+    func selectionAnchor() async -> (text: String, prefix: String, suffix: String)? {
+        guard let result = try? await webView.callAsyncJavaScript(
+            "return Reader.selectionAnchor()", contentWorld: .page
+        ) as? [String: Any], let text = result["text"] as? String else { return nil }
+        return (text, (result["prefix"] as? String) ?? "", (result["suffix"] as? String) ?? "")
+    }
 
     func jumpToChange(_ direction: Int) async -> Bool {
         (try? await webView.callAsyncJavaScript(
@@ -223,6 +237,14 @@ final class ReaderController: NSObject {
             onEvent(.folds((message["ids"] as? [String]) ?? []))
         case "copy":
             if let text = message["text"] as? String { onEvent(.copy(text)) }
+        case "highlight":
+            if let text = message["text"] as? String {
+                onEvent(.highlight(text: text, prefix: (message["prefix"] as? String) ?? "", suffix: (message["suffix"] as? String) ?? ""))
+            }
+        case "unhighlight":
+            if let id = message["id"] as? String { onEvent(.unhighlight(id)) }
+        case "orphans":
+            onEvent(.orphans((message["ids"] as? [String]) ?? []))
         case "log":
             #if DEBUG
             debugLog("[page] \(message["message"] ?? "")")

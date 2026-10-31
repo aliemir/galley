@@ -27,6 +27,7 @@
   let lastReport = '';
   let lastReportTime = 0;
   let findState = { query: '', marks: [], index: -1 };
+  let highlights = [];     // [{id, text, prefix, suffix}] for the document
 
   // — Lazy libraries ———————————————————————————————————————————————
 
@@ -83,6 +84,8 @@
     decorateSections(new Set(d.folded || []));
     decorateCode();
     findState = { query: '', marks: [], index: -1 };
+    highlights = d.highlights || [];
+    applyHighlights();
     index();
     layoutGutter();
     enhance(generation);
@@ -296,6 +299,8 @@
       post({ type: 'log', message: String(error) });
     }
     if (gen !== generation) return;
+    // Code colouring and math replace their elements' contents: re-anchor.
+    applyHighlights();
     index();
     layoutGutter();
     if (doc && doc.pendingScroll) { restore(doc.pendingScroll); doc.pendingScroll = null; }
@@ -522,6 +527,164 @@
     return { count: groups.length, index: findState.index };
   }
 
+  // — Highlights ——————————————————————————————————————————————————
+  //
+  // A highlight is its text plus a little context either side, measured in
+  // the content's reading text (no button labels, no MathML, no SVG). It is
+  // re-found by text, never by position, so it survives the file being
+  // rewritten around it; when the text is gone it becomes an orphan.
+
+  const CONTEXT = 48;
+  const skipForText = (node) => node.parentElement && node.parentElement.closest('button, .katex-mathml, svg, .copy');
+
+  function readingNodes(root) {
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
+      acceptNode: (node) => (skipForText(node) ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT),
+    });
+    const nodes = [];
+    for (let node = walker.nextNode(); node; node = walker.nextNode()) nodes.push(node);
+    return nodes;
+  }
+
+  function readingText(root) {
+    return readingNodes(root).map((n) => n.data).join('');
+  }
+
+  /// A DOM boundary point as an offset into the reading text.
+  function readingOffset(root, container, offset) {
+    const nodes = readingNodes(root);
+    let total = 0;
+    if (container.nodeType === Node.TEXT_NODE && nodes.includes(container)) {
+      for (const node of nodes) {
+        if (node === container) return total + offset;
+        total += node.data.length;
+      }
+    }
+    const boundary = document.createRange();
+    boundary.setStart(container, offset);
+    for (const node of nodes) {
+      if (boundary.comparePoint(node, 0) >= 0) break;
+      total += node.data.length;
+    }
+    return total;
+  }
+
+  function selectionAnchor() {
+    const content = $('#content');
+    const selection = window.getSelection();
+    if (!content || !selection.rangeCount || selection.isCollapsed) return null;
+    const range = selection.getRangeAt(0);
+    if (!content.contains(range.commonAncestorContainer)) return null;
+    const full = readingText(content);
+    const start = readingOffset(content, range.startContainer, range.startOffset);
+    const end = readingOffset(content, range.endContainer, range.endOffset);
+    const text = full.slice(start, end);
+    if (!text.trim()) return null;
+    return { text, prefix: full.slice(Math.max(0, start - CONTEXT), start), suffix: full.slice(end, end + CONTEXT) };
+  }
+
+  /// Where `h` sits in `full` now: the occurrence whose surroundings best
+  /// match the saved context.
+  function locate(h, full) {
+    let best = -1, bestScore = -1;
+    for (let at = full.indexOf(h.text); at >= 0; at = full.indexOf(h.text, at + 1)) {
+      const before = full.slice(Math.max(0, at - CONTEXT), at);
+      const after = full.slice(at + h.text.length, at + h.text.length + CONTEXT);
+      let score = 0;
+      while (score < before.length && score < h.prefix.length &&
+             before[before.length - 1 - score] === h.prefix[h.prefix.length - 1 - score]) score++;
+      let tail = 0;
+      while (tail < after.length && tail < h.suffix.length && after[tail] === h.suffix[tail]) tail++;
+      if (score + tail > bestScore) { bestScore = score + tail; best = at; }
+    }
+    // A long passage is distinctive on its own. A short one ("day.") must
+    // also agree with some of its old surroundings, or it would latch onto
+    // the next word that happens to contain it.
+    const distinctive = h.text.trim().length >= 24;
+    const needed = Math.min(8, h.prefix.length + h.suffix.length);
+    if (best >= 0 && !distinctive && bestScore < needed) return -1;
+    return best;
+  }
+
+  function clearHighlights() {
+    for (const mark of $$('#content mark.hl')) {
+      const parent = mark.parentNode;
+      while (mark.firstChild) parent.insertBefore(mark.firstChild, mark);
+      parent.removeChild(mark);
+      parent.normalize();
+    }
+  }
+
+  function applyHighlights() {
+    const content = $('#content');
+    if (!content) return;
+    clearHighlights();
+    if (!highlights.length) { post({ type: 'orphans', ids: [] }); return; }
+    const full = readingText(content);
+    const found = [];
+    const orphans = [];
+    for (const h of highlights) {
+      const at = locate(h, full);
+      if (at < 0) orphans.push(h.id); else found.push({ id: h.id, range: [at, at + h.text.length] });
+    }
+    found.sort((a, b) => a.range[0] - b.range[0]);
+    const marks = wrapRanges(content, found.map((f) => f.range), 'mark', 'hl', skipForText);
+    for (const mark of marks) mark.dataset.id = found[Number(mark.dataset.range)].id;
+    post({ type: 'orphans', ids: orphans });
+  }
+
+  function scrollToHighlight(id) {
+    const mark = $(`#content mark.hl[data-id="${CSS.escape(id)}"]`);
+    if (!mark) return;
+    const sec = mark.closest('.sec.folded');
+    if (sec) setFolded(sec, false);
+    mark.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    const group = $$(`#content mark.hl[data-id="${CSS.escape(id)}"]`);
+    for (const m of group) { m.classList.remove('flash-hl'); void m.offsetWidth; m.classList.add('flash-hl'); }
+  }
+
+  // The pill that appears over a selection (or over a highlight, to remove it).
+  let pill = null;
+  function hidePill() { pill?.remove(); pill = null; }
+  function showPill(rect, label, onClick) {
+    hidePill();
+    pill = document.createElement('button');
+    pill.type = 'button';
+    pill.className = 'pill';
+    pill.textContent = label;
+    pill.addEventListener('mousedown', (e) => e.preventDefault());
+    pill.addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); onClick(); hidePill(); });
+    document.body.appendChild(pill);
+    const width = pill.offsetWidth;
+    const top = rect.top + window.scrollY - pill.offsetHeight - 8;
+    const left = Math.min(window.innerWidth - width - 8, Math.max(8, rect.left + rect.width / 2 - width / 2));
+    pill.style.top = `${Math.max(window.scrollY + 8, top)}px`;
+    pill.style.left = `${left}px`;
+  }
+
+  document.addEventListener('mouseup', (event) => {
+    if (event.target.closest('.pill')) return;
+    setTimeout(() => {
+      const anchor = selectionAnchor();
+      if (anchor) {
+        const rect = window.getSelection().getRangeAt(0).getBoundingClientRect();
+        showPill(rect, 'Highlight', () => {
+          post({ type: 'highlight', ...anchor });
+          window.getSelection().removeAllRanges();
+        });
+        return;
+      }
+      const mark = event.target.closest('mark.hl');
+      if (mark && window.getSelection().isCollapsed) {
+        showPill(mark.getBoundingClientRect(), 'Remove Highlight', () => post({ type: 'unhighlight', id: mark.dataset.id }));
+        return;
+      }
+      hidePill();
+    }, 0);
+  });
+  window.addEventListener('scroll', () => { if (pill && !window.getSelection().isCollapsed) return; hidePill(); }, { passive: true });
+  document.addEventListener('keydown', (event) => { if (event.key === 'Escape') hidePill(); });
+
   // — Input ———————————————————————————————————————————————————————
 
   document.addEventListener('click', (event) => {
@@ -681,6 +844,10 @@
       return true;
     },
     find(query, direction) { return find(query, direction); },
+    setHighlights(list) { highlights = list || []; applyHighlights(); },
+    scrollToHighlight(id) { scrollToHighlight(id); },
+    /// For the menu command: the selection as a highlight anchor, or null.
+    selectionAnchor() { const a = selectionAnchor(); hidePill(); return a; },
     endFind() { clearFind(); },
     selectionText() { return window.getSelection().toString(); },
     scrollPage(direction) { window.scrollBy({ top: direction * (window.innerHeight - 80), behavior: 'smooth' }); },

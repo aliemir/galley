@@ -96,6 +96,12 @@ struct GalleyCommands: Commands {
                 .keyboardShortcut("u", modifiers: [.command, .option, .shift])
                 .disabled((model.selectedWorkspace?.unreadCount ?? 0) == 0)
             Divider()
+            Button("Highlight Selection") { model.highlightSelection() }
+                .keyboardShortcut("h", modifiers: [.command, .control])
+                .disabled(model.current == nil)
+            Button("Copy Highlights as Quotes") { model.copyHighlights() }
+                .disabled(model.current?.highlights.isEmpty ?? true)
+            Divider()
             Button("Fold All Sections") { model.foldAll(true) }
                 .keyboardShortcut(.leftArrow, modifiers: [.command, .option])
                 .disabled(model.current == nil)

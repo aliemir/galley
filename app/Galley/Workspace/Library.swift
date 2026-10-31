@@ -2,6 +2,16 @@ import Foundation
 
 /// What the app remembers about one file. Never anything about the file's
 /// content beyond a hash — the content itself lives in `Snapshots`.
+/// A passage the reader marked. Anchored by its text and the text around
+/// it, never by position, so it survives the file being rewritten.
+nonisolated struct Highlight: Codable, Hashable, Identifiable, Sendable {
+    var id: String = UUID().uuidString
+    var text: String
+    var prefix: String
+    var suffix: String
+    var created = Date()
+}
+
 nonisolated struct FileRecord: Codable, Hashable, Sendable {
     /// Hash of the version the reader last read; nil when never read.
     var readHash: String?
@@ -10,6 +20,7 @@ nonisolated struct FileRecord: Codable, Hashable, Sendable {
     var markedUnread: Bool?
     var scroll: ScrollAnchor?
     var folded: [String]?
+    var highlights: [Highlight]?
 }
 
 nonisolated struct WorkspaceRecord: Codable, Identifiable, Sendable {
