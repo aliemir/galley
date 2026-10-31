@@ -77,10 +77,12 @@ Every action has a shortcut, and the shortcuts mirror the swipe model.
 ---
 
 ## Maybe later
-- Send a selection or highlight to an agent:
-  - copy as an agent-ready reference (`@path/file.md` + quoted text),
-  - pipe to a CLI agent (`claude -p`, `codex exec`),
-  - or a small MCP server so the agent can pull "what the user highlighted".
+- Let agents read your highlights and comments:
+  - a CLI bundled with the app, plus an agent skill for it, so the agent runs
+    the CLI to pull "what the user highlighted / commented" (preferred over
+    piping to `claude -p` — the app stays passive, agents come to it),
+  - copy a selection as an agent-ready reference (`@path/file.md` + quoted text),
+  - or a small MCP server exposing the same data.
 - Optional git integration for history.
 - Export highlights as notes.
 

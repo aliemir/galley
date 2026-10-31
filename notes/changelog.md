@@ -26,6 +26,8 @@ otherwise have to re-derive. Not worth one: typo fixes and formatting.
 
 ## 2026-10-31
 
+- Recorded: leaning to direct download (Developer ID), reading experience
+  first, agent integration later via a bundled CLI + skill.
 - Retargeted the template from iOS to a native macOS app: macOS 26.0, App
   Sandbox with read-only user-selected files, hardened runtime, Mac icon sizes
   (`feat(app): retarget the Xcode project to macOS`, `f725783`). Builds and

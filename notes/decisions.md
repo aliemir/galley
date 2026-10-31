@@ -35,8 +35,22 @@ because the app is meant to feel calm, not like a dev tool.
 from a sandboxed app and would need another shape (copy to clipboard, a URL
 scheme, or an MCP server the agent connects to).
 
-## Open — distribution channel
+## Leaning — distribution channel: direct download
 
-Mac App Store (sandboxed, TestFlight for Mac, the current setup), direct
-download (Developer ID + notarization, sandbox optional), or both. Not decided
-yet; the project is set up for the Mac App Store and works for both.
+**Leaning (not final):** direct download — Developer ID signing + notarization —
+rather than the Mac App Store. Said "probably" on 2026-10-31.
+
+**Not yet acted on:** the project is still configured for the Mac App Store
+(sandbox on, `testflight-release` skill uploads a `.pkg`). Revisit the sandbox
+and write a Developer ID + `notarytool` release path when release work starts,
+not before.
+
+## 2026-10-31 — Focus: reading experience first
+
+**Chosen:** the current phase is the reading experience and ease of use —
+typography, navigation, change tracking, highlights, state restoration.
+Agent integration is out of scope for now; do not build hooks to agents yet.
+
+**Later, replacing "pipe to `claude -p`":** a small CLI that ships with the
+app, plus a skill for it, so agents run the CLI to pull the user's highlights
+and comments. The app stays passive; agents come to it.
