@@ -31,6 +31,26 @@ nonisolated struct WorkspaceRecord: Codable, Identifiable, Sendable {
     var selectedFile: String?
     var collapsedFolders: [String] = []
     var files: [String: FileRecord] = [:]
+
+    init(id: UUID, bookmark: Data?, path: String, addedAt: Date) {
+        self.id = id
+        self.bookmark = bookmark
+        self.path = path
+        self.addedAt = addedAt
+    }
+
+    // Every field but the identity is optional on disk, so adding a field
+    // later can never make an older library unreadable.
+    init(from decoder: any Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        id = try c.decode(UUID.self, forKey: .id)
+        path = try c.decode(String.self, forKey: .path)
+        bookmark = try c.decodeIfPresent(Data.self, forKey: .bookmark)
+        addedAt = try c.decodeIfPresent(Date.self, forKey: .addedAt) ?? Date()
+        selectedFile = try c.decodeIfPresent(String.self, forKey: .selectedFile)
+        collapsedFolders = try c.decodeIfPresent([String].self, forKey: .collapsedFolders) ?? []
+        files = try c.decodeIfPresent([String: FileRecord].self, forKey: .files) ?? [:]
+    }
 }
 
 nonisolated struct LibraryState: Codable, Sendable {
@@ -38,6 +58,16 @@ nonisolated struct LibraryState: Codable, Sendable {
     var selectedWorkspace: UUID?
     var level: Int = 3
     var lastPanelLevel: Int = 3
+
+    init() {}
+
+    init(from decoder: any Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        workspaces = try c.decodeIfPresent([WorkspaceRecord].self, forKey: .workspaces) ?? []
+        selectedWorkspace = try c.decodeIfPresent(UUID.self, forKey: .selectedWorkspace)
+        level = try c.decodeIfPresent(Int.self, forKey: .level) ?? 3
+        lastPanelLevel = try c.decodeIfPresent(Int.self, forKey: .lastPanelLevel) ?? 3
+    }
 }
 
 /// Reads and writes the library and the last-read snapshots under
@@ -52,9 +82,16 @@ final class Library {
         let base = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
         directory = base.appendingPathComponent("Galley", isDirectory: true)
         try? FileManager.default.createDirectory(at: directory.appendingPathComponent("Snapshots"), withIntermediateDirectories: true)
-        if let data = try? Data(contentsOf: directory.appendingPathComponent("library.json")),
-           let decoded = try? JSONDecoder.library.decode(LibraryState.self, from: data) {
-            state = decoded
+        let file = directory.appendingPathComponent("library.json")
+        if let data = try? Data(contentsOf: file) {
+            if let decoded = try? JSONDecoder.library.decode(LibraryState.self, from: data) {
+                state = decoded
+            } else {
+                // Never overwrite what could not be read: keep it beside the new one.
+                let stamp = Int(Date().timeIntervalSince1970)
+                try? FileManager.default.moveItem(at: file, to: directory.appendingPathComponent("library-unreadable-\(stamp).json"))
+                state = LibraryState()
+            }
         } else {
             state = LibraryState()
         }

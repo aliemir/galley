@@ -221,3 +221,38 @@ struct PerformanceTests {
         #expect(diffTime < .milliseconds(800))
     }
 }
+
+struct ReviewRegressionTests {
+    let renderer = MarkdownRenderer(baseURL: nil)
+
+    @Test func emptyWikilinksAreLeftAsText() {
+        let doc = renderer.render("a [[|]] b [[ ]] c [[#]] d [[x|]]")
+        #expect(doc.html.contains("[[|]]"))
+        #expect(doc.html.contains("<a href=\"wiki:x\" class=\"wikilink\">x</a>"))
+    }
+
+    @Test func inlineDisplayMathDoesNotSwallowLaterLines() {
+        let doc = renderer.render("$$x$$ is small.\n\nNext paragraph stays.")
+        #expect(doc.html.contains("Next paragraph stays."))
+        #expect(doc.html.contains("<span class=\"math display\">x</span>"))
+    }
+
+    @Test func displayMathKeepsItsListIndentation() {
+        let doc = renderer.render("1. Step\n\n   $$\n   x^2\n   $$\n\n2. Step")
+        // One list, with the math inside it.
+        #expect(doc.html.components(separatedBy: "<ol").count == 2)
+        let mathAt = doc.html.range(of: "math display")!.lowerBound
+        let listEnd = doc.html.range(of: "</ol>")!.lowerBound
+        #expect(mathAt < listEnd)
+    }
+
+    @Test func libraryDecodesWithMissingFields() throws {
+        let json = #"{"workspaces":[{"id":"3F2504E0-4F89-11D3-9A0C-0305E82C3301","path":"/tmp/x"}]}"#
+        let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .iso8601
+        let state = try decoder.decode(LibraryState.self, from: Data(json.utf8))
+        #expect(state.workspaces.count == 1)
+        #expect(state.workspaces[0].files.isEmpty)
+        #expect(state.level == 3)
+    }
+}

@@ -169,6 +169,13 @@ final class AppModel {
     }
 
     private func observeSettings() {
+        observeAppearance()
+        observeNaming()
+    }
+
+    /// Each tracker re-arms only itself; re-arming both from either would
+    /// stack observers on every change.
+    private func observeAppearance() {
         withObservationTracking {
             _ = settings.appearance; _ = settings.lightTheme; _ = settings.darkTheme
             _ = settings.font; _ = settings.fontSize; _ = settings.lineSpacing; _ = settings.lineWidth
@@ -176,15 +183,18 @@ final class AppModel {
         } onChange: { [weak self] in
             Task { @MainActor in
                 self?.configureReader()
-                self?.observeSettings()
+                self?.observeAppearance()
             }
         }
+    }
+
+    private func observeNaming() {
         withObservationTracking {
             _ = settings.nameStyle; _ = settings.continueOrder
         } onChange: { [weak self] in
             Task { @MainActor in
                 self?.refreshPage(transition: "none", keepPosition: true)
-                self?.observeSettings()
+                self?.observeNaming()
             }
         }
     }
@@ -220,10 +230,32 @@ final class AppModel {
     func addWorkspace(_ url: URL) {
         var isDirectory: ObjCBool = false
         guard FileManager.default.fileExists(atPath: url.path, isDirectory: &isDirectory) else { return }
-        let folder = isDirectory.boolValue ? url : url.deletingLastPathComponent()
+        var folder = isDirectory.boolValue ? url : url.deletingLastPathComponent()
+
+        // A dropped file is already inside a workspace: just open it.
+        if !isDirectory.boolValue, let existing = workspaces.first(where: { $0.contains(url) }) {
+            let relative = String(url.standardizedFileURL.path.dropFirst(existing.root.standardizedFileURL.path.count + 1))
+            if existing.hasScanned, let file = existing.file(relative) {
+                open(file, in: existing)
+            } else {
+                pendingRestore = relative
+                selectWorkspace(existing.id)
+            }
+            return
+        }
+        // The sandbox grants a dropped file, not its folder: ask for the folder.
+        if !isDirectory.boolValue, (try? FileManager.default.contentsOfDirectory(atPath: folder.path)) == nil {
+            let panel = NSOpenPanel()
+            panel.canChooseDirectories = true
+            panel.canChooseFiles = false
+            panel.directoryURL = folder
+            panel.prompt = "Allow"
+            panel.message = "Galley reads whole folders. Allow it to read “\(folder.lastPathComponent)” to show “\(url.lastPathComponent)” with the files beside it."
+            guard panel.runModal() == .OK, let chosen = panel.url else { return }
+            folder = chosen
+        }
         if let existing = workspaces.first(where: { $0.root.standardizedFileURL == folder.standardizedFileURL }) {
             selectWorkspace(existing.id)
-            if !isDirectory.boolValue { pendingRestore = String(url.path.dropFirst(existing.root.path.count + 1)) }
             return
         }
         let bookmark = try? folder.bookmarkData(options: [.withSecurityScope, .securityScopeAllowOnlyReadAccess])
@@ -231,8 +263,8 @@ final class AppModel {
         library.update { $0.workspaces.append(record) }
         let workspace = Workspace(record: record, library: library)
         attach(workspace, baseline: true)
-        if !isDirectory.boolValue {
-            pendingRestore = String(url.path.dropFirst(folder.path.count + 1))
+        if !isDirectory.boolValue, workspace.contains(url) {
+            pendingRestore = String(url.standardizedFileURL.path.dropFirst(folder.standardizedFileURL.path.count + 1))
         }
         selectWorkspace(workspace.id)
         if level < .files { setLevel(.files) }
@@ -264,15 +296,14 @@ final class AppModel {
         if current?.workspaceID == id { return }
         let remembered = pendingRestore ?? workspace.record?.selectedFile
         pendingRestore = nil
-        if workspace.hasScanned {
-            if let path = remembered, let file = workspace.file(path) {
-                open(file, transition: "none")
-            } else if let first = workspace.files.first {
-                open(first, transition: "none")
-            }
-        } else {
-            pendingRestore = remembered ?? ""
+        if workspace.hasScanned, let file = remembered.flatMap(workspace.file) ?? workspace.files.first {
+            open(file, transition: "none")
+            return
         }
+        // Nothing to show yet: the page must not keep another workspace's file.
+        leaveCurrent()
+        current = nil
+        if !workspace.hasScanned { pendingRestore = remembered ?? "" }
     }
 
     private func workspaceRescanned(_ workspace: Workspace) {
@@ -284,6 +315,14 @@ final class AppModel {
         }
         if current == nil, let first = workspace.files.first {
             open(first, transition: "none")
+            return
+        }
+        // A file that vanished and came back (a branch switch) is not
+        // reported as changed: compare what is shown with what is on disk.
+        if let current, current.workspaceID == workspace.id,
+           let hash = workspace.currentHash(current.file.id), hash != WorkspaceScanner.hash(current.source),
+           let file = workspace.file(current.file.id), let source = WorkspaceScanner.read(file.url) {
+            load(file, in: workspace, source: source, transition: nil)
             return
         }
         // The open file was deleted or renamed: keep it on screen, but the
@@ -316,18 +355,22 @@ final class AppModel {
         open(file, transition: "none")
     }
 
-    func open(_ file: DocumentFile, transition: String = "none") {
+    /// Opens `file`; with `heading`, at that section instead of the saved place.
+    func open(_ file: DocumentFile, transition: String = "none", heading: String? = nil) {
         guard let workspace = selectedWorkspace ?? workspaces.first(where: { $0.file(file.id) != nil }) else { return }
-        if current?.file.id == file.id, current?.workspaceID == workspace.id { return }
+        if current?.file.id == file.id, current?.workspaceID == workspace.id {
+            if let heading { reader.scrollToHeading(heading) }
+            return
+        }
         guard let source = WorkspaceScanner.read(file.url) else { return }
         leaveCurrent()
-        load(file, in: workspace, source: source, transition: transition)
+        load(file, in: workspace, source: source, transition: transition, heading: heading)
         library.updateWorkspace(workspace.id) { $0.selectedFile = file.id }
     }
 
     /// Renders `source` and shows it. A nil transition means the same file
     /// changed on disk: the page updates in place, keeping the reader's spot.
-    private func load(_ file: DocumentFile, in workspace: Workspace, source: String, transition: String?) {
+    private func load(_ file: DocumentFile, in workspace: Workspace, source: String, transition: String?, heading: String? = nil) {
         let renderer = MarkdownRenderer(baseURL: file.url.deletingLastPathComponent())
         let rendered = renderer.render(source)
         let record = workspace.record?.files[file.id]
@@ -346,6 +389,8 @@ final class AppModel {
         let anchor: ScrollAnchor?
         if isUpdate {
             anchor = current?.anchor
+        } else if let heading {
+            anchor = ScrollAnchor(unit: -1, offset: 0, heading: heading)
         } else if status == .changed, let first = changes.units.keys.min() {
             // Coming back to a changed file: start at the first change.
             anchor = ScrollAnchor(unit: max(0, first), offset: 0)
@@ -385,7 +430,12 @@ final class AppModel {
             reader.show(payload)
         }
         if isFindVisible, !findQuery.isEmpty, transition != nil, !keepPosition {
-            Task { await runFind(direction: 0) }
+            // A page transition renders after its fade-out; search the new page.
+            let delay = transition == "none" ? 0 : 520
+            Task {
+                try? await Task.sleep(for: .milliseconds(delay))
+                await runFind(direction: 0)
+            }
         }
     }
 
@@ -543,6 +593,7 @@ final class AppModel {
             self.current?.reachedEnd = false
         } else {
             workspace.markRead(current.file.id, text: current.source)
+            self.current?.changes = .none
         }
         if var document = self.current {
             document.status = workspace.status(of: document.file)
@@ -620,8 +671,8 @@ final class AppModel {
         case .copy(let text):
             NSPasteboard.general.clearContents()
             NSPasteboard.general.setString(text, forType: .string)
-        case let .highlight(text, prefix, suffix):
-            addHighlight(Highlight(text: text, prefix: prefix, suffix: suffix))
+        case let .highlight(text, prefix, suffix, replaces):
+            addHighlight(Highlight(text: text, prefix: prefix, suffix: suffix), replacing: replaces)
         case .unhighlight(let id):
             removeHighlight(id)
         case .orphans(let ids):
@@ -661,12 +712,14 @@ final class AppModel {
     func highlightSelection() {
         Task {
             guard let anchor = await reader.selectionAnchor() else { NSSound.beep(); return }
-            addHighlight(Highlight(text: anchor.text, prefix: anchor.prefix, suffix: anchor.suffix))
+            addHighlight(Highlight(text: anchor.text, prefix: anchor.prefix, suffix: anchor.suffix), replacing: anchor.replaces)
         }
     }
 
-    private func addHighlight(_ highlight: Highlight) {
+    /// Adds a highlight; one that grew over existing highlights replaces them.
+    private func addHighlight(_ highlight: Highlight, replacing: [String] = []) {
         guard current != nil else { return }
+        current?.highlights.removeAll { replacing.contains($0.id) }
         current?.highlights.append(highlight)
         saveHighlights()
     }
@@ -704,8 +757,14 @@ final class AppModel {
         guard let current, let workspace = currentWorkspace else { return }
         if href.hasPrefix("wiki:") {
             let target = String(href.dropFirst(5))
-            let parts = target.split(separator: "#", maxSplits: 1).map(String.init)
-            let name = parts[0].lowercased()
+            let parts = target.split(separator: "#", maxSplits: 1, omittingEmptySubsequences: false).map(String.init)
+            let name = parts[0].trimmingCharacters(in: .whitespaces).lowercased()
+            let heading = parts.count > 1 && !parts[1].isEmpty ? Slug.make(parts[1]) : nil
+            // `[[#Section]]` points into this page.
+            if name.isEmpty {
+                if let heading { reader.scrollToHeading(heading) } else { NSSound.beep() }
+                return
+            }
             let match = workspace.files.first {
                 ($0.filename as NSString).deletingPathExtension.lowercased() == name
                     || $0.filename.lowercased() == name
@@ -714,13 +773,12 @@ final class AppModel {
                     || $0.heading?.lowercased() == name
             }
             guard let match else { NSSound.beep(); return }
-            open(match, transition: "none")
-            if parts.count > 1 { scrollAfterOpen(to: Slug.make(parts[1])) }
+            open(match, transition: "none", heading: heading)
             return
         }
         guard let url = URL(string: href) ?? URL(string: href.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? "") else { return }
-        if let scheme = url.scheme, scheme != "file" {
-            NSWorkspace.shared.open(url)
+        if let scheme = url.scheme?.lowercased(), scheme != "file" {
+            openExternal(url, scheme: scheme)
             return
         }
         let path = (url.path.isEmpty ? href : url.path).removingPercentEncoding ?? url.path
@@ -728,26 +786,36 @@ final class AppModel {
             ? URL(fileURLWithPath: path)
             : current.file.url.deletingLastPathComponent().appendingPathComponent(path)
         let standardized = target.standardizedFileURL
+        let fragment = url.fragment.map { $0.removingPercentEncoding ?? $0 }
         if WorkspaceScanner.isMarkdown(standardized), workspace.contains(standardized) {
             let relative = String(standardized.path.dropFirst(workspace.root.standardizedFileURL.path.count + 1))
             if let file = workspace.file(relative) {
-                open(file, transition: "none")
-                if let fragment = url.fragment { scrollAfterOpen(to: fragment) }
+                open(file, transition: "none", heading: fragment)
                 return
             }
         }
+        // Other local files are shown, never launched: a link in an agent's
+        // Markdown must not be able to run an app or a script with one click.
         if FileManager.default.fileExists(atPath: standardized.path) {
-            NSWorkspace.shared.open(standardized)
+            NSWorkspace.shared.activateFileViewerSelecting([standardized])
         } else {
             NSSound.beep()
         }
     }
 
-    private func scrollAfterOpen(to heading: String) {
-        Task {
-            try? await Task.sleep(for: .milliseconds(220))
-            reader.scrollToHeading(heading)
+    /// Web and mail links open directly; anything that would hand the link
+    /// to another app asks first.
+    private func openExternal(_ url: URL, scheme: String) {
+        if ["http", "https", "mailto"].contains(scheme) {
+            NSWorkspace.shared.open(url)
+            return
         }
+        let alert = NSAlert()
+        alert.messageText = "Open this link in another app?"
+        alert.informativeText = url.absoluteString
+        alert.addButton(withTitle: "Open")
+        alert.addButton(withTitle: "Cancel")
+        if alert.runModal() == .alertFirstButtonReturn { NSWorkspace.shared.open(url) }
     }
 
     func printPage() {

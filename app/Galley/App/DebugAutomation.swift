@@ -44,18 +44,21 @@ final class DebugAutomation {
         case "probe":
             let web = model.reader.webView
             debugLog("[probe] url=\(web.url?.absoluteString ?? "nil") loading=\(web.isLoading) progress=\(web.estimatedProgress) window=\(web.window != nil) frame=\(web.frame)")
+            debugLog("[probe] anchor=\(String(describing: model.current?.anchor)) file=\(model.current?.file.id ?? "-")")
             web.evaluateJavaScript("document.readyState + ' ' + typeof window.Reader + ' ' + document.body.innerHTML.length") { result, error in
                 debugLog("[probe] js=\(String(describing: result)) error=\(String(describing: error))")
             }
         case "highlight":
             // Selects a phrase in the second paragraph, then highlights it.
             let select = """
-            const p = document.querySelectorAll('#content p')[1];
-            const walker = document.createTreeWalker(p, NodeFilter.SHOW_TEXT);
-            const node = walker.nextNode();
+            (() => {
+            const walker = document.createTreeWalker(document.getElementById('content'), NodeFilter.SHOW_TEXT);
+            let node = walker.nextNode();
+            while (node && (node.length < 60 || !node.parentElement.closest('p'))) node = walker.nextNode();
             const range = document.createRange();
             range.setStart(node, 4); range.setEnd(node, Math.min(node.length, 60));
             const s = window.getSelection(); s.removeAllRanges(); s.addRange(range);
+            })();
             """
             model.reader.webView.evaluateJavaScript(select) { _, _ in
                 MainActor.assumeIsolated { self.model.highlightSelection() }

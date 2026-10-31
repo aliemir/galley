@@ -34,6 +34,9 @@ final class Workspace: Identifiable {
     @ObservationIgnored private var hashes: [String: (modified: Date, size: Int, hash: String)] = [:]
     @ObservationIgnored private var scanTask: Task<Void, Never>?
     @ObservationIgnored private var accessing = false
+    /// A new workspace's first full scan must record the baseline; a rescan
+    /// that cancels it (an agent writing meanwhile) inherits the duty.
+    @ObservationIgnored private var needsBaseline = false
 
     /// Bumped when library-backed state (collapsed folders) changes, so
     /// views reading `record` refresh.
@@ -113,8 +116,10 @@ final class Workspace: Identifiable {
 
     /// Re-reads the tree in the background, then recomputes statuses and
     /// reports which files' content changed.
-    func rescan(baseline: Bool = false) {
+    func rescan(baseline requested: Bool = false) {
         scanTask?.cancel()
+        if requested { needsBaseline = true }
+        let baseline = needsBaseline
         let root = root
         let previous = hashes
         scanTask = Task { [weak self] in
@@ -148,6 +153,7 @@ final class Workspace: Identifiable {
         files = tree.readingOrder
 
         if let baselineTexts {
+            needsBaseline = false
             // A new workspace: everything already there counts as read, so
             // only what agents write from now on lights up.
             let now = Date()

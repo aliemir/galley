@@ -11,7 +11,7 @@
   const post = (message) => {
     try { window.webkit.messageHandlers.galley.postMessage(message); } catch (_) { /* not in the app */ }
   };
-  window.addEventListener('error', (e) => post({ type: 'log', message: `${e.message} (${e.filename}:${e.lineno})` }));
+  window.addEventListener('error', (e) => post({ type: 'log', message: `${e.message} (${e.filename}:${e.lineno}) ${e.error && e.error.stack || ''}` }));
   window.addEventListener('unhandledrejection', (e) => post({ type: 'log', message: String(e.reason) }));
 
   const $ = (selector, root = document) => root.querySelector(selector);
@@ -37,6 +37,7 @@
     const promise = new Promise((resolve, reject) => {
       const isCSS = name.endsWith('.css');
       const el = document.createElement(isCSS ? 'link' : 'script');
+      el.crossOrigin = 'anonymous';
       if (isCSS) { el.rel = 'stylesheet'; el.href = `galley://app/${name}`; } else { el.src = `galley://app/${name}`; }
       el.onload = resolve;
       el.onerror = () => reject(new Error(`could not load ${name}`));
@@ -447,8 +448,8 @@
 
   function restore(anchor) {
     if (!anchor) { window.scrollTo(0, 0); return; }
-    if (anchor.heading) { scrollToHeading(anchor.heading, false); return; }
-    let el = $(`#content [data-b="${anchor.unit}"]`);
+    let el = anchor.unit >= 0 ? $(`#content [data-b="${anchor.unit}"]`) : null;
+    if (!el && anchor.heading) { scrollToHeading(anchor.heading, false); return; }
     if (!el) { window.scrollTo(0, 0); return; }
     if (!el.offsetParent) el = el.closest('.sec.folded')?.firstElementChild || el;
     const rect = el.getBoundingClientRect();
@@ -479,22 +480,22 @@
     findState = { query: '', marks: [], index: -1 };
   }
 
-  function find(query, direction) {
+  function find(query, direction, quiet = false) {
     const content = $('#content');
     if (!content) return { count: 0, index: -1 };
     if (query !== findState.query) {
       clearFind();
       findState.query = query;
       if (query) {
-        const text = content.textContent;
+        // Same text the wrapper walks: no button labels, MathML or SVG.
+        const text = readingText(content);
         const needle = query.toLocaleLowerCase();
         const haystack = text.toLocaleLowerCase();
         const ranges = [];
         for (let at = haystack.indexOf(needle); at >= 0 && ranges.length < 2000; at = haystack.indexOf(needle, at + needle.length)) {
           ranges.push([at, at + needle.length]);
         }
-        const skip = (node) => node.parentElement && node.parentElement.closest('.katex-mathml, button, svg');
-        const created = wrapRanges(content, ranges, 'mark', 'find', skip);
+        const created = wrapRanges(content, ranges, 'mark', 'find', skipForText);
         // A match split across nodes becomes several marks; group them by range.
         const groups = new Map();
         for (const mark of created) {
@@ -509,6 +510,7 @@
     }
     const groups = findState.groups || [];
     if (!groups.length) return { count: 0, index: -1 };
+    if (quiet) return { count: groups.length, index: -1 };
     for (const mark of findState.marks) mark.classList.remove('current');
     if (findState.index < 0) {
       // Start from the first match below the current reading position.
@@ -578,9 +580,28 @@
     const full = readingText(content);
     const start = readingOffset(content, range.startContainer, range.startOffset);
     const end = readingOffset(content, range.endContainer, range.endOffset);
-    const text = full.slice(start, end);
+    // A selection touching existing highlights grows to cover them and
+    // replaces them, so highlights never overlap.
+    let from = start, to = end;
+    const replaces = [];
+    for (const mark of $$('#content mark.hl')) {
+      if (!range.intersectsNode(mark)) continue;
+      const id = mark.dataset.id;
+      if (!replaces.includes(id)) replaces.push(id);
+      const markStart = readingOffset(content, mark, 0);
+      from = Math.min(from, markStart);
+      to = Math.max(to, markStart + mark.textContent.length);
+    }
+    for (const id of replaces) {
+      const marks = $$(`#content mark.hl[data-id="${CSS.escape(id)}"]`);
+      const first = readingOffset(content, marks[0], 0);
+      const last = marks[marks.length - 1];
+      from = Math.min(from, first);
+      to = Math.max(to, readingOffset(content, last, 0) + last.textContent.length);
+    }
+    const text = full.slice(from, to);
     if (!text.trim()) return null;
-    return { text, prefix: full.slice(Math.max(0, start - CONTEXT), start), suffix: full.slice(end, end + CONTEXT) };
+    return { text, prefix: full.slice(Math.max(0, from - CONTEXT), from), suffix: full.slice(to, to + CONTEXT), replaces };
   }
 
   /// Where `h` sits in `full` now: the occurrence whose surroundings best
@@ -628,6 +649,19 @@
       if (at < 0) orphans.push(h.id); else found.push({ id: h.id, range: [at, at + h.text.length] });
     }
     found.sort((a, b) => a.range[0] - b.range[0]);
+    // Overlaps (older data, or two highlights re-anchoring onto one spot)
+    // would break the wrapper: keep the earlier one's extent.
+    const placed = [];
+    for (const f of found) {
+      const last = placed[placed.length - 1];
+      if (last && f.range[0] < last.range[1]) {
+        if (f.range[1] > last.range[1]) placed.push({ id: f.id, range: [last.range[1], f.range[1]] });
+        continue;
+      }
+      placed.push(f);
+    }
+    found.length = 0;
+    found.push(...placed);
     const marks = wrapRanges(content, found.map((f) => f.range), 'mark', 'hl', skipForText);
     for (const mark of marks) mark.dataset.id = found[Number(mark.dataset.range)].id;
     post({ type: 'orphans', ids: orphans });
@@ -800,7 +834,7 @@
       render(d);
       const el = $(`#content [data-b="${anchor.unit}"]`);
       if (el && offsetBefore !== null) window.scrollBy(0, el.getBoundingClientRect().top - offsetBefore);
-      if (findQuery) find(findQuery, 0);
+      if (findQuery) find(findQuery, 0, true);
       report(true);
     },
 
@@ -853,5 +887,15 @@
     scrollPage(direction) { window.scrollBy({ top: direction * (window.innerHeight - 80), behavior: 'smooth' }); },
   };
 
+  // Errors from scripts on a custom scheme reach window.onerror as an opaque
+  // "Script error."; catching at the API boundary keeps the real message.
+  for (const [name, fn] of Object.entries(window.Reader)) {
+    window.Reader[name] = (...args) => {
+      try { return fn(...args); } catch (error) {
+        post({ type: 'log', message: `Reader.${name}: ${error && error.stack || error}` });
+        throw error;
+      }
+    };
+  }
   document.addEventListener('DOMContentLoaded', () => post({ type: 'ready' }));
 })();

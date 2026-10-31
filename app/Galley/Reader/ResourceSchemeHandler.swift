@@ -48,6 +48,9 @@ final class ResourceSchemeHandler: NSObject, WKURLSchemeHandler {
                 "Content-Type": Self.mimeType(for: url.pathExtension),
                 "Content-Length": String(data.count),
                 "Cache-Control": "no-cache",
+                // Lets the page see real error messages from its own scripts
+                // (a custom scheme is an opaque origin to WebKit).
+                "Access-Control-Allow-Origin": "*",
             ]
         )!
         task.didReceive(response)

@@ -76,7 +76,7 @@ enum ReaderEvent {
     case fold(id: String, folded: Bool)
     case folds([String])
     case copy(String)
-    case highlight(text: String, prefix: String, suffix: String)
+    case highlight(text: String, prefix: String, suffix: String, replaces: [String])
     case unhighlight(String)
     case orphans([String])
 }
@@ -150,11 +150,11 @@ final class ReaderController: NSObject {
     func scrollToHighlight(_ id: String) { run("Reader.scrollToHighlight(\(Self.json(id)))") }
 
     /// The current selection as a highlight anchor, if there is one.
-    func selectionAnchor() async -> (text: String, prefix: String, suffix: String)? {
+    func selectionAnchor() async -> (text: String, prefix: String, suffix: String, replaces: [String])? {
         guard let result = try? await webView.callAsyncJavaScript(
             "return Reader.selectionAnchor()", contentWorld: .page
         ) as? [String: Any], let text = result["text"] as? String else { return nil }
-        return (text, (result["prefix"] as? String) ?? "", (result["suffix"] as? String) ?? "")
+        return (text, (result["prefix"] as? String) ?? "", (result["suffix"] as? String) ?? "", (result["replaces"] as? [String]) ?? [])
     }
 
     func jumpToChange(_ direction: Int) async -> Bool {
@@ -239,7 +239,12 @@ final class ReaderController: NSObject {
             if let text = message["text"] as? String { onEvent(.copy(text)) }
         case "highlight":
             if let text = message["text"] as? String {
-                onEvent(.highlight(text: text, prefix: (message["prefix"] as? String) ?? "", suffix: (message["suffix"] as? String) ?? ""))
+                onEvent(.highlight(
+                    text: text,
+                    prefix: (message["prefix"] as? String) ?? "",
+                    suffix: (message["suffix"] as? String) ?? "",
+                    replaces: (message["replaces"] as? [String]) ?? []
+                ))
             }
         case "unhighlight":
             if let id = message["id"] as? String { onEvent(.unhighlight(id)) }

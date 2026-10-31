@@ -65,12 +65,15 @@ nonisolated struct Preprocessor {
 
             if trimmed.hasPrefix("$$") {
                 let rest = trimmed.dropFirst(2)
-                if rest.count >= 2, rest.hasSuffix("$$") {
+                if rest.count >= 2, rest.hasSuffix("$$"), !rest.dropLast(2).contains("$$") {
                     output.append(prefix + token("MD", appendMath([String(rest.dropLast(2))], display: true)))
-                } else {
-                    display = (prefix, [String(rest)])
+                    continue
                 }
-                continue
+                if !rest.contains("$$") {
+                    display = (prefix, [String(rest)])
+                    continue
+                }
+                // `$$x$$ and more text` is inline display math, not a block.
             }
 
             output.append(prefix + inline(content))
@@ -122,19 +125,14 @@ nonisolated struct Preprocessor {
         return math.count - 1
     }
 
-    /// Leading whitespace and `>` markers, so math inside quotes and callouts
-    /// is found too.
+    /// Leading whitespace and `>` markers, so math inside quotes, callouts
+    /// and list items is found too — and keeps its indentation.
     private static func splitQuotePrefix(_ line: String) -> (String, String) {
         var index = line.startIndex
-        var lastQuote: String.Index?
         while index < line.endIndex, line[index] == " " || line[index] == "\t" || line[index] == ">" {
-            if line[index] == ">" { lastQuote = index }
             index = line.index(after: index)
         }
-        guard let lastQuote else { return ("", line) }
-        var end = line.index(after: lastQuote)
-        if end < line.endIndex, line[end] == " " { end = line.index(after: end) }
-        return (String(line[..<end]), String(line[end...]))
+        return (String(line[..<index]), String(line[index...]))
     }
 
     /// Pulls `[^label]: text` definitions (plus indented continuation lines)
@@ -272,9 +270,11 @@ nonisolated struct Preprocessor {
         }
         guard j + 1 < chars.count, j > start + 2 else { return nil }
         let inner = String(chars[(start + 2)..<j])
-        let parts = inner.split(separator: "|", maxSplits: 1).map { $0.trimmingCharacters(in: .whitespaces) }
+        let parts = inner.split(separator: "|", maxSplits: 1, omittingEmptySubsequences: false)
+            .map { $0.trimmingCharacters(in: .whitespaces) }
         let target = parts[0]
-        let label = parts.count > 1 ? parts[1] : target
+        guard !target.isEmpty, target != "#" else { return nil }
+        let label = parts.count > 1 && !parts[1].isEmpty ? parts[1] : target
         let escapedLabel = label.replacingOccurrences(of: "]", with: "\\]").replacingOccurrences(of: "[", with: "\\[")
         let escapedTarget = target.replacingOccurrences(of: ">", with: "%3E").replacingOccurrences(of: "<", with: "%3C")
         let isImage = start > 0 && chars[start - 1] == "!"
