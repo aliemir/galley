@@ -65,3 +65,33 @@ the app's whole premise. The real name is still to be decided.
 plus `git mv` of `app/Galley*` — `rename.sh` is one-shot and has been deleted.
 Changing the bundle id resets the sandbox container (saved workspaces, read
 state, highlights), which costs nothing before the first release.
+
+## 2026-11-01 — Rendering: Swift parses, WebKit draws
+
+**Chosen:** `swift-markdown` (Apple) parses in Swift — outline, diff units,
+titles and syntax extensions are Swift and unit-tested. One persistent
+`WKWebView` draws the page from HTML fragments over a small hand-written JS
+bridge.
+
+**Why:** WebKit is the system's own CoreText text stack, so the page is
+native text with CSS typography (hyphenation, `text-wrap: pretty`, hanging
+punctuation, real tables) and native selection — none of which `NSTextView`
+gives without weeks of custom layout. SwiftUI `Text` cannot select across
+paragraphs at all.
+
+**Rejected:** `NSTextView`/TextKit 2 (tables fall back to TextKit 1, block
+backgrounds and callouts need custom drawing); SwiftUI views per block (no
+cross-paragraph selection); a JS markdown parser (the document model would
+live in JS, untestable from Swift).
+
+## 2026-11-01 — Third-party JS: only where nothing native matches
+
+The user prefers not to depend on JavaScript packages. Three are vendored
+anyway because syntax parity with other readers was asked for and no native
+option matches them: **Mermaid** (no native renderer exists), **KaTeX**
+(SwiftMath is the native alternative — lower fidelity, a contained swap if
+wanted), **highlight.js** (code colouring). All are pinned, bundled, offline,
+run under a strict content security policy, and each is loaded only when a
+document actually contains a diagram, math or code. The reader's own script
+has no dependencies. `gemoji` is data only (shortcode → emoji JSON). Licenses
+are bundled in `Reader/Web/vendor/Acknowledgements.txt`.
