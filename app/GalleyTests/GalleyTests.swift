@@ -198,3 +198,26 @@ struct FuzzyTests {
         #expect(Fuzzy.score("xyz", in: "Auth migration plan") == nil)
     }
 }
+
+struct PerformanceTests {
+    /// A long agent document — about 4,000 lines — must render and diff fast
+    /// enough to stay on the main thread.
+    @Test func largeDocumentRendersQuickly() {
+        var parts: [String] = []
+        for section in 0..<200 {
+            parts.append("## Section \(section)\n\nParagraph with **bold**, `code`, $x_\(section)$ and a [link](other.md).\n\n- one\n- two :rocket:\n\n```swift\nlet value = \(section)\n```\n\n| a | b |\n|---|---|\n| \(section) | x |\n")
+        }
+        let source = parts.joined(separator: "\n")
+        let renderer = MarkdownRenderer(baseURL: nil)
+        let clock = ContinuousClock()
+        var rendered: RenderedDocument?
+        let renderTime = clock.measure { rendered = renderer.render(source) }
+        let edited = source.replacingOccurrences(of: "## Section 100", with: "## Section one hundred")
+        let diffTime = clock.measure {
+            _ = BlockDiff.changes(from: rendered!.units, to: renderer.render(edited).units)
+        }
+        print("render \(renderTime), render+diff \(diffTime), \(rendered!.units.count) units")
+        #expect(renderTime < .milliseconds(400))
+        #expect(diffTime < .milliseconds(800))
+    }
+}
