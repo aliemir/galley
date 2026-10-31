@@ -1,0 +1,19 @@
+{
+  "name": "website",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "deploy": "npm run build:css && wrangler deploy",
+    "dev": "npm run build:css && wrangler dev",
+    "start": "wrangler dev",
+    "dev:css": "tailwindcss -i ./input.css -o ./public/style.css --watch",
+    "build:css": "tailwindcss -i ./input.css -o ./public/style.css --minify"
+  },
+  "devDependencies": {
+    "wrangler": "^4.125.0"
+  },
+  "dependencies": {
+    "@tailwindcss/cli": "^4.3.3",
+    "tailwindcss": "^4.3.3"
+  }
+}
