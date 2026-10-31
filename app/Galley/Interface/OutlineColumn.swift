@@ -100,14 +100,16 @@ private struct OutlineList: View {
         return result
     }
 
-    /// Headings whose section (up to the next heading of the same or a
-    /// higher level) contains a changed unit.
+    /// Headings with a change in their own text (up to the next heading of
+    /// any level), or — when folded — anywhere in the section they hide.
     private func changedSections(_ items: [OutlineItem]) -> Set<String> {
         let units = document.changes.units.keys.sorted()
         guard !units.isEmpty else { return [] }
         var result = Set<String>()
         for (index, item) in items.enumerated() {
-            let end = items[(index + 1)...].first { $0.level <= item.level }?.unit ?? Int.max
+            let directEnd = index + 1 < items.count ? items[index + 1].unit : Int.max
+            let sectionEnd = items[(index + 1)...].first { $0.level <= item.level }?.unit ?? Int.max
+            let end = document.folded.contains(item.id) ? sectionEnd : directEnd
             if units.contains(where: { $0 >= item.unit && $0 < end }) { result.insert(item.id) }
         }
         return result

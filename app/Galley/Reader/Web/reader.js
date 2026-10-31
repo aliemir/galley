@@ -384,6 +384,15 @@
     for (const h of headings) {
       if (h.getBoundingClientRect().top <= line) current = h.id; else break;
     }
+    // At the very end, short last sections never reach the line: the last
+    // heading on screen is the one being read.
+    const max = document.documentElement.scrollHeight - window.innerHeight;
+    if (window.scrollY >= max - 2) {
+      const visible = headings.filter((h) => h.getBoundingClientRect().top < window.innerHeight * 0.75);
+      if (visible.length) current = visible[visible.length - 1].id;
+    }
+    // At the top, the first heading counts once it is on screen.
+    if (!current && headings[0] && headings[0].getBoundingClientRect().top < window.innerHeight * 0.6) current = headings[0].id;
     return current;
   }
 
@@ -543,15 +552,6 @@
     if (next && window.getSelection().isCollapsed) post({ type: 'next' });
   });
 
-  // Heading folds also work from the keyboard-free gesture people try first:
-  // a double-click on the heading text itself.
-  document.addEventListener('dblclick', (event) => {
-    const heading = event.target.closest('.sec > :is(h1, h2, h3, h4, h5, h6)');
-    if (!heading || !event.altKey) return;
-    event.preventDefault();
-    setFolded(heading.parentElement, !heading.parentElement.classList.contains('folded'));
-  });
-
   document.addEventListener('mouseover', (event) => {
     const link = event.target.closest('a[href]');
     if (link && !link.title) {
@@ -640,10 +640,12 @@
     fold(id, folded) { setFolded($(`#content .sec[data-sec="${CSS.escape(id)}"]`), folded, false); },
     foldAll(folded) {
       const sections = $$('#content .sec');
-      // Fold only top-level-ish sections: the shallowest level present.
-      const levels = sections.map((s) => Number(s.dataset.level));
-      const minLevel = Math.min(...levels);
-      const targets = folded ? sections.filter((s) => Number(s.dataset.level) <= minLevel + 1 && $('.sec-body > *', s)) : sections;
+      // Fold the first level that structures the document: below a lone
+      // title heading, the level of its sections.
+      const levels = [...new Set(sections.map((s) => Number(s.dataset.level)))].sort((a, b) => a - b);
+      let level = levels[0];
+      if (levels.length > 1 && sections.filter((s) => Number(s.dataset.level) === level).length === 1) level = levels[1];
+      const targets = folded ? sections.filter((s) => Number(s.dataset.level) === level && $('.sec-body > *', s)) : sections;
       for (const sec of targets) sec.classList.toggle('folded', folded);
       index();
       layoutGutter();
@@ -654,10 +656,6 @@
       const line = TOP_LINE() + 4;
       const changes = $$('#content .chg').filter((el) => !el.parentElement.closest('.chg'));
       if (!changes.length) return false;
-      for (const el of changes) {
-        const sec = el.closest('.sec.folded');
-        if (sec && !el.offsetParent) { /* reachable after unfolding */ }
-      }
       let target;
       if (direction > 0) target = changes.find((el) => el.offsetParent && el.getBoundingClientRect().top > line + 6);
       else target = changes.filter((el) => el.offsetParent && el.getBoundingClientRect().top < line - 6).pop();

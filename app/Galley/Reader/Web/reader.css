@@ -267,7 +267,8 @@ th {
   font: 600 .74em/1.4 var(--font-ui); letter-spacing: .06em; text-transform: uppercase;
   color: var(--ink-2); text-align: left; border-bottom: 1px solid var(--ink-3);
 }
-th, td { padding: .55em .9em .55em 0; vertical-align: top; overflow-wrap: anywhere; hyphens: auto; }
+th, td { padding: .55em .9em .55em 0; vertical-align: top; overflow-wrap: break-word; hyphens: manual; -webkit-hyphens: manual; }
+th { white-space: nowrap; }
 th:last-child, td:last-child { padding-right: 0; }
 td { border-bottom: 1px solid var(--rule); }
 tr:last-child > td { border-bottom: 0; }
@@ -322,7 +323,7 @@ a.footnote-back { text-decoration: none; margin-left: .3em; font-family: var(--f
   opacity: 0; transition: opacity .15s, background .15s;
 }
 .sec > :is(h1, h2, h3, h4, h5, h6) > button.fold::before {
-  content: ""; position: absolute; left: 8px; top: 7px; width: 5px; height: 5px;
+  content: ""; position: absolute; left: 8px; top: 7.5px; width: 5px; height: 5px;
   border: solid currentColor; border-width: 0 1.6px 1.6px 0;
   transform: rotate(45deg); transition: transform .2s ease;
 }
@@ -331,6 +332,9 @@ a.footnote-back { text-decoration: none; margin-left: .3em; font-family: var(--f
 button.fold:hover { background: color-mix(in srgb, var(--ink) 7%, transparent); color: var(--ink-2); }
 .sec.folded > :is(h1, h2, h3, h4, h5, h6) > button.fold::before { transform: rotate(-45deg); left: 7px; top: 8px; }
 .sec.folded > .sec-body { display: none; }
+/* A run of folded sections reads as a table of contents, not a page. */
+.sec.folded + .sec > :is(h1, h2, h3, h4, h5, h6) { margin-top: .9em; }
+.sec.folded > :is(h1, h2, h3, h4, h5, h6) { margin-bottom: .2em; }
 .sec.folded > :is(h1, h2, h3, h4, h5, h6)::after {
   content: "⋯"; margin-left: .4em; padding: 0 .4em; border-radius: 6px;
   font: 600 .6em/1.5 var(--font-ui); vertical-align: middle; letter-spacing: .1em;

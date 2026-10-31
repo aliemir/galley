@@ -168,6 +168,15 @@ struct DiffTests {
         #expect(changes.removed == 1)
     }
 
+    @Test func editedTableRowIsModified() {
+        let old = renderer.render("| Tier | Limit |\n|---|---|\n| Free | 60 |\n| Team | 600 |")
+        let new = renderer.render("| Tier | Limit |\n|---|---|\n| Free | 60 |\n| Team | 900 |")
+        let changes = BlockDiff.changes(from: old.units, to: new.units)
+        #expect(changes.modified == 1)
+        #expect(changes.added == 0)
+        #expect(changes.removed == 0)
+    }
+
     @Test func mathNumberingDoesNotFakeChanges() {
         let old = renderer.render("Intro.\n\nLater $y$.")
         let new = renderer.render("Intro $x$.\n\nLater $y$.")

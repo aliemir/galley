@@ -67,8 +67,22 @@ nonisolated enum BlockDiff {
         return result
     }
 
-    /// Word-set overlap, 0…1.
+    /// How alike two units are, 0…1: word-set overlap, or for table rows
+    /// the share of cells that are the same, since rows are mostly numbers.
     static func similarity(_ a: String, _ b: String) -> Double {
+        if a.hasPrefix("| "), b.hasPrefix("| ") {
+            let cellsA = a.split(separator: "|").map { $0.trimmingCharacters(in: .whitespaces) }
+            let cellsB = b.split(separator: "|").map { $0.trimmingCharacters(in: .whitespaces) }
+            if cellsA.count == cellsB.count, !cellsA.isEmpty {
+                let same = zip(cellsA, cellsB).filter { $0 == $1 }.count
+                // A row keyed by the same first cell is the same row, edited.
+                return cellsA.first == cellsB.first ? max(0.5, Double(same) / Double(cellsA.count)) : Double(same) / Double(cellsA.count)
+            }
+        }
+        return wordSimilarity(a, b)
+    }
+
+    static func wordSimilarity(_ a: String, _ b: String) -> Double {
         let wordsA = Set(a.lowercased().split(whereSeparator: { !$0.isLetter && !$0.isNumber }))
         let wordsB = Set(b.lowercased().split(whereSeparator: { !$0.isLetter && !$0.isNumber }))
         let union = wordsA.union(wordsB).count

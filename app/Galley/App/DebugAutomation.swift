@@ -15,7 +15,7 @@ import WebKit
 final class DebugAutomation {
     static let prefix = "com.aliemir.galley.debug."
     static let commands = [
-        "snapshot", "probe", "reload", "next", "previous", "fold", "unfold", "change", "find.close", "resize.small", "resize.large",
+        "snapshot", "probe", "reload", "reset", "next", "previous", "fold", "unfold", "change", "find.close", "resize.small", "resize.large",
         "scroll.top", "scroll.bottom", "dark", "light", "system",
     ] + (1...4).map { "level.\($0)" }
         + Theme.all.map { "theme.\($0.id)" }
@@ -47,6 +47,8 @@ final class DebugAutomation {
             web.evaluateJavaScript("document.readyState + ' ' + typeof window.Reader + ' ' + document.body.innerHTML.length") { result, error in
                 debugLog("[probe] js=\(String(describing: result)) error=\(String(describing: error))")
             }
+        case "reset":
+            for workspace in model.workspaces { model.removeWorkspace(workspace.id) }
         case "reload": model.reader.webView.load(URLRequest(url: URL(string: "galley://app/reader.html")!))
         case "next": model.goToNext()
         case "previous": model.goToPrevious()
@@ -101,33 +103,30 @@ final class DebugAutomation {
         ) else { return }
         rep.size = bounds.size
 
-        let chrome = frameView.bitmapImageRepForCachingDisplay(in: bounds)
-        if let chrome { frameView.cacheDisplay(in: bounds, to: chrome) }
-
         let webView = model.reader.webView
         let page = webView.window === window && model.current != nil
             ? try? await webView.takeSnapshot(configuration: nil)
             : nil
 
-        NSGraphicsContext.saveGraphicsState()
-        NSGraphicsContext.current = NSGraphicsContext(bitmapImageRep: rep)
-        chrome?.draw(in: bounds)
-        if let page {
-            var frame = webView.convert(webView.bounds, to: frameView)
-            if frameView.isFlipped { frame.origin.y = bounds.height - frame.maxY }
-            page.draw(in: frame)
-            // The window buttons sit above the page in the real window.
-            if let buttons = window.standardWindowButton(.closeButton)?.superview {
-                let buttonRect = buttons.convert(buttons.bounds, to: frameView)
-                if let rep = buttons.bitmapImageRepForCachingDisplay(in: buttons.bounds) {
-                    buttons.cacheDisplay(in: buttons.bounds, to: rep)
-                    var rect = buttonRect
-                    if frameView.isFlipped { rect.origin.y = bounds.height - rect.maxY }
-                    rep.draw(in: rect, from: .zero, operation: .sourceOver, fraction: 1, respectFlipped: true, hints: nil)
-                }
-            }
+        // Put the page's pixels into the view tree, under SwiftUI's overlays,
+        // so one `cacheDisplay` captures everything in the right order.
+        var stand: NSImageView?
+        if let page, let container = webView.superview {
+            let imageView = NSImageView(frame: webView.frame)
+            imageView.image = page
+            imageView.imageScaling = .scaleAxesIndependently
+            container.addSubview(imageView, positioned: .above, relativeTo: webView)
+            stand = imageView
         }
-        NSGraphicsContext.restoreGraphicsState()
+        frameView.layoutSubtreeIfNeeded()
+        if let composed = frameView.bitmapImageRepForCachingDisplay(in: bounds) {
+            frameView.cacheDisplay(in: bounds, to: composed)
+            NSGraphicsContext.saveGraphicsState()
+            NSGraphicsContext.current = NSGraphicsContext(bitmapImageRep: rep)
+            composed.draw(in: bounds)
+            NSGraphicsContext.restoreGraphicsState()
+        }
+        stand?.removeFromSuperview()
 
         let directory = URL(fileURLWithPath: "/private/tmp/galley-debug", isDirectory: true)
         try? FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
