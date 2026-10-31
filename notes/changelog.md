@@ -23,3 +23,17 @@ changes (listing, IAP, tester groups), anything a future session would
 otherwise have to re-derive. Not worth one: typo fixes and formatting.
 
 <!-- newest entries go directly below this line -->
+
+## 2026-10-31
+
+- Retargeted the template from iOS to a native macOS app: macOS 26.0, App
+  Sandbox with read-only user-selected files, hardened runtime, Mac icon sizes
+  (`feat(app): retarget the Xcode project to macOS`, `f725783`). Builds and
+  unit tests pass on `platform=macOS`.
+- AGENTS.md, `check.sh` and `rename.sh` now describe a Mac app; the preflight
+  checks the macOS SDK instead of an iPhone simulator (`0a6ea0f`).
+- Release skill and store-media docs switched to the Mac App Store: `.pkg`
+  upload, `APP_DESKTOP` screenshots at 2880 × 1800, window capture via
+  `screencapture` (`de8aae1`).
+- Recorded the macOS-only and sandbox decisions in `notes/decisions.md`;
+  distribution channel left open.
