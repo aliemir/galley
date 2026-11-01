@@ -26,6 +26,14 @@ otherwise have to re-derive. Not worth one: typo fixes and formatting.
 
 ## 2026-11-01
 
+- Single Markdown files open on their own — Finder's Open With, a
+  double-click (once Galley is the default), the Dock icon, ⌘O (now "Open…",
+  folders or files), a drop on the window. A file inside a workspace opens
+  there; any other joins **Opened Files**, a workspace of files opened one at
+  a time (own bookmarks, polled for changes since there is no folder to
+  watch), with read state, change marks, highlights and feedback like any
+  other. Each opens in a tab. "Add Its Folder as a Workspace…" and "Remove
+  from Opened Files" on the file. Document types in `app/Info.plist`
 - Tabs in the page column, Safari's way: a click opens in the current tab,
   ⌘-click (files, links), "Open in New Tab", ⌘Return in the palette or ⌘T
   open a new one; ⌃Tab / ⌃⇧Tab step, ⌘W closes (the window when it is the

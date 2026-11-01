@@ -83,7 +83,7 @@ private struct WorkspaceRow: View {
         .contentShape(Rectangle())
         .onTapGesture { model.selectWorkspace(workspace.id) }
         .onHover { isHovered = $0 }
-        .help(workspace.root.path)
+        .help(workspace.isOpenedFiles ? "Files opened one at a time" : workspace.root.path)
         .reorderable(workspace, edge: .top)
         .contextMenu { WorkspaceMenu(workspace: workspace) }
         .identityEditor(for: workspace, arrowEdge: .trailing)
@@ -205,14 +205,14 @@ private struct WorkspaceMenu: View {
 
     var body: some View {
         Button("Name and Icon…") { model.customizingWorkspace = workspace.id }
-        Button("Reveal in Finder") { NSWorkspace.shared.activateFileViewerSelecting([workspace.root]) }
+        Button("Reveal in Finder") { NSWorkspace.shared.activateFileViewerSelecting(workspace.revealURLs) }
         Button("Mark All as Read") {
             model.selectWorkspace(workspace.id)
             model.markAllRead()
         }
         .disabled(workspace.unreadCount == 0)
         Divider()
-        Button("Remove Workspace", role: .destructive) { model.removeWorkspace(workspace.id) }
+        Button(workspace.isOpenedFiles ? "Remove Opened Files" : "Remove Workspace", role: .destructive) { model.removeWorkspace(workspace.id) }
     }
 }
 

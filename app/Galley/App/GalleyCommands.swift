@@ -14,7 +14,7 @@ struct GalleyCommands: Commands {
             }
             .keyboardShortcut("t")
             .disabled(model.workspaces.isEmpty)
-            Button("Open Folder…") { model.openFolderPanel() }
+            Button("Open…") { model.openFolderPanel() }
                 .keyboardShortcut("o")
             Button("Go to File…") {
                 model.quickOpenSearchesText = false

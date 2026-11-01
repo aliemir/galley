@@ -89,6 +89,28 @@ nonisolated enum WorkspaceScanner {
         return FolderNode(id: relative, name: name, folders: folders, files: files)
     }
 
+    /// Files opened one at a time, as one flat folder. Their ids are their
+    /// absolute paths; files that are gone are left out.
+    /// Keyed by the path each was opened at, which stays its id even when
+    /// its bookmark resolves through a different spelling of the path.
+    static func scanFiles(_ documents: [String: URL]) -> FolderNode {
+        let keys: Set<URLResourceKey> = [.contentModificationDateKey, .fileSizeKey]
+        let files = documents.compactMap { path, kept -> DocumentFile? in
+            // A fresh URL: one kept between scans caches its dates and sizes.
+            let url = URL(fileURLWithPath: kept.path)
+            guard let values = try? url.resourceValues(forKeys: keys) else { return nil }
+            return DocumentFile(
+                url: url,
+                relativePath: path,
+                modified: values.contentModificationDate ?? .distantPast,
+                size: values.fileSize ?? 0,
+                heading: firstHeading(of: url)
+            )
+        }
+        .sorted { $0.filename.localizedStandardCompare($1.filename) == .orderedAscending }
+        return FolderNode(id: "", name: "", folders: [], files: files)
+    }
+
     /// The first ATX `# Heading` in the opening few kilobytes, past front matter.
     static func firstHeading(of url: URL) -> String? {
         guard let handle = try? FileHandle(forReadingFrom: url) else { return nil }

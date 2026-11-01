@@ -108,7 +108,7 @@ struct WorkspaceIdentityEditor: View {
                         .textFieldStyle(.roundedBorder)
                         .font(.system(size: 13))
                         .onSubmit { commitName() }
-                    Text("Folder on disk: \(workspace.folderName) — never renamed")
+                    Text(workspace.isOpenedFiles ? "Files opened one at a time" : "Folder on disk: \(workspace.folderName) — never renamed")
                         .font(.system(size: 10.5))
                         .foregroundStyle(.secondary)
                         .lineLimit(1)
@@ -152,7 +152,7 @@ struct WorkspaceIdentityEditor: View {
                     loadedName = ""
                     emoji = ""
                     model.setWorkspaceName(nil, for: workspace.id)
-                    model.setWorkspaceIcon(.monogram, for: workspace.id)
+                    model.setWorkspaceIcon(workspace.isOpenedFiles ? .symbol("doc.on.doc") : .monogram, for: workspace.id)
                     model.setWorkspaceColor(nil, for: workspace.id)
                 }
                 .controlSize(.small)

@@ -198,7 +198,9 @@ swift tools/galley-debug.swift level.3 theme.sepia open.1 snapshot
 #             divider.narrow|wide (drives the Workspaces edge-drag steps)
 #             tab.new|newnext|next|close|others|move|state (state logs the
 #             tabs and workspaces) key.ctrltab|ctrlshifttab|cmdw|cmdt|cmdreturn
-#             menus (logs every menu shortcut)
+#             menus (logs every menu shortcut) opened.remove
+# open a single file as Finder would (outside a workspace → Opened Files):
+open -a app/…/Debug/Galley.app /path/to/file.md
 # real on-screen captures (needs Screen Recording for the terminal) —
 # popovers and Settings are their own windows, so capture by window id:
 swift tools/window-bounds.swift Galley     # id layer x,y,w,h title
@@ -258,13 +260,14 @@ simulator ones).
   bookmark stored per workspace. Read-only is deliberate — the app never writes
   to a markdown file. The sandbox also blocks spawning CLI tools, so the
   "pipe to `claude -p`" idea needs a different shape (or direct distribution).
-- **There is no `Info.plist` file.** `GENERATE_INFOPLIST_FILE = YES`, so plist
-  keys live as `INFOPLIST_KEY_*` build settings in `project.pbxproj`. To add a
-  usage description or `ITSAppUsesNonExemptEncryption`, add the build setting —
-  do not create an `Info.plist`.
+- **Flat plist keys are build settings.** `GENERATE_INFOPLIST_FILE = YES`, so
+  plist keys live as `INFOPLIST_KEY_*` build settings in `project.pbxproj`. To
+  add a usage description or `ITSAppUsesNonExemptEncryption`, add the build
+  setting — not a key in `app/Info.plist`, which is only for nested values.
 - **Nested plist values need a real file, placed outside the target folder.**
   `INFOPLIST_KEY_*` only carries flat values, so `CFBundleURLTypes`,
-  `NSAppTransportSecurity` and friends need a partial `app/Info.plist` plus
+  `NSAppTransportSecurity` and friends need the partial `app/Info.plist` (it
+  exists: Markdown and folder document types, the Markdown type import) and
   `INFOPLIST_FILE = Info.plist;` on the app target's two configs. Xcode merges
   it with the generated keys. It must NOT go in `app/<Target>/`: the project
   uses file-system synchronized groups, so anything in that folder is added to

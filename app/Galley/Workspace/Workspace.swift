@@ -24,6 +24,8 @@ final class Workspace: Identifiable {
     private(set) var hasScanned = false
     /// False when the folder is gone or no longer readable.
     private(set) var isAvailable = true
+    /// Opened Files: documents opened one at a time, not a folder.
+    let isOpenedFiles: Bool
 
     /// Called with the relative paths whose content changed on disk.
     @ObservationIgnored var onContentChange: (Set<String>) -> Void = { _ in }
@@ -35,6 +37,11 @@ final class Workspace: Identifiable {
     @ObservationIgnored private var hashes: [String: (modified: Date, size: Int, hash: String)] = [:]
     @ObservationIgnored private var scanTask: Task<Void, Never>?
     @ObservationIgnored private var accessing = false
+    /// Opened Files' documents by id (absolute path), and the ones whose
+    /// security scope this workspace holds open.
+    @ObservationIgnored private var documentURLs: [String: URL] = [:]
+    @ObservationIgnored private var accessedDocuments: [URL] = []
+    @ObservationIgnored private var pollTask: Task<Void, Never>?
     /// A new workspace's first full scan must record the baseline; a rescan
     /// that cancels it (an agent writing meanwhile) inherits the duty.
     @ObservationIgnored private var needsBaseline = false
@@ -44,14 +51,17 @@ final class Workspace: Identifiable {
     private(set) var revision = 0
 
     /// The folder's name on disk.
-    var folderName: String { root.lastPathComponent }
+    var folderName: String { isOpenedFiles ? "" : root.lastPathComponent }
     /// The name Galley shows: the reader's own, or the tidied folder name.
     var name: String {
         if let custom = record?.customName?.trimmingCharacters(in: .whitespaces), !custom.isEmpty { return custom }
         return defaultName
     }
 
-    var defaultName: String { ReaderSettings.shared.displayFolderName(folderName) }
+    var defaultName: String { isOpenedFiles ? "Opened Files" : ReaderSettings.shared.displayFolderName(folderName) }
+
+    /// What "Reveal in Finder" shows: the folder, or Opened Files' files.
+    var revealURLs: [URL] { isOpenedFiles ? files.map(\.url) : [root] }
 
     var icon: WorkspaceIcon.Kind { WorkspaceIcon.Kind(stored: record?.icon) }
 
@@ -87,6 +97,13 @@ final class Workspace: Identifiable {
     init(record: WorkspaceRecord, library: Library) {
         id = record.id
         self.library = library
+        isOpenedFiles = record.kind == "files"
+        if isOpenedFiles {
+            root = URL(fileURLWithPath: "/", isDirectory: true)
+            tree = FolderNode(id: "", name: "", folders: [], files: [])
+            for document in record.documents { resolve(document) }
+            return
+        }
         var url = URL(fileURLWithPath: record.path, isDirectory: true)
         if let bookmark = record.bookmark {
             var stale = false
@@ -104,6 +121,10 @@ final class Workspace: Identifiable {
 
     func start() {
         rescan()
+        if isOpenedFiles {
+            pollDocuments()
+            return
+        }
         watcher = FolderWatcher(url: root) { [weak self] paths in
             self?.filesystemChanged(paths)
         }
@@ -112,9 +133,109 @@ final class Workspace: Identifiable {
     func close() {
         watcher?.stop()
         watcher = nil
+        pollTask?.cancel()
         scanTask?.cancel()
         if accessing { root.stopAccessingSecurityScopedResource() }
         accessing = false
+        for url in accessedDocuments { url.stopAccessingSecurityScopedResource() }
+        accessedDocuments = []
+    }
+
+    // MARK: Opened Files
+
+    /// Opens a document's security scope from its bookmark.
+    private func resolve(_ document: OpenedDocument) {
+        var url = URL(fileURLWithPath: document.path)
+        if let bookmark = document.bookmark {
+            var stale = false
+            if let resolved = try? URL(resolvingBookmarkData: bookmark, options: [.withSecurityScope], bookmarkDataIsStale: &stale) {
+                url = resolved
+                if stale, let fresh = try? resolved.bookmarkData(options: [.withSecurityScope, .securityScopeAllowOnlyReadAccess]) {
+                    library.updateWorkspace(id) { record in
+                        if let index = record.documents.firstIndex(where: { $0.path == document.path }) {
+                            record.documents[index].bookmark = fresh
+                        }
+                    }
+                }
+            }
+        }
+        if url.startAccessingSecurityScopedResource() { accessedDocuments.append(url) }
+        documentURLs[document.path] = url
+    }
+
+    /// Adds a file opened on its own and lists it at once, so it can be
+    /// shown before the rescan that follows. What is in it now counts as
+    /// read: only what an agent changes from here on lights up.
+    func addDocument(_ url: URL) -> DocumentFile? {
+        let url = url.standardizedFileURL
+        let path = url.path
+        if documentURLs[path] == nil {
+            let document = OpenedDocument(path: path, bookmark: try? url.bookmarkData(options: [.withSecurityScope, .securityScopeAllowOnlyReadAccess]))
+            library.updateWorkspace(id) { $0.documents.append(document) }
+            if url.startAccessingSecurityScopedResource() { accessedDocuments.append(url) }
+            documentURLs[path] = url
+        }
+        if file(path) == nil, let listed = WorkspaceScanner.scanFiles([path: url]).files.first {
+            files = (files + [listed]).sorted { $0.filename.localizedStandardCompare($1.filename) == .orderedAscending }
+            tree = FolderNode(id: "", name: "", folders: [], files: files)
+            if let text = WorkspaceScanner.read(url) {
+                hashes[path] = (listed.modified, listed.size, WorkspaceScanner.hash(text))
+                if library.record(id)?.files[path]?.readHash == nil {
+                    library.saveSnapshot(text, workspace: id, path: path)
+                    library.updateWorkspace(id) { record in
+                        record.files[path, default: FileRecord()].readHash = WorkspaceScanner.hash(text)
+                        record.files[path, default: FileRecord()].readAt = Date()
+                    }
+                }
+            }
+            recomputeStatuses()
+            hasScanned = true
+        }
+        rescan()
+        return file(path)
+    }
+
+    /// Takes a document out of Opened Files; the file itself is untouched.
+    func removeDocument(_ path: String) {
+        library.updateWorkspace(id) { record in
+            record.documents.removeAll { $0.path == path }
+            record.pinned.removeAll { $0 == path }
+        }
+        if let url = documentURLs.removeValue(forKey: path),
+           let index = accessedDocuments.firstIndex(of: url) {
+            accessedDocuments.remove(at: index).stopAccessingSecurityScopedResource()
+        }
+        files.removeAll { $0.id == path }
+        tree = FolderNode(id: "", name: "", folders: [], files: files)
+        hashes[path] = nil
+        recomputeStatuses()
+        touch()
+    }
+
+    /// No folder to watch: the documents' dates and sizes are checked every
+    /// second or so instead, and any change reads them again.
+    private func pollDocuments() {
+        pollTask?.cancel()
+        pollTask = Task { [weak self] in
+            var last: [String: Date] = [:]
+            while !Task.isCancelled {
+                try? await Task.sleep(for: .seconds(1.2))
+                guard let self, !Task.isCancelled else { return }
+                let urls = self.documentURLs
+                let now = await Task.detached(priority: .utility) {
+                    var dates: [String: Date] = [:]
+                    for (path, url) in urls {
+                        // Fresh each time: a kept URL caches its resource values.
+                        let values = try? URL(fileURLWithPath: url.path).resourceValues(forKeys: [.contentModificationDateKey, .fileSizeKey])
+                        // A file that is gone has no date: that is a change too.
+                        dates[path] = values?.contentModificationDate.map { $0.addingTimeInterval(Double(values?.fileSize ?? 0) / 1e9) } ?? .distantPast
+                    }
+                    return dates
+                }.value
+                if !last.isEmpty, now != last { self.rescan() }
+                last = now
+            }
+        }
     }
 
     func file(_ relativePath: String) -> DocumentFile? {
@@ -136,6 +257,7 @@ final class Workspace: Identifiable {
     }
 
     func contains(_ url: URL) -> Bool {
+        if isOpenedFiles { return documentURLs[url.standardizedFileURL.path] != nil }
         let rootPath = root.standardizedFileURL.path
         let path = url.standardizedFileURL.path
         return path == rootPath || path.hasPrefix(rootPath.hasSuffix("/") ? rootPath : rootPath + "/")
@@ -159,9 +281,10 @@ final class Workspace: Identifiable {
         let baseline = needsBaseline
         let root = root
         let previous = hashes
+        let documents = isOpenedFiles ? documentURLs : nil
         scanTask = Task { [weak self] in
             let result = await Task.detached(priority: .userInitiated) { () -> (FolderNode, [String: (Date, Int, String)], [String: String]) in
-                let tree = WorkspaceScanner.scan(root)
+                let tree = documents.map(WorkspaceScanner.scanFiles) ?? WorkspaceScanner.scan(root)
                 var hashes: [String: (Date, Int, String)] = [:]
                 var texts: [String: String] = [:]
                 for file in tree.readingOrder {
@@ -180,7 +303,7 @@ final class Workspace: Identifiable {
     }
 
     private func apply(tree: FolderNode, hashes newHashes: [String: (Date, Int, String)], baselineTexts: [String: String]?) {
-        let exists = FileManager.default.fileExists(atPath: root.path)
+        let exists = isOpenedFiles || FileManager.default.fileExists(atPath: root.path)
         isAvailable = exists
         let changed = Set(newHashes.compactMap { path, value in
             hashes[path].map { $0.hash != value.2 ? path : nil } ?? nil

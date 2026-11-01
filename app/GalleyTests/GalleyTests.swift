@@ -415,3 +415,33 @@ struct TextSearchWordTests {
         #expect(TextSearch.search("fresh", in: docs).map(\.key) == ["b"]) // the camelCase hump counts
     }
 }
+
+struct OpenedFilesTests {
+    @Test func listsOpenedFilesByThePathTheyWereOpenedAt() throws {
+        let folder = FileManager.default.temporaryDirectory.appendingPathComponent("galley-opened-\(UUID().uuidString)")
+        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: folder) }
+        let notes = folder.appendingPathComponent("notes.md")
+        let agenda = folder.appendingPathComponent("Agenda.md")
+        try "# Weekly notes\n\nText.".write(to: notes, atomically: true, encoding: .utf8)
+        try "Plain".write(to: agenda, atomically: true, encoding: .utf8)
+
+        let tree = WorkspaceScanner.scanFiles([
+            "/opened/as/notes.md": notes,
+            "/opened/as/Agenda.md": agenda,
+            "/opened/as/gone.md": folder.appendingPathComponent("gone.md"),
+        ])
+        // Gone files are left out; the rest sort by name, keyed by their
+        // opened path, and keep their headings.
+        #expect(tree.files.map(\.id) == ["/opened/as/Agenda.md", "/opened/as/notes.md"])
+        #expect(tree.files.last?.heading == "Weekly notes")
+        #expect(tree.folders.isEmpty)
+    }
+
+    @Test func oldLibrariesDecodeWithoutOpenedFiles() throws {
+        let json = #"{"id":"3F2504E0-4F89-11D3-9A0C-0305E82C3301","path":"/tmp/x"}"#
+        let record = try JSONDecoder().decode(WorkspaceRecord.self, from: Data(json.utf8))
+        #expect(record.kind == nil)
+        #expect(record.documents.isEmpty)
+    }
+}

@@ -89,7 +89,7 @@ struct MainView: View {
             handled = true
             _ = provider.loadObject(ofClass: URL.self) { url, _ in
                 guard let url else { return }
-                Task { @MainActor in model.addWorkspace(url) }
+                Task { @MainActor in model.open([url]) }
             }
         }
         return handled
@@ -306,7 +306,7 @@ private struct DropHighlight: View {
             .background(palette.accent.opacity(0.04))
             .padding(10)
             .overlay {
-                Label("Drop to add as a workspace", systemImage: "folder.badge.plus")
+                Label("Drop a folder to watch it, or files to read them", systemImage: "folder.badge.plus")
                     .font(.system(size: 13, weight: .medium))
                     .foregroundStyle(palette.accent)
                     .padding(.horizontal, 14)

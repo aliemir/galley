@@ -186,3 +186,28 @@ double-click files, and every double-click would have left a kept tab behind
 tabs (`NSWindow` tabbing), which would need a whole window — model, web
 view, columns — per tab.
 
+## 2026-11-01 — A file opened on its own joins "Opened Files"
+
+**Chosen:** a Markdown file opened from outside every workspace goes into a
+workspace of its own kind, *Opened Files* (`WorkspaceRecord.kind = "files"`),
+which lists files opened one at a time, keyed by absolute path, each with its
+own security-scoped bookmark. Everything a workspace has — read state,
+change marks, highlights, feedback, pins, tabs, search — works for them
+unchanged. Opening registers Galley as an *Alternate* viewer for Markdown: it
+offers itself in Open With and never takes over the default unless the reader
+sets it in Get Info.
+
+**Why:** the sandbox grants the file, not its folder, so the old behaviour
+(an open panel asking for the folder, then a whole workspace) put a prompt in
+front of every double-click, and a folder like Downloads is not something
+anyone wants watched. Promoting a file is still one step away ("Add Its
+Folder as a Workspace…").
+
+**Watching:** there is no folder Galley may watch, so the files' dates and
+sizes are checked every 1.2 s (fresh `URL`s each time — a kept `URL` caches
+its resource values, which hid every change in the first build).
+
+**Rejected:** a tab that shows a file outside any workspace with no record
+behind it (no highlights, no change tracking, nothing restored on relaunch);
+one workspace per opened file (a rail full of single files).
+

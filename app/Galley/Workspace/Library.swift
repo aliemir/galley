@@ -41,6 +41,11 @@ nonisolated struct WorkspaceRecord: Codable, Identifiable, Sendable {
     var color: String?
     /// Pinned files by relative path, in the order they were pinned.
     var pinned: [String] = []
+    /// "files" for Opened Files: documents opened one at a time rather than
+    /// a folder. Their ids are their absolute paths.
+    var kind: String?
+    /// Opened Files' documents, each with the bookmark that reopens it.
+    var documents: [OpenedDocument] = []
 
     init(id: UUID, bookmark: Data?, path: String, addedAt: Date) {
         self.id = id
@@ -64,7 +69,16 @@ nonisolated struct WorkspaceRecord: Codable, Identifiable, Sendable {
         icon = try c.decodeIfPresent(String.self, forKey: .icon)
         color = try c.decodeIfPresent(String.self, forKey: .color)
         pinned = try c.decodeIfPresent([String].self, forKey: .pinned) ?? []
+        kind = try c.decodeIfPresent(String.self, forKey: .kind)
+        documents = try c.decodeIfPresent([OpenedDocument].self, forKey: .documents) ?? []
     }
+}
+
+/// A file opened on its own. The sandbox grants that file and nothing
+/// beside it, so each keeps a bookmark of its own.
+nonisolated struct OpenedDocument: Codable, Hashable, Sendable {
+    var path: String
+    var bookmark: Data?
 }
 
 nonisolated struct LibraryState: Codable, Sendable {

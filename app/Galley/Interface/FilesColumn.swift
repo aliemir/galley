@@ -47,7 +47,7 @@ struct FilesColumn: View {
             Divider()
             Button("Mark All as Read") { model.markAllRead() }
                 .disabled(workspace.unreadCount == 0)
-            Button("Reveal in Finder") { NSWorkspace.shared.activateFileViewerSelecting([workspace.root]) }
+            Button("Reveal in Finder") { NSWorkspace.shared.activateFileViewerSelecting(workspace.revealURLs) }
         } label: {
             Image(systemName: "ellipsis")
                 .font(.system(size: 13, weight: .medium))
@@ -248,7 +248,9 @@ private struct FolderContents: View {
 
     var body: some View {
         ForEach(folder.files) { file in
-            FileRow(file: file, workspace: workspace, depth: depth, showsLocation: false)
+            // Opened files come from anywhere: where each lives tells apart
+            // two READMEs.
+            FileRow(file: file, workspace: workspace, depth: depth, showsLocation: workspace.isOpenedFiles)
                 .id(file.id)
         }
         ForEach(folder.folders) { child in
@@ -401,6 +403,11 @@ struct FileRow: View {
             Button("Open in Default App") { model.openInEditor(file) }
             Button("Reveal in Finder") { model.revealInFinder(file) }
             Button("Copy Path") { model.copyPath(file) }
+            if workspace.isOpenedFiles {
+                Divider()
+                Button("Add Its Folder as a Workspace…") { model.addFolder(of: file) }
+                Button("Remove from Opened Files") { model.removeOpenedFile(file) }
+            }
         }
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(model.settings.displayName(for: file))\(status == .read ? "" : status == .changed ? ", changed" : ", unread")")
@@ -408,6 +415,9 @@ struct FileRow: View {
     }
 
     private var location: String {
+        if workspace.isOpenedFiles {
+            return "\((file.folder as NSString).abbreviatingWithTildeInPath) · \(AppModel.relativeDate(file.modified).lowercased())"
+        }
         let folder = file.folder.isEmpty ? workspace.name : model.settings.displayFolderPath(file.folder)
         return "\(folder) · \(AppModel.relativeDate(file.modified).lowercased())"
     }

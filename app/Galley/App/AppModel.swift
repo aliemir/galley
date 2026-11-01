@@ -1,6 +1,7 @@
 import AppKit
 import Observation
 import SwiftUI
+import UniformTypeIdentifiers
 import WebKit
 
 /// The document on the page.
@@ -261,15 +262,101 @@ final class AppModel {
 
     // MARK: Workspaces
 
+    /// ⌘O: a folder to watch as a workspace, or Markdown files to read.
     func openFolderPanel() {
         let panel = NSOpenPanel()
         panel.canChooseDirectories = true
-        panel.canChooseFiles = false
+        panel.canChooseFiles = true
+        panel.allowedContentTypes = [.folder, .markdown]
         panel.allowsMultipleSelection = true
         panel.prompt = "Open"
-        panel.message = "Choose a folder your agents write Markdown into."
+        panel.message = "Choose a folder your agents write Markdown into, or Markdown files to read."
         guard panel.runModal() == .OK else { return }
-        for url in panel.urls { addWorkspace(url) }
+        open(panel.urls)
+    }
+
+    /// Whatever was opened from outside — Finder, the Dock, ⌘O, a drop:
+    /// folders become workspaces; a Markdown file inside a workspace opens
+    /// there, and any other joins Opened Files. Each file gets a tab.
+    func open(_ urls: [URL]) {
+        for url in urls {
+            var isDirectory: ObjCBool = false
+            guard FileManager.default.fileExists(atPath: url.path, isDirectory: &isDirectory) else { continue }
+            if isDirectory.boolValue {
+                addWorkspace(url)
+            } else if WorkspaceScanner.isMarkdown(url) {
+                openFile(url)
+            }
+        }
+    }
+
+    private func openFile(_ url: URL) {
+        if let workspace = workspaces.first(where: { !$0.isOpenedFiles && $0.contains(url) }) {
+            let relative = String(url.standardizedFileURL.path.dropFirst(workspace.root.standardizedFileURL.path.count + 1))
+            if workspace.hasScanned, let file = workspace.file(relative) {
+                openInNewTab(file, in: workspace)
+            } else {
+                pendingRestore = relative
+                selectWorkspace(workspace.id)
+            }
+            return
+        }
+        let group = openedFiles ?? makeOpenedFiles()
+        guard let file = group.addDocument(url) else { NSSound.beep(); return }
+        openInNewTab(file, in: group)
+    }
+
+    /// The workspace that holds files opened one at a time, if there is one.
+    var openedFiles: Workspace? { workspaces.first { $0.isOpenedFiles } }
+
+    private func makeOpenedFiles() -> Workspace {
+        var record = WorkspaceRecord(id: UUID(), bookmark: nil, path: "", addedAt: Date())
+        record.kind = "files"
+        record.icon = WorkspaceIcon.Kind.symbol("doc.on.doc").stored
+        library.update { $0.workspaces.append(record) }
+        let workspace = Workspace(record: record, library: library)
+        attach(workspace, baseline: false)
+        return workspace
+    }
+
+    /// "Remove from Opened Files": the file leaves the list (and its tab
+    /// closes); the file itself is untouched. An empty list goes away.
+    func removeOpenedFile(_ file: DocumentFile) {
+        guard let group = openedFiles else { return }
+        let showing = current?.workspaceID == group.id && current?.file.id == file.id
+        if let tab = tab(showing: file.id, in: group.id), tabs.count > 1 {
+            closeTab(tab.id)
+        }
+        group.removeDocument(file.id)
+        if group.files.isEmpty {
+            removeWorkspace(group.id)
+        } else if showing, current?.file.id == file.id, let next = group.files.first {
+            // It was the only tab: the next opened file takes its place.
+            open(next, in: group)
+        }
+    }
+
+    /// A file opened on its own, promoted: its folder becomes a workspace
+    /// (the sandbox needs the reader to grant it), and the file opens there.
+    func addFolder(of file: DocumentFile) {
+        let folder = file.url.deletingLastPathComponent()
+        let panel = NSOpenPanel()
+        panel.canChooseDirectories = true
+        panel.canChooseFiles = false
+        panel.directoryURL = folder
+        panel.prompt = "Add Workspace"
+        panel.message = "Allow Galley to read “\(folder.lastPathComponent)” to watch every Markdown file in it."
+        guard panel.runModal() == .OK, let chosen = panel.url else { return }
+        let url = file.url
+        removeOpenedFile(file)
+        addWorkspace(chosen)
+        if let workspace = workspaces.first(where: { !$0.isOpenedFiles && $0.contains(url) }) {
+            pendingRestore = String(url.standardizedFileURL.path.dropFirst(workspace.root.standardizedFileURL.path.count + 1))
+            if workspace.hasScanned, let path = pendingRestore, let file = workspace.file(path) {
+                pendingRestore = nil
+                open(file, in: workspace)
+            }
+        }
     }
 
     func addWorkspace(_ url: URL) {
@@ -278,7 +365,7 @@ final class AppModel {
         var folder = isDirectory.boolValue ? url : url.deletingLastPathComponent()
 
         // A dropped file is already inside a workspace: just open it.
-        if !isDirectory.boolValue, let existing = workspaces.first(where: { $0.contains(url) }) {
+        if !isDirectory.boolValue, let existing = workspaces.first(where: { !$0.isOpenedFiles && $0.contains(url) }) {
             let relative = String(url.standardizedFileURL.path.dropFirst(existing.root.standardizedFileURL.path.count + 1))
             if existing.hasScanned, let file = existing.file(relative) {
                 open(file, in: existing)
@@ -299,7 +386,7 @@ final class AppModel {
             guard panel.runModal() == .OK, let chosen = panel.url else { return }
             folder = chosen
         }
-        if let existing = workspaces.first(where: { $0.root.standardizedFileURL == folder.standardizedFileURL }) {
+        if let existing = workspaces.first(where: { !$0.isOpenedFiles && $0.root.standardizedFileURL == folder.standardizedFileURL }) {
             selectWorkspace(existing.id)
             return
         }
@@ -552,7 +639,12 @@ final class AppModel {
     private func makePayload(_ document: OpenDocument, in workspace: Workspace, transition: String) -> PagePayload {
         var meta: [String] = []
         let folder = document.file.folder
-        meta.append(folder.isEmpty ? workspace.name : workspace.name + " / " + settings.displayFolderPath(folder))
+        if workspace.isOpenedFiles {
+            // Opened on its own: where it lives says more than the group.
+            meta.append(settings.displayFolderName((folder as NSString).lastPathComponent))
+        } else {
+            meta.append(folder.isEmpty ? workspace.name : workspace.name + " / " + settings.displayFolderPath(folder))
+        }
         meta.append(Self.relativeDate(document.file.modified))
         meta.append("\(document.rendered.readingMinutes) min read")
 
@@ -1234,11 +1326,11 @@ final class AppModel {
     /// The open document's feedback, for pasting to an agent. Passages no
     /// longer in the text are left out: the agent has dealt with them.
     func copyFeedback() {
-        guard let current, let workspace = currentWorkspace else { NSSound.beep(); return }
+        guard let current else { NSSound.beep(); return }
         let items = current.highlights
             .filter { !current.orphans.contains($0.id) }
             .map { Feedback.Item(text: $0.text, note: $0.note) }
-        copy(Feedback.format([Feedback.File(path: workspace.root.appendingPathComponent(current.file.id).path, items: items)]))
+        copy(Feedback.format([Feedback.File(path: current.file.url.path, items: items)]))
     }
 
     /// Every file's feedback in the selected workspace, in reading order.
@@ -1410,8 +1502,11 @@ final class AppModel {
     // MARK: Files
 
     func revealInFinder(_ file: DocumentFile? = nil) {
-        guard let url = file?.url ?? current?.file.url ?? selectedWorkspace?.root else { return }
-        NSWorkspace.shared.activateFileViewerSelecting([url])
+        if let url = file?.url ?? current?.file.url {
+            NSWorkspace.shared.activateFileViewerSelecting([url])
+        } else if let workspace = selectedWorkspace {
+            NSWorkspace.shared.activateFileViewerSelecting(workspace.revealURLs)
+        }
     }
 
     func openInEditor(_ file: DocumentFile? = nil) {
@@ -1484,6 +1579,11 @@ final class AppModel {
         let result = await reader.find(query, direction: direction)
         if query == findQuery { findResult = result }
     }
+}
+
+extension UTType {
+    /// Markdown, as the system declares it (and `app/Info.plist` imports it).
+    static let markdown = UTType("net.daringfireball.markdown") ?? .plainText
 }
 
 extension Animation {

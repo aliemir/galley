@@ -29,10 +29,24 @@ struct GalleyApp: App {
 }
 
 final class AppDelegate: NSObject, NSApplicationDelegate {
-    var model: AppModel?
+    var model: AppModel? {
+        didSet {
+            guard let model, !pendingURLs.isEmpty else { return }
+            model.open(pendingURLs)
+            pendingURLs = []
+        }
+    }
+    /// Files opened before the window (and the model with it) was ready —
+    /// a double-click in Finder that also launches the app.
+    private var pendingURLs: [URL] = []
     #if DEBUG
     var automation: DebugAutomation?
     #endif
+
+    /// Finder's Open With, a double-click, a drop on the Dock icon, `open -a`.
+    func application(_ application: NSApplication, open urls: [URL]) {
+        if let model { model.open(urls) } else { pendingURLs += urls }
+    }
 
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool { true }
 

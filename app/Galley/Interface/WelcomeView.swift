@@ -36,7 +36,7 @@ struct WelcomeView: View {
                     }
                     .buttonStyle(.plain)
                     .keyboardShortcut(.defaultAction)
-                    Text("or drop one on this window")
+                    Text("or drop a folder — or a single file — on this window")
                         .font(.system(size: 12))
                         .foregroundStyle(palette.ink3)
                 }

@@ -71,14 +71,13 @@ lights up.
 9. ✅ Feedback: notes on highlights, Copy Feedback for an agent, Clear Feedback
 10. ✅ Full-text search (⇧⌘F, and under names in ⌘K; Tab switches)
 11. ✅ Tabs in the page column (Safari-style; see `decisions.md`)
+12. ✅ Single files: Open With, the Dock, ⌘O, drops → Opened Files
 
 ## Next
 
 - **Sample workspace on the welcome screen** — "Look at a sample" opening a
   bundled read-only set (needs a folder reference so the tree survives the
   bundle's flattening).
-- **Open a single .md file** (Finder "Open With", drag a file) — document
-  types in a partial `app/Info.plist`.
 - **Distribution** — Developer ID + notarization path; decide whether to keep
   the sandbox.
 - **Store/site media** — the screenshot script on top of `DebugAutomation`.
