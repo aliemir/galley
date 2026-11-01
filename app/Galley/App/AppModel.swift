@@ -777,6 +777,36 @@ final class AppModel {
         return Self.defaultColumnWidths[column] ?? 240
     }
 
+    /// Dragged narrower than this, the workspace list folds into the rail.
+    static let foldBelow: CGFloat = 105
+    /// Dragged wider than this, the rail opens back into the list. The gap
+    /// between the two keeps it from flapping at one point.
+    static let unfoldAbove: CGFloat = 130
+
+    /// A column's edge dragged to `requested` points wide. Workspaces fold
+    /// into the icon rail past the narrow end and back out past the wide
+    /// one, as Finder's sidebar does.
+    func dragColumnEdge(_ column: PanelColumn, to requested: CGFloat) {
+        guard column == .workspaces else {
+            setColumnWidth(column, requested)
+            return
+        }
+        if settings.workspacesAsIcons {
+            guard requested > Self.unfoldAbove else { return }
+            foldWorkspaces(false)
+            setColumnWidth(column, requested)
+        } else if requested < Self.foldBelow {
+            foldWorkspaces(true)
+        } else {
+            setColumnWidth(column, requested)
+        }
+    }
+
+    private func foldWorkspaces(_ toRail: Bool) {
+        withAnimation(.snappy(duration: 0.22)) { settings.workspacesAsIcons = toRail }
+        NSHapticFeedbackManager.defaultPerformer.perform(.alignment, performanceTime: .now)
+    }
+
     func setColumnWidth(_ column: PanelColumn, _ width: CGFloat?) {
         guard let width else {
             settings.columnWidths[Self.widthKey(column)] = nil

@@ -164,11 +164,7 @@ private struct ColumnStack: View {
             .frame(maxHeight: .infinity)
             .background(palette.sidebar)
             .overlay(alignment: .trailing) {
-                if isRail {
-                    Rectangle().fill(palette.rule).frame(width: 1)
-                } else {
-                    ColumnDivider(column: column, scale: scale)
-                }
+                ColumnDivider(column: column, scale: isRail ? 1 : scale)
             }
             .frame(width: width * fraction, alignment: .trailing)
             .clipped()
@@ -180,13 +176,20 @@ private struct ColumnStack: View {
 
 /// A column's right edge: the hairline, and a wider invisible grip that
 /// drags the width. Double-click puts the default width back.
+///
+/// Workspaces fold into the icon rail when dragged narrow enough, and the
+/// rail opens back into the list when dragged wide again, as Finder's
+/// sidebar does; the gap between the two thresholds keeps it from flapping.
 private struct ColumnDivider: View {
     let column: PanelColumn
     let scale: CGFloat
     @Environment(AppModel.self) private var model
     @Environment(\.palette) private var palette
     @State private var startWidth: CGFloat?
+    @State private var startScale: CGFloat = 1
     @State private var isHovered = false
+
+    private var isRail: Bool { column == .workspaces && model.settings.workspacesAsIcons }
 
     var body: some View {
         ZStack(alignment: .trailing) {
@@ -205,9 +208,12 @@ private struct ColumnDivider: View {
                         .onChanged { drag in
                             if startWidth == nil {
                                 startWidth = model.columnWidth(column)
+                                startScale = max(scale, 0.5)
                                 model.beginPanelMotion()
                             }
-                            model.setColumnWidth(column, (startWidth ?? 0) + drag.translation.width / max(scale, 0.5))
+                            // The scale the drag began with, so folding mid-drag
+                            // does not shift where the thresholds are.
+                            model.dragColumnEdge(column, to: (startWidth ?? 0) + drag.translation.width / startScale)
                         }
                         .onEnded { _ in
                             startWidth = nil
@@ -215,9 +221,16 @@ private struct ColumnDivider: View {
                         }
                 )
                 .onTapGesture(count: 2) {
-                    withAnimation(.galleyPanel) { model.setColumnWidth(column, nil) }
+                    withAnimation(.galleyPanel) {
+                        if isRail { model.settings.workspacesAsIcons = false }
+                        model.setColumnWidth(column, nil)
+                    }
                 }
-                .help("Drag to resize · double-click for the default width")
+                .help(isRail
+                    ? "Drag wider to show names · double-click for the list"
+                    : column == .workspaces
+                        ? "Drag to resize, or narrow to icons · double-click for the default width"
+                        : "Drag to resize · double-click for the default width")
         }
         .frame(maxHeight: .infinity)
     }

@@ -26,6 +26,8 @@ otherwise have to re-derive. Not worth one: typo fixes and formatting.
 
 ## 2026-11-01
 
+- Dragging the Workspaces edge narrower than 105 pt folds it into the icon
+  rail, and dragging the rail wider than 130 pt opens the list again
 - Columns toggle independently: ⌘1 Workspaces, ⌘2 Files, ⌘3 Contents (View
   menu too), ⌘\ hides all; swipes and ⌘] / ⌘[ follow the reader's order
 - Column order now sets only the reveal order; columns keep their places on screen
