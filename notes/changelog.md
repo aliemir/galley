@@ -26,6 +26,9 @@ otherwise have to re-derive. Not worth one: typo fixes and formatting.
 
 ## 2026-11-01
 
+- ⌘K is names only again; text matches show there only when no file name
+  matches, labelled "No file names match — in the text" (before, they always
+  followed the names, and with no names they looked like ⇧⌘F)
 - Palette results carry their workspace's icon (with more than one
   workspace) instead of its name in the path; the list is sized to its rows'
   measured height, so no empty band under the last result

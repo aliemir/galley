@@ -69,7 +69,7 @@ lights up.
 7. ✅ Personal highlights (text + context anchors, orphans)
 8. ✅ Section folding (page and outline share one fold state)
 9. ✅ Feedback: notes on highlights, Copy Feedback for an agent, Clear Feedback
-10. ✅ Full-text search (⇧⌘F, and under names in ⌘K; Tab switches)
+10. ✅ Full-text search (⇧⌘F; ⌘K falls back to it when no name matches; Tab switches)
 11. ✅ Tabs in the page column (Safari-style; see `decisions.md`)
 12. ✅ Single files: Open With, the Dock, ⌘O, drops → Opened Files
 

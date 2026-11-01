@@ -88,9 +88,13 @@ struct QuickOpenView: View {
         return trimmed
     }
 
+    /// ⌘K finds files by name; only when no name matches does it show
+    /// what is in the text instead, and says so. ⇧⌘F (or Tab) is text only.
     private var results: [Result] {
         if searchesText, !sectionMode { return textHits }
-        return nameResults + (textQuery == nil ? [] : textHits)
+        let names = nameResults
+        guard names.isEmpty, !sectionMode, textQuery != nil else { return names }
+        return textHits
     }
 
     private var nameResults: [Result] {
@@ -121,8 +125,8 @@ struct QuickOpenView: View {
         }
         let sorted = scored.sorted { $0.1 > $1.1 }
         if query.isEmpty { return sorted.prefix(40).map(\.0) }
-        // Only names close to the best match: loose subsequence matches
-        // would push the text results out of sight.
+        // Only names close to the best match: loose subsequence matches are
+        // noise, and would keep the text fallback from ever showing.
         guard let best = sorted.first?.1 else { return [] }
         return sorted.prefix { $0.1 >= best - best / 4 }.prefix(8).map(\.0)
     }
@@ -166,7 +170,7 @@ struct QuickOpenView: View {
             case let .text(_, _, hit): total + 40 + CGFloat(hit.snippets.count) * 18
             }
         }
-        let label: CGFloat = !searchesText && results.contains(where: \.isText) && results.contains(where: { !$0.isText }) ? 26 : 0
+        let label: CGFloat = !searchesText && results.first?.isText == true ? 26 : 0
         return min(420, rows + label + 12)
     }
 
@@ -227,8 +231,8 @@ struct QuickOpenView: View {
                         // height is what sizes the list.
                         VStack(spacing: 2) {
                             ForEach(Array(results.enumerated()), id: \.element.id) { index, result in
-                                if !searchesText, result.isText, index > 0, !results[index - 1].isText {
-                                    Text("IN THE TEXT")
+                                if !searchesText, result.isText, index == 0 {
+                                    Text("NO FILE NAMES MATCH — IN THE TEXT")
                                         .font(.system(size: 10, weight: .semibold))
                                         .tracking(0.7)
                                         .foregroundStyle(palette.ink3)
