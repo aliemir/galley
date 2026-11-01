@@ -187,6 +187,7 @@ private struct ColumnDivider: View {
     @Environment(\.palette) private var palette
     @State private var startWidth: CGFloat?
     @State private var startScale: CGFloat = 1
+    @State private var dividerHeight: CGFloat = 800
     @State private var isHovered = false
 
     private var isRail: Bool { column == .workspaces && model.settings.workspacesAsIcons }
@@ -197,6 +198,18 @@ private struct ColumnDivider: View {
                 .fill(startWidth != nil || isHovered ? palette.accent.opacity(0.55) : palette.rule)
                 .frame(width: startWidth != nil || isHovered ? 2 : 1)
                 .animation(.easeOut(duration: 0.12), value: isHovered)
+                // The title band is one clean strip: the line fades in below
+                // it, so it never runs through the traffic lights.
+                .mask(
+                    LinearGradient(
+                        stops: [
+                            .init(color: .clear, location: 0),
+                            .init(color: .clear, location: MainView.bandHeight / max(1, dividerHeight)),
+                            .init(color: .black, location: (MainView.bandHeight + 16) / max(1, dividerHeight)),
+                        ],
+                        startPoint: .top, endPoint: .bottom
+                    )
+                )
             Color.clear
                 .frame(width: 9)
                 .contentShape(Rectangle())
@@ -233,6 +246,7 @@ private struct ColumnDivider: View {
                         : "Drag to resize · double-click for the default width")
         }
         .frame(maxHeight: .infinity)
+        .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { dividerHeight = $0 }
     }
 }
 
