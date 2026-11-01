@@ -188,8 +188,10 @@ swift tools/galley-debug.swift level.3 theme.sepia open.1 snapshot
 #   commands: level.N theme.<id> open.N next fold unfold scroll.N highlight
 #             palette dark light resize.small|large reset probe snapshot
 #             appearance[.close] settings[.reading|.appearance|.close]
-#             swipe.right|left|hold|release pull.hold|release (trackpad
-#             gestures fed through the real GestureMonitor)
+#             swipe.right|left|hold|release|wobble pull.hold|back|release
+#             (trackpad gestures fed through the real GestureMonitor)
+#             js (runs /private/tmp/galley-debug/eval.js in the page, logs
+#             the result to stderr — measure layout, read scroll position)
 # real on-screen captures (needs Screen Recording for the terminal) —
 # popovers and Settings are their own windows, so capture by window id:
 swift tools/window-bounds.swift Galley     # id layer x,y,w,h title

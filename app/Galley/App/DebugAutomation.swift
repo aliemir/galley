@@ -18,7 +18,7 @@ final class DebugAutomation {
         "snapshot", "probe", "reload", "reset", "palette", "palette.close", "highlight", "next", "previous", "fold", "unfold", "change", "find.close", "resize.small", "resize.large",
         "scroll.top", "scroll.bottom", "dark", "light", "system",
         "appearance", "appearance.close", "settings", "settings.close", "settings.reading", "settings.appearance",
-        "swipe.right", "swipe.left", "swipe.hold", "swipe.release", "pull.hold", "pull.release",
+        "js", "swipe.right", "swipe.left", "swipe.hold", "swipe.release", "swipe.wobble", "pull.hold", "pull.back", "pull.release",
     ] + (1...4).map { "level.\($0)" }
         + Theme.all.map { "theme.\($0.id)" }
         + (0..<30).map { "open.\($0)" }
@@ -112,17 +112,30 @@ final class DebugAutomation {
             let size = argument == "small" ? NSSize(width: 900, height: 640) : NSSize(width: 1440, height: 900)
             window.setFrame(NSRect(origin: window.frame.origin, size: size), display: true, animate: false)
         case "find": model.hideFind()
+        case "js":
+            // Runs /private/tmp/galley-debug/eval.js in the page and logs the result.
+            let path = "/private/tmp/galley-debug/eval.js"
+            guard let script = try? String(contentsOfFile: path, encoding: .utf8) else { debugLog("[js] no \(path)"); return }
+            model.reader.webView.evaluateJavaScript(script) { result, error in
+                debugLog("[js] \(result.map { "\($0)" } ?? "nil") \(error.map { "error: \($0)" } ?? "")")
+            }
         case "swipe":
             // Trackpad fingers: positive x is rightward, which reveals.
             switch argument {
             case "right": Task { await gesture(dx: 120, dy: 0, release: true) }
             case "left": Task { await gesture(dx: -120, dy: 0, release: true) }
             case "hold": Task { await gesture(dx: 100, dy: 0, release: false) }
+            // A real hand: rightward, drifting down, with a vertical first sample.
+            case "wobble": Task { await gesture(dx: 120, dy: 18, release: true, wobble: true) }
             default: postScroll(phase: .ended, dx: 0, dy: 0)
             }
         case "pull":
             // Classic scrolling: fingers moving down scroll toward the end.
-            if argument == "hold" { Task { await gesture(dx: 0, dy: 170, release: false) } } else { postScroll(phase: .ended, dx: 0, dy: 0) }
+            switch argument {
+            case "hold": Task { await gesture(dx: 0, dy: 170, release: false) }
+            case "back": Task { await gesture(dx: 0, dy: -170, release: false) }
+            default: postScroll(phase: .ended, dx: 0, dy: 0)
+            }
         default: break
         }
     }
@@ -132,12 +145,13 @@ final class DebugAutomation {
     /// (right and down positive). Built events report classic scrolling
     /// (`isDirectionInvertedFromDevice` false), where the scroll delta runs
     /// against the fingers, so the deltas are negated.
-    private func gesture(dx: Double, dy: Double, release: Bool) async {
+    private func gesture(dx: Double, dy: Double, release: Bool, wobble: Bool = false) async {
         let steps = 12
-        postScroll(phase: .began, dx: 0, dy: 0)
-        for _ in 0..<steps {
+        postScroll(phase: .began, dx: 0, dy: wobble ? -3 : 0)
+        for step in 0..<steps {
             try? await Task.sleep(for: .milliseconds(12))
-            postScroll(phase: .changed, dx: -dx / Double(steps), dy: -dy / Double(steps))
+            let jitter = wobble ? (step == 0 ? 4.0 : step.isMultiple(of: 2) ? 2 : -2) : 0
+            postScroll(phase: .changed, dx: -dx / Double(steps), dy: -dy / Double(steps) - jitter)
         }
         if release {
             try? await Task.sleep(for: .milliseconds(12))

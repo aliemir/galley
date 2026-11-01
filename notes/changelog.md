@@ -26,6 +26,12 @@ otherwise have to re-derive. Not worth one: typo fixes and formatting.
 
 ## 2026-11-01
 
+- Trackpad gestures lock to one axis: a sideways swipe no longer nudges the
+  page, and a slanted scroll no longer turns into a swipe
+- Pull past the top goes back to the previous document, landing at its end
+- Highlighting no longer re-wraps a paragraph: `box-decoration-break: clone`
+  was switching off `text-wrap: pretty` (measured with the new `js` debug
+  command); inline code paragraphs get balanced wrapping as a bonus
 - Real-screen pass (Screen Recording granted): captured the window, the
   Appearance popover and both Settings tabs. Fixed the popover overflowing
   its edge and misaligned rows, the Settings window's empty third, and a
