@@ -22,12 +22,15 @@ struct OpenDocument {
     var id: String { "\(workspaceID.uuidString)/\(file.id)" }
 }
 
-/// A column beside the page. The reader orders them (Settings → Reading);
-/// each swipe right reveals the next one, further from the page.
+/// A column beside the page. Each has a fixed place (`arrangement`); the
+/// reader's order (Settings → Reading) is only the order swipes reveal them.
 enum PanelColumn: String, CaseIterable, Identifiable {
     case outline, files, workspaces
 
     var id: String { rawValue }
+
+    /// Where the columns sit, left to right, whatever the reveal order.
+    static let arrangement: [PanelColumn] = [.workspaces, .files, .outline]
 
     var title: String {
         switch self {
@@ -661,13 +664,13 @@ final class AppModel {
 
     // MARK: Panels
 
-    /// The columns in play, from the page outwards: the reader's order,
-    /// without the ones switched off.
+    /// The columns in play, in the reader's reveal order, without the ones
+    /// switched off.
     var columns: [PanelColumn] {
         settings.columnOrder.filter { !settings.hiddenColumns.contains($0) }
     }
 
-    /// The columns showing now, from the page outwards.
+    /// The columns showing now, in reveal order.
     var shownColumns: ArraySlice<PanelColumn> { columns.prefix(depth) }
 
     func isShowing(_ column: PanelColumn) -> Bool { shownColumns.contains(column) }

@@ -132,19 +132,18 @@ What actually bothered the user was only the scrollbar popping up and moving
 while the page's length changed under the slide, so the page now hides its
 scrollbar (`scrollbar-width: none`) for the duration of the motion.
 
-## 2026-11-01 — Columns are an ordered stack the reader arranges
+## 2026-11-01 — Columns keep their places; the reader orders the reveals
 
 **Chosen:** the panel state is a *depth* — how many columns of the reader's
-order are showing — instead of fixed levels (page, outline, files,
-workspaces). The order runs outward from the page and also sets the
-on-screen arrangement, so the swipe always adds the next column on the far
-side and removes the outermost one. Any column can be switched off; levels
-simply skip it.
+reveal order are showing — instead of fixed levels (page, outline, files,
+workspaces). The order (Settings → Reading → Columns) decides only which
+column a swipe right brings in next and which a swipe left takes away;
+every column keeps its fixed place on screen (Workspaces · Files ·
+Contents · page). Any column can be switched off; the order skips it.
 
-**Rejected:** keeping a fixed left-to-right arrangement and only changing
-the reveal order — a column would then appear in the middle of the others,
-which breaks the "next column slides in from the left" feel of the swipe.
+**Rejected:** letting the order also rearrange the columns (first in the
+order next to the page). Built first and changed the same day at the
+user's request — the order is "how we toggle things", not a layout.
 
 The stored state keeps the old 1-based level number (depth + 1), so
 existing libraries open unchanged with the default order.
-

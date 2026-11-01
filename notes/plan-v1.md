@@ -23,11 +23,11 @@ insertions, not in a separate diff view.
 
 ## Navigation — one axis
 
-Columns beside the page: **Contents · Files · Workspaces**, in an order the
-reader sets (Settings → Reading → Columns, drag to reorder; each can be
-switched off, Contents also with ⌥⌘2). The first column in the order sits
-next to the page; each swipe right reveals the next one further left, and
-swiping left puts them away in reverse.
+Columns sit in fixed places: **Workspaces · Files · Contents · Page**. The
+order they are revealed in is the reader's (Settings → Reading → Columns,
+drag to reorder; each can be switched off, Contents also with ⌥⌘2): each
+swipe right brings in the next column of that order in its own place, and
+swiping left takes them away in reverse.
 
 - Two-finger horizontal swipe, **interactive** — the column follows the
   fingers and snaps on release (fingers right = reveal, left = hide).

@@ -26,6 +26,7 @@ otherwise have to re-derive. Not worth one: typo fixes and formatting.
 
 ## 2026-11-01
 
+- Column order now sets only the reveal order; columns keep their places on screen
 - Type-to-select in the Files column: typing jumps a highlight to the
   matching file (prefix, then word start; a repeated letter cycles), Return
   opens it, Esc cancels; what was typed shows briefly at the column's foot

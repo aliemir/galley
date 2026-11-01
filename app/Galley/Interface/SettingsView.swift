@@ -41,7 +41,7 @@ private struct ReadingSettings: View {
             } header: {
                 Text("Columns")
             } footer: {
-                Text("Swiping right reveals them from the top down, and swiping left puts them away in reverse; ⌘] and ⌘[ do the same. The first sits next to the page. Drag to reorder.")
+                Text("Swiping right reveals them from the top down, and swiping left puts them away in reverse; ⌘] and ⌘[ do the same. Each keeps its place on screen. Drag to reorder.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }

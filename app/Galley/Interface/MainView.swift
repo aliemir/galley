@@ -104,9 +104,9 @@ private struct ColumnStack: View {
         GeometryReader { geometry in
             let fit = fitting(available: geometry.size.width)
             HStack(spacing: 0) {
-                // The reader's order runs outwards from the page: the last
-                // column in it sits at the far left.
-                ForEach(model.columns.reversed()) { column in
+                // Places are fixed; the reader's order only decides which
+                // column a swipe brings in next.
+                ForEach(PanelColumn.arrangement.filter(model.columns.contains)) { column in
                     self.column(column, scale: fit.scale, limit: fit.depth)
                 }
                 PageView()
