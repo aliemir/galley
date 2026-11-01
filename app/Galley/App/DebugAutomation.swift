@@ -18,7 +18,7 @@ final class DebugAutomation {
         "snapshot", "probe", "reload", "reset", "palette", "palette.close", "highlight", "next", "previous", "fold", "unfold", "change", "find.close", "resize.small", "resize.large",
         "scroll.top", "scroll.bottom", "dark", "light", "system",
         "appearance", "appearance.close", "settings", "settings.close", "settings.general", "settings.reading", "settings.themes", "settings.shortcuts", "settings.icon",
-        "js", "searchopen", "search.token", "search.rate limits", "names.rate", "names.auth", "note", "feedback.copy", "feedback.copyall", "pin", "movepin", "movews", "divider.narrow", "divider.wide", "toggle.outline", "toggle.files", "toggle.workspaces", "focusfiles", "type.api", "type.rate", "type.s", "type.sta", "key.return", "key.escape", "key.down", "key.ctrltab", "key.ctrlshifttab", "key.cmdw", "key.cmdt", "key.cmdreturn", "key.backspace", "key.tab", "type.#", "tab.new", "tab.newnext", "tab.next", "tab.close", "tab.others", "tab.state", "tab.move", "menus", "opened.remove", "highlight.note", "guide", "shortcut.test", "shortcut.reset", "key.cmdy", "key.cmdf", "key.cmdshiftbracket", "columns.reset", "columns.filesfirst", "columns.nocontents", "rail", "rail.off", "identity", "identity.close", "icon.test", "icon.reset", "swipe.right", "swipe.left", "swipe.hold", "swipe.release", "swipe.wobble", "pull.hold", "pull.half", "pull.back", "pull.backhalf", "pull.release",
+        "js", "searchopen", "search.token", "search.rate limits", "names.rate", "names.auth", "note", "feedback.copy", "feedback.copyall", "pin", "movepin", "movews", "divider.narrow", "divider.wide", "toggle.outline", "toggle.files", "toggle.workspaces", "focusfiles", "type.api", "type.rate", "type.s", "type.sta", "key.return", "key.escape", "key.down", "key.ctrltab", "key.ctrlshifttab", "key.cmdw", "key.cmdt", "key.cmdreturn", "key.backspace", "key.tab", "type.#", "tab.new", "tab.newnext", "tab.next", "tab.close", "tab.others", "tab.state", "tab.move", "menus", "opened.remove", "highlight.note", "guide", "shortcut.test", "shortcut.reset", "key.cmdy", "key.cmdf", "key.cmdshiftbracket", "columns.reset", "columns.filesfirst", "columns.nocontents", "rail", "rail.off", "identity", "identity.close", "icon.test", "icon.reset", "swipe.right", "swipe.left", "swipe.slowright", "swipe.slowleft", "pull.slow", "swipe.hold", "swipe.release", "swipe.wobble", "pull.hold", "pull.half", "pull.back", "pull.backhalf", "pull.release",
     ] + (1...4).map { "level.\($0)" }
         + Theme.all.map { "theme.\($0.id)" }
         + (0..<30).map { "open.\($0)" }
@@ -242,6 +242,8 @@ final class DebugAutomation {
             // Trackpad fingers: positive x is rightward, which reveals.
             switch argument {
             case "right": Task { await gesture(dx: 120, dy: 0, release: true) }
+            case "slowright": Task { await gesture(dx: 220, dy: 0, release: true, steps: 36, interval: 16) }
+            case "slowleft": Task { await gesture(dx: -220, dy: 0, release: true, steps: 36, interval: 16) }
             case "left": Task { await gesture(dx: -120, dy: 0, release: true) }
             case "hold": Task { await gesture(dx: 100, dy: 0, release: false) }
             // A real hand: rightward, drifting down, with a vertical first sample.
@@ -252,6 +254,13 @@ final class DebugAutomation {
             // Classic scrolling: fingers moving down scroll toward the end.
             switch argument {
             case "hold": Task { await gesture(dx: 0, dy: 170, release: false) }
+            // Past the threshold, slowly, then let go: the next page.
+            case "slow":
+                Task {
+                    await gesture(dx: 0, dy: 300, release: false, steps: 50, interval: 18)
+                    try? await Task.sleep(for: .milliseconds(350))
+                    postScroll(phase: .ended, dx: 0, dy: 0)
+                }
             case "back": Task { await gesture(dx: 0, dy: -170, release: false) }
             case "half": Task { await gesture(dx: 0, dy: 80, release: false) }
             case "backhalf": Task { await gesture(dx: 0, dy: -80, release: false) }
@@ -266,11 +275,12 @@ final class DebugAutomation {
     /// (right and down positive). Built events report classic scrolling
     /// (`isDirectionInvertedFromDevice` false), where the scroll delta runs
     /// against the fingers, so the deltas are negated.
-    private func gesture(dx: Double, dy: Double, release: Bool, wobble: Bool = false) async {
-        let steps = 12
+    /// `steps` × `interval` ms of finger travel: the default is a quick
+    /// flick; the guide's GIFs use a slower, readable one.
+    private func gesture(dx: Double, dy: Double, release: Bool, wobble: Bool = false, steps: Int = 12, interval: Int = 12) async {
         postScroll(phase: .began, dx: 0, dy: wobble ? -3 : 0)
         for step in 0..<steps {
-            try? await Task.sleep(for: .milliseconds(12))
+            try? await Task.sleep(for: .milliseconds(interval))
             let jitter = wobble ? (step == 0 ? 4.0 : step.isMultiple(of: 2) ? 2 : -2) : 0
             postScroll(phase: .changed, dx: -dx / Double(steps), dy: -dy / Double(steps) - jitter)
         }

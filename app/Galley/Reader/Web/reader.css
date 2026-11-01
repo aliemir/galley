@@ -271,6 +271,9 @@ th {
 }
 th, td { padding: .55em .9em .55em 0; vertical-align: top; overflow-wrap: break-word; hyphens: manual; -webkit-hyphens: manual; }
 th { white-space: nowrap; }
+td code { white-space: nowrap; }
+/* Key symbols in running text (⇧⌘C), in the face macOS menus use. */
+.keys { font-family: -apple-system, system-ui, sans-serif; font-size: .9em; letter-spacing: .04em; }
 th:last-child, td:last-child { padding-right: 0; }
 td { border-bottom: 1px solid var(--rule); }
 tr:last-child > td { border-bottom: 0; }

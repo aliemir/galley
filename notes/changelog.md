@@ -26,6 +26,13 @@ otherwise have to re-derive. Not worth one: typo fixes and formatting.
 
 ## 2026-11-01
 
+- The guide, rewritten to cover everything: reading, columns and pulling (as
+  GIFs), changes, marking up, handing back — Copy Feedback and the `galley`
+  command with its skill — finding, tabs, single files, hidden comments (with
+  a live one), themes, a key table, every syntax, and what keeps files safe.
+  `tools/capture-guide.sh` now records the GIFs too (ffmpeg)
+- Key symbols in running text (⇧⌘C) are drawn in the system face — reading
+  faces lack them; code in table cells no longer breaks across lines
 - Feedback says where each passage is: "Marked in Rollout › Token shape"
   (its headings, outermost first, without the document's own title), worked
   out when copied or read so it follows the file as it is now; in Copy

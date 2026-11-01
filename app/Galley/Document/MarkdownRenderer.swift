@@ -423,8 +423,16 @@ nonisolated private final class HTMLBuilder {
         if html.contains(":") {
             html = Emoji.replaceShortcodes(in: html)
         }
+        // Key symbols (⇧⌘C): reading faces lack most of them, and the stand-in
+        // glyphs the browser finds sit thin and off the line. The system face
+        // draws them as macOS menus do.
+        if html.unicodeScalars.contains(where: { Self.keySymbols.contains($0) }) {
+            html = html.replacingOccurrences(of: "[⌃⌥⇧⌘⇥⇤↩⌫⌦⎋⇪⏏]+", with: "<span class=\"keys\">$0</span>", options: .regularExpression)
+        }
         return html
     }
+
+    private static let keySymbols = Set("⌃⌥⇧⌘⇥⇤↩⌫⌦⎋⇪⏏".unicodeScalars)
 
     private func image(_ image: Markdown.Image) -> String {
         let alt = HTML.attribute(image.plainText)

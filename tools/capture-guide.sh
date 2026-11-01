@@ -2,8 +2,9 @@
 # Captures the pictures in the Galley Guide (app/Galley/Guide/) from the
 # debug build: a throwaway library on a copy of the Showcase workspace, the
 # Paper theme passed at launch, so the reader's own library and settings are
-# never touched. Needs Screen Recording for the terminal. Quits any running
-# Galley first (one Galley at a time — see AGENTS.md).
+# never touched. Needs Screen Recording for the terminal, and ffmpeg
+# (Homebrew) for the GIFs. Quits any running Galley first (one Galley at a
+# time — see AGENTS.md).
 #
 # Usage: tools/capture-guide.sh   (after building the Debug scheme)
 set -euo pipefail
@@ -38,6 +39,24 @@ shot() {
   # Finder info from screencapture and sips fails code signing.
   xattr -c "$file"
   echo "wrote $file"
+}
+
+# gif <name> <seconds> <debug commands…>: records the main window while the
+# commands run (a moment of stillness either side), then makes a GIF.
+gif() {
+  local name=$1 seconds=$2; shift 2
+  local id=$(window)
+  local bounds=$(swift tools/window-bounds.swift Galley | awk -v id="$id" '$1 == id { print $3 }')
+  screencapture -x -v -V "$seconds" -R"$bounds" "$WORK/$name.mov" &
+  local recording=$!
+  sleep 0.8
+  debug "$@"
+  wait $recording
+  ffmpeg -loglevel error -y -i "$WORK/$name.mov" \
+    -vf "fps=12,scale=760:-1:flags=lanczos,split[a][b];[a]palettegen=stats_mode=diff[p];[b][p]paletteuse=dither=bayer:bayer_scale=4:diff_mode=rectangle" \
+    "$OUT/guide-$name.gif"
+  xattr -c "$OUT/guide-$name.gif"
+  echo "wrote $OUT/guide-$name.gif"
 }
 
 osascript -e 'tell application id "com.aliemir.galley" to quit' 2>/dev/null || true
@@ -82,6 +101,12 @@ debug palette.close
 debug settings.themes wait.1800
 shot themes "$(window Themes)"
 debug settings.close wait.300
+
+# 6. GIFs, in a smaller window so they stay light.
+debug resize.small level.1 open.1 wait.1500
+gif columns 7 swipe.slowright wait.1400 swipe.slowright wait.1400 swipe.slowleft wait.1200 swipe.slowleft
+debug level.1 open.3 wait.1500 scroll.bottom wait.900
+gif pull 5 pull.slow
 
 osascript -e 'tell application id "com.aliemir.galley" to quit' 2>/dev/null || true
 echo "done — check $OUT/guide-*.png"
