@@ -263,7 +263,7 @@ private struct PanelToggle: View {
     @Environment(\.palette) private var palette
 
     var body: some View {
-        IconButton(systemName: "sidebar.left", help: model.visibleColumns.isEmpty ? "Show Panels (⌘\\)" : "Focus on the Page (⌘\\)") {
+        IconButton(systemName: "sidebar.left", help: (model.visibleColumns.isEmpty ? "Show Panels" : "Focus on the Page") + Shortcuts.shared.label(.togglePanels)) {
             model.togglePanels()
         }
         .padding(.leading, 80)

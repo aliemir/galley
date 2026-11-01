@@ -129,7 +129,7 @@ struct LayoutControls: View {
                             .contentShape(Rectangle())
                     }
                     .disabled(settings.fontSize <= ReaderSettings.fontSizes.lowerBound)
-                    .help("Smaller Text (⌘−)")
+                    .help("Smaller Text" + Shortcuts.shared.label(.smallerText))
                     Text("\(Int(settings.fontSize)) pt")
                         .monospacedDigit()
                         .frame(maxWidth: .infinity)
@@ -139,7 +139,7 @@ struct LayoutControls: View {
                             .contentShape(Rectangle())
                     }
                     .disabled(settings.fontSize >= ReaderSettings.fontSizes.upperBound)
-                    .help("Bigger Text (⌘+)")
+                    .help("Bigger Text" + Shortcuts.shared.label(.biggerText))
                 }
                 .buttonStyle(.plain)
                 .padding(2)

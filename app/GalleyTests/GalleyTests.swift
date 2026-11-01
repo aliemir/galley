@@ -1,3 +1,4 @@
+import AppKit
 import Foundation
 import Testing
 @testable import Galley
@@ -446,5 +447,27 @@ struct OpenedFilesTests {
         let record = try JSONDecoder().decode(WorkspaceRecord.self, from: Data(json.utf8))
         #expect(record.kind == nil)
         #expect(record.documents.isEmpty)
+    }
+}
+
+struct KeyShortcutTests {
+    @Test func displaysInMenuOrder() {
+        #expect(KeyShortcut("r", [.command, .option]).display == "⌥⌘R")
+        #expect(KeyShortcut("tab", [.control, .shift]).display == "⌃⇧⇥")
+        #expect(KeyShortcut("down", [.command, .option]).display == "⌥⌘↓")
+        #expect(KeyShortcut("]", [.command, .shift]).display == "⇧⌘]")
+    }
+
+    @Test func storesOnlyTheModifiersThatMatter() throws {
+        let shortcut = KeyShortcut("k", [.command, .capsLock, .numericPad])
+        #expect(shortcut == KeyShortcut("k"))
+        let decoded = try JSONDecoder().decode(KeyShortcut.self, from: JSONEncoder().encode(shortcut))
+        #expect(decoded == shortcut)
+    }
+
+    @Test func everyActionHasADistinctDefault() {
+        let defaults = ShortcutAction.allCases.compactMap(\.defaultShortcut)
+        #expect(Set(defaults).count == defaults.count)
+        #expect(ShortcutAction.allCases.allSatisfy { ShortcutAction.groups.contains($0.group) })
     }
 }

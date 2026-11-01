@@ -1,6 +1,7 @@
 import SwiftUI
 
 /// Every action has a shortcut, and the panel shortcuts mirror the swipe.
+/// The keys are the reader's own (Settings → Shortcuts), read from `Shortcuts`.
 struct GalleyCommands: Commands {
     let model: AppModel
 
@@ -12,52 +13,52 @@ struct GalleyCommands: Commands {
                 model.quickOpenOpensTab = true
                 model.isQuickOpenVisible = true
             }
-            .keyboardShortcut("t")
+            .shortcut(.newTab)
             .disabled(model.workspaces.isEmpty)
             Button("Open…") { model.openFolderPanel() }
-                .keyboardShortcut("o")
+                .shortcut(.open)
             Button("Go to File…") {
                 model.quickOpenSearchesText = false
                 model.isQuickOpenVisible.toggle()
             }
-                .keyboardShortcut("k")
+                .shortcut(.goToFile)
                 .disabled(model.workspaces.isEmpty)
             Button("Search All Files…") {
                 model.quickOpenSearchesText = true
                 model.isQuickOpenVisible = true
             }
-            .keyboardShortcut("f", modifiers: [.command, .shift])
+            .shortcut(.searchAllFiles)
             .disabled(model.workspaces.isEmpty)
             Button("Go to Section…") {
                 model.quickOpenSearchesText = false
                 model.isQuickOpenVisible = true
                 model.quickOpenSeed = "#"
             }
-            .keyboardShortcut("k", modifiers: [.command, .shift])
+            .shortcut(.goToSection)
             .disabled(model.current == nil)
         }
         CommandGroup(after: .newItem) {
             Divider()
             Button("Open in Default App") { model.openInEditor() }
-                .keyboardShortcut("e")
+                .shortcut(.openInDefaultApp)
                 .disabled(model.current == nil)
             Button("Reveal in Finder") { model.revealInFinder() }
-                .keyboardShortcut("r", modifiers: [.command, .option])
+                .shortcut(.revealInFinder)
                 .disabled(model.selectedWorkspace == nil)
             Button("Copy Path") { model.copyPath() }
-                .keyboardShortcut("c", modifiers: [.command, .option, .shift])
+                .shortcut(.copyPath)
                 .disabled(model.current == nil)
         }
         CommandGroup(replacing: .saveItem) {
             Button(model.tabs.count > 1 ? "Close Tab" : "Close Window") { model.closeTabOrWindow() }
-                .keyboardShortcut("w")
+                .shortcut(.closeTab)
             Button("Close Other Tabs") { if let id = model.activeTabID { model.closeOtherTabs(id) } }
-                .keyboardShortcut("w", modifiers: [.command, .option])
+                .shortcut(.closeOtherTabs)
                 .disabled(model.tabs.count < 2)
         }
         CommandGroup(replacing: .printItem) {
             Button("Print…") { model.printPage() }
-                .keyboardShortcut("p")
+                .shortcut(.print)
                 .disabled(model.current == nil)
         }
 
@@ -67,96 +68,96 @@ struct GalleyCommands: Commands {
                 model.showFind()
                 model.findFocusRequest += 1
             }
-            .keyboardShortcut("f")
+            .shortcut(.find)
             .disabled(model.current == nil)
             Button("Find Next") { Task { await model.runFind(direction: 1) } }
-                .keyboardShortcut("g")
+                .shortcut(.findNext)
                 .disabled(model.findQuery.isEmpty)
             Button("Find Previous") { Task { await model.runFind(direction: -1) } }
-                .keyboardShortcut("g", modifiers: [.command, .shift])
+                .shortcut(.findPrevious)
                 .disabled(model.findQuery.isEmpty)
         }
 
         CommandGroup(before: .toolbar) {
-            // ⌘1–⌘3 toggle each column; the numbers follow their places.
-            ForEach(Array(PanelColumn.arrangement.enumerated()), id: \.element) { index, column in
+            // ⌘1–⌘3 by default, numbered by the columns' places.
+            ForEach(PanelColumn.arrangement) { column in
                 Toggle(column.title, isOn: Binding(
                     get: { model.isShowing(column) },
                     set: { model.setColumn(column, visible: $0) }
                 ))
-                .keyboardShortcut(KeyEquivalent(Character("\(index + 1)")))
+                .shortcut(column.shortcutAction)
             }
             Button(model.visibleColumns.isEmpty ? "Show Panels" : "Hide All Panels") { model.togglePanels() }
-                .keyboardShortcut("\\")
+                .shortcut(.togglePanels)
             Button("Show Next Panel") { model.stepLevel(1) }
-                .keyboardShortcut("]")
+                .shortcut(.showNextPanel)
             Button("Hide Last Panel") { model.stepLevel(-1) }
-                .keyboardShortcut("[")
+                .shortcut(.hideLastPanel)
             Toggle("Workspaces as Icons", isOn: Binding(
                 get: { model.settings.workspacesAsIcons },
                 set: { value in withAnimation(.galleyPanel) { model.settings.workspacesAsIcons = value } }
             ))
-            .keyboardShortcut("4", modifiers: [.command, .option])
+            .shortcut(.workspacesAsIcons)
             Divider()
             Button("Bigger Text") { model.settings.adjustFontSize(by: 1) }
-                .keyboardShortcut("+")
+                .shortcut(.biggerText)
             Button("Smaller Text") { model.settings.adjustFontSize(by: -1) }
-                .keyboardShortcut("-")
+                .shortcut(.smallerText)
             Button("Actual Size") { model.settings.fontSize = 17 }
-                .keyboardShortcut("0")
+                .shortcut(.actualSize)
             Divider()
             Toggle("Mark Changes", isOn: Binding(
                 get: { model.settings.showChanges },
                 set: { model.settings.showChanges = $0 }
             ))
-            .keyboardShortcut("d", modifiers: [.command, .shift])
+            .shortcut(.markChanges)
             Divider()
         }
 
         CommandGroup(before: .windowList) {
             Button("Show Next Tab") { model.showTab(offset: 1) }
-                .keyboardShortcut(.tab, modifiers: .control)
+                .shortcut(.nextTab)
                 .disabled(model.tabs.count < 2)
             Button("Show Previous Tab") { model.showTab(offset: -1) }
-                .keyboardShortcut(.tab, modifiers: [.control, .shift])
+                .shortcut(.previousTab)
                 .disabled(model.tabs.count < 2)
             Divider()
         }
 
         CommandMenu("Go") {
             Button("Next Document") { model.goToNext() }
-                .keyboardShortcut(.downArrow, modifiers: [.command, .option])
+                .shortcut(.nextDocument)
             Button("Previous Document") { model.goToPrevious() }
-                .keyboardShortcut(.upArrow, modifiers: [.command, .option])
+                .shortcut(.previousDocument)
             Button("Next Unread") { model.goToNextUnread() }
-                .keyboardShortcut("u", modifiers: [.command, .option])
+                .shortcut(.nextUnread)
             Divider()
             Button("Next Change") { model.jumpToChange(1) }
-                .keyboardShortcut("j")
+                .shortcut(.nextChange)
             Button("Previous Change") { model.jumpToChange(-1) }
-                .keyboardShortcut("j", modifiers: [.command, .shift])
+                .shortcut(.previousChange)
         }
 
         CommandMenu("Document") {
             Button(model.current?.status == .read ? "Mark as Unread" : "Mark as Read") { model.toggleRead() }
-                .keyboardShortcut("u", modifiers: [.command, .shift])
+                .shortcut(.toggleRead)
                 .disabled(model.current == nil)
             Button(model.isCurrentPinned ? "Unpin" : "Pin") { model.togglePinCurrent() }
-                .keyboardShortcut("p", modifiers: [.command, .option])
+                .shortcut(.togglePin)
                 .disabled(model.current == nil)
             Button("Mark All as Read") { model.markAllRead() }
-                .keyboardShortcut("u", modifiers: [.command, .option, .shift])
+                .shortcut(.markAllRead)
                 .disabled((model.selectedWorkspace?.unreadCount ?? 0) == 0)
             Divider()
             Button("Highlight Selection") { model.highlightSelection() }
-                .keyboardShortcut("h", modifiers: [.command, .control])
+                .shortcut(.highlight)
                 .disabled(model.current == nil)
             Button("Add Note to Selection") { model.noteSelection() }
-                .keyboardShortcut("n", modifiers: [.command, .control])
+                .shortcut(.addNote)
                 .disabled(model.current == nil)
             Divider()
             Button("Copy Feedback") { model.copyFeedback() }
-                .keyboardShortcut("c", modifiers: [.command, .shift])
+                .shortcut(.copyFeedback)
                 .disabled(!model.hasFeedback)
             Button("Copy Feedback for Workspace") { model.copyWorkspaceFeedback() }
                 .disabled(!model.workspaceHasFeedback)
@@ -166,10 +167,10 @@ struct GalleyCommands: Commands {
                 .disabled(!model.workspaceHasFeedback)
             Divider()
             Button("Fold All Sections") { model.foldAll(true) }
-                .keyboardShortcut(.leftArrow, modifiers: [.command, .option])
+                .shortcut(.foldAll)
                 .disabled(model.current == nil)
             Button("Unfold All Sections") { model.foldAll(false) }
-                .keyboardShortcut(.rightArrow, modifiers: [.command, .option])
+                .shortcut(.unfoldAll)
                 .disabled(model.current == nil)
         }
     }

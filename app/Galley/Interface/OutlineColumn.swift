@@ -38,8 +38,7 @@ struct OutlineColumn: View {
                 Button("Previous Change") { model.jumpToChange(-1) }
             }
             Divider()
-            Button("Hide Contents (⌘3)") { model.setColumn(.outline, visible: false) }
-                .keyboardShortcut("2", modifiers: [.command, .option])
+            Button("Hide Contents" + Shortcuts.shared.label(.toggleContents)) { model.setColumn(.outline, visible: false) }
         } label: {
             Image(systemName: "ellipsis")
                 .font(.system(size: 13, weight: .medium))
@@ -62,7 +61,7 @@ private struct OutlineList: View {
     /// Copy or clear the feedback, for this document or the workspace.
     private var feedbackMenu: some View {
         Menu {
-            Button("Copy Feedback (⇧⌘C)") { model.copyFeedback() }
+            Button("Copy Feedback" + Shortcuts.shared.label(.copyFeedback)) { model.copyFeedback() }
             Button("Copy Feedback for Workspace") { model.copyWorkspaceFeedback() }
             Divider()
             Button("Clear Feedback…") { model.clearFeedback() }

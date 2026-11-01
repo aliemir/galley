@@ -14,6 +14,9 @@ struct SettingsView: View {
             ThemeGallery()
                 .tabItem { Label("Themes", systemImage: "swatchpalette") }
                 .tag("themes")
+            ShortcutSettings()
+                .tabItem { Label("Shortcuts", systemImage: "command") }
+                .tag("shortcuts")
         }
         .frame(width: SettingsView.width)
     }
@@ -23,6 +26,11 @@ struct SettingsView: View {
 
 private struct GeneralSettings: View {
     @Environment(AppModel.self) private var model
+
+    /// A shortcut as the reader has it, for the explanation below the columns.
+    private func key(_ action: ShortcutAction) -> String {
+        Shortcuts.shared[action]?.display ?? "its shortcut"
+    }
 
     var body: some View {
         @Bindable var settings = model.settings
@@ -47,7 +55,7 @@ private struct GeneralSettings: View {
             } header: {
                 Text("Columns")
             } footer: {
-                Text("Swiping right brings them in from the top down, and swiping left takes them away in reverse; ⌘] and ⌘[ do the same. Drag to reorder; switch one off and swipes pass over it. Each column keeps its place, and ⌘1, ⌘2 and ⌘3 show or hide Workspaces, Files and Contents on their own; ⌘\\ hides them all.")
+                Text("Swiping right brings them in from the top down, and swiping left takes them away in reverse; \(key(.showNextPanel)) and \(key(.hideLastPanel)) do the same. Drag to reorder; switch one off and swipes pass over it. Each column keeps its place, and \(key(.toggleWorkspaces)), \(key(.toggleFiles)) and \(key(.toggleContents)) show or hide Workspaces, Files and Contents on their own; \(key(.togglePanels)) hides them all.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }

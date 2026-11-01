@@ -212,14 +212,14 @@ private struct CloseButton: View {
         }
         .buttonStyle(.plain)
         .onHover { isHovered = $0 }
-        .help("Close Tab (⌘W)")
+        .help("Close Tab" + Shortcuts.shared.label(.closeTab))
         .accessibilityLabel("Close Tab")
     }
 }
 
-/// ⌃Tab and ⌃⇧Tab step through the tabs, as in Safari. Read by key code
-/// rather than left to the menu: a real ⇧Tab arrives as a back-tab
-/// character, which the menu's ⌃⇧Tab never matched.
+/// Show Next Tab and Show Previous Tab (⌃Tab and ⌃⇧Tab unless the reader
+/// changed them), read here rather than left to the menu: a real ⇧Tab
+/// arrives as a back-tab character, which the menu's ⌃⇧Tab never matched.
 @MainActor
 final class TabKeys {
     private weak var window: NSWindow?
@@ -229,11 +229,16 @@ final class TabKeys {
         self.window = window
         monitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self, weak model] event in
             MainActor.assumeIsolated {
-                // With one tab, ⌃Tab keeps its ordinary job of moving focus.
-                guard let self, let model, model.tabs.count > 1, event.window === self.window, event.keyCode == 48,
-                      event.modifierFlags.intersection(.deviceIndependentFlagsMask).subtracting([.shift, .capsLock]) == .control
-                else { return event }
-                model.showTab(offset: event.modifierFlags.contains(.shift) ? -1 : 1)
+                // With one tab, the keys keep their ordinary jobs (⌃Tab moves focus).
+                guard let self, let model, model.tabs.count > 1, event.window === self.window else { return event }
+                let shortcuts = Shortcuts.shared
+                if shortcuts[.nextTab]?.matches(event) == true {
+                    model.showTab(offset: 1)
+                } else if shortcuts[.previousTab]?.matches(event) == true {
+                    model.showTab(offset: -1)
+                } else {
+                    return event
+                }
                 return nil
             }
         }

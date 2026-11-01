@@ -55,6 +55,14 @@ enum PanelColumn: String, CaseIterable, Identifiable {
     /// number counted through.
     static let legacyOrder: [PanelColumn] = [.outline, .files, .workspaces]
 
+    var shortcutAction: ShortcutAction {
+        switch self {
+        case .outline: .toggleContents
+        case .files: .toggleFiles
+        case .workspaces: .toggleWorkspaces
+        }
+    }
+
     var title: String {
         switch self {
         case .outline: "Contents"

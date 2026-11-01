@@ -41,7 +41,7 @@ struct PageView: View {
             if let current = model.current, !current.highlights.isEmpty {
                 FeedbackButton(
                     count: current.highlights.count,
-                    help: "Copy this file's feedback for an agent (⇧⌘C)",
+                    help: "Copy this file's feedback for an agent" + Shortcuts.shared.label(.copyFeedback),
                     copy: model.copyFeedback,
                     menu: {
                         Button("Copy File Feedback") { model.copyFeedback() }
@@ -65,11 +65,11 @@ struct PageView: View {
                 )
             }
             if model.current?.changes.isEmpty == false {
-                IconButton(systemName: "arrow.down.to.line.compact", help: "Next Change (⌘J)") {
+                IconButton(systemName: "arrow.down.to.line.compact", help: "Next Change" + Shortcuts.shared.label(.nextChange)) {
                     model.jumpToChange(1)
                 }
             }
-            IconButton(systemName: "magnifyingglass", help: "Find (⌘F)", isActive: model.isFindVisible) {
+            IconButton(systemName: "magnifyingglass", help: "Find" + Shortcuts.shared.label(.find), isActive: model.isFindVisible) {
                 withAnimation(.easeOut(duration: 0.18)) {
                     if model.isFindVisible { model.hideFind() } else { model.showFind() }
                 }

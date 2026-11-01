@@ -18,7 +18,7 @@ final class DebugAutomation {
         "snapshot", "probe", "reload", "reset", "palette", "palette.close", "highlight", "next", "previous", "fold", "unfold", "change", "find.close", "resize.small", "resize.large",
         "scroll.top", "scroll.bottom", "dark", "light", "system",
         "appearance", "appearance.close", "settings", "settings.close", "settings.general", "settings.reading", "settings.themes", "settings.shortcuts", "settings.icon",
-        "js", "searchopen", "search.token", "search.rate limits", "names.rate", "note", "feedback.copy", "feedback.copyall", "pin", "movepin", "movews", "divider.narrow", "divider.wide", "toggle.outline", "toggle.files", "toggle.workspaces", "focusfiles", "type.api", "type.rate", "type.s", "type.sta", "key.return", "key.escape", "key.down", "key.ctrltab", "key.ctrlshifttab", "key.cmdw", "key.cmdt", "key.cmdreturn", "key.backspace", "key.tab", "type.#", "tab.new", "tab.newnext", "tab.next", "tab.close", "tab.others", "tab.state", "tab.move", "menus", "opened.remove", "columns.reset", "columns.filesfirst", "columns.nocontents", "rail", "rail.off", "identity", "identity.close", "icon.test", "icon.reset", "swipe.right", "swipe.left", "swipe.hold", "swipe.release", "swipe.wobble", "pull.hold", "pull.half", "pull.back", "pull.backhalf", "pull.release",
+        "js", "searchopen", "search.token", "search.rate limits", "names.rate", "note", "feedback.copy", "feedback.copyall", "pin", "movepin", "movews", "divider.narrow", "divider.wide", "toggle.outline", "toggle.files", "toggle.workspaces", "focusfiles", "type.api", "type.rate", "type.s", "type.sta", "key.return", "key.escape", "key.down", "key.ctrltab", "key.ctrlshifttab", "key.cmdw", "key.cmdt", "key.cmdreturn", "key.backspace", "key.tab", "type.#", "tab.new", "tab.newnext", "tab.next", "tab.close", "tab.others", "tab.state", "tab.move", "menus", "opened.remove", "shortcut.test", "shortcut.reset", "key.cmdy", "key.cmdf", "key.cmdshiftbracket", "columns.reset", "columns.filesfirst", "columns.nocontents", "rail", "rail.off", "identity", "identity.close", "icon.test", "icon.reset", "swipe.right", "swipe.left", "swipe.hold", "swipe.release", "swipe.wobble", "pull.hold", "pull.half", "pull.back", "pull.backhalf", "pull.release",
     ] + (1...4).map { "level.\($0)" }
         + Theme.all.map { "theme.\($0.id)" }
         + (0..<30).map { "open.\($0)" }
@@ -176,6 +176,14 @@ final class DebugAutomation {
         case "opened":
             // Takes the first opened file out of Opened Files.
             if let file = model.openedFiles?.files.first { model.removeOpenedFile(file) }
+        case "shortcut":
+            // "test": Find moves to ⌘Y and Show Next Tab to ⇧⌘]; "reset" undoes it.
+            if argument == "test" {
+                Shortcuts.shared.set(KeyShortcut("y"), for: .find)
+                Shortcuts.shared.set(KeyShortcut("]", [.command, .shift]), for: .nextTab)
+            } else {
+                Shortcuts.shared.resetAll()
+            }
         case "menus":
             // Every menu item with a shortcut, to check what a key reaches.
             for top in NSApp.mainMenu?.items ?? [] {
@@ -197,6 +205,9 @@ final class DebugAutomation {
             case "cmdw": postKey("w", keyCode: 13, modifiers: .command)
             case "cmdt": postKey("t", keyCode: 17, modifiers: .command)
             case "cmdreturn": postKey("\r", keyCode: 36, modifiers: .command)
+            case "cmdy": postKey("y", keyCode: 16, modifiers: .command)
+            case "cmdf": postKey("f", keyCode: 3, modifiers: .command)
+            case "cmdshiftbracket": postKey("}", keyCode: 30, modifiers: [.command, .shift])
             case "backspace": postKey("\u{7F}", keyCode: 51)
             case "tab": postKey("\t", keyCode: 48)
             default: postKey(String(UnicodeScalar(NSDownArrowFunctionKey)!), keyCode: 125)

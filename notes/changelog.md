@@ -26,6 +26,12 @@ otherwise have to re-derive. Not worth one: typo fixes and formatting.
 
 ## 2026-11-01
 
+- Every shortcut is the reader's own: Settings → Shortcuts lists all 40 by
+  menu, with a filter; click one and press new keys (Esc cancels, Delete
+  removes it). A shortcut taken from another action is moved and said so;
+  macOS's and editing's own (⌘Q, ⌘C…) and bare keys are refused. Menus,
+  tooltips, the Settings explanation and the tab keys all follow
+  (`App/Shortcuts.swift`)
 - Settings rebuilt as panes, Bear-style: General, Reading (typeface cards,
   size slider, spacing, width, Restore Defaults) and Themes — a gallery of
   cards, each a small page in its own colours (a change, a highlight, a

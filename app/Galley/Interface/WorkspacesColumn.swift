@@ -16,7 +16,7 @@ struct WorkspacesColumn: View {
         VStack(spacing: 0) {
             ColumnHeader(title: "Workspaces") {
                 Menu {
-                    Button("Show as Icons (⌥⌘4)") { model.settings.workspacesAsIcons = true }
+                    Button("Show as Icons" + Shortcuts.shared.label(.workspacesAsIcons)) { model.settings.workspacesAsIcons = true }
                 } label: {
                     Image(systemName: "ellipsis")
                         .font(.system(size: 13, weight: .medium))
@@ -52,7 +52,7 @@ struct WorkspacesColumn: View {
                     .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
-            .help("Open a folder as a workspace (⌘O)")
+            .help("Open a folder as a workspace" + Shortcuts.shared.label(.open))
         }
     }
 }
@@ -145,7 +145,7 @@ private struct AddWorkspaceTile: View {
         }
         .buttonStyle(.plain)
         .onHover { isHovered = $0 }
-        .help("Open Folder… (⌘O)")
+        .help("Open Folder…" + Shortcuts.shared.label(.open))
         .accessibilityLabel("Open Folder")
     }
 }
