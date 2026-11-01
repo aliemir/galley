@@ -26,6 +26,8 @@ otherwise have to re-derive. Not worth one: typo fixes and formatting.
 
 ## 2026-11-01
 
+- Contents and Files lists end with 32 pt of space, so the last row can be
+  scrolled clear of the window's bottom edge; the workspace list gets a little
 - Tidied names are title case: "Auth Migration Plan", with short words
   ("of", "the", "to"…) lowercase inside a title, acronyms as before
 - Your marks are purple everywhere: highlights and note cards on the page

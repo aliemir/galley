@@ -114,7 +114,10 @@ private struct OutlineList: View {
                     }
                 }
                 .padding(.horizontal, 8)
-                .padding(.vertical, 4)
+                .padding(.top, 4)
+                // Room past the last row, so the end of the list can be
+                // scrolled up off the window's bottom edge.
+                .padding(.bottom, MainView.listTail)
             }
             .onChange(of: model.currentHeading) { _, id in
                 guard let id else { return }

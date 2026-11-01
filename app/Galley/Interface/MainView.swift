@@ -11,6 +11,8 @@ struct MainView: View {
 
     /// The empty strip at the top of every column, where the traffic lights sit.
     static let bandHeight: CGFloat = 40
+    /// Space after the last row of a column's list.
+    static let listTail: CGFloat = 32
 
     var body: some View {
         let palette = model.palette

@@ -37,6 +37,7 @@ struct WorkspacesColumn: View {
                 }
                 .padding(.horizontal, 8)
                 .padding(.top, 2)
+                .padding(.bottom, 12)
             }
             .scrollIndicators(.never)
             Button {

@@ -115,7 +115,7 @@ struct FilesColumn: View {
                         }
                     }
                     .padding(.horizontal, 8)
-                    .padding(.bottom, 16)
+                    .padding(.bottom, MainView.listTail)
                 }
                 .scrollIndicators(.automatic)
                 .onChange(of: model.current?.file.id) { _, id in
