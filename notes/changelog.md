@@ -26,6 +26,12 @@ otherwise have to re-derive. Not worth one: typo fixes and formatting.
 
 ## 2026-11-01
 
+- Small sideways swipes (under 28 pt) no longer move panels
+- Badges show new, changed and feedback separately with counts (workspace
+  rows, rail dots, Files header); files get a feedback dot that grows into
+  a count on hover
+- Copy-feedback buttons for the file and the workspace in the page's top
+  strip, each with a chevron menu to clear
 - Feedback: a note on any highlight ("Add Note" on the selection pill, ⌃⌘N,
   or on a highlight), shown as a card under its passage and in Contents;
   Copy Feedback (⇧⌘C, or for the workspace) for pasting to an agent; Clear

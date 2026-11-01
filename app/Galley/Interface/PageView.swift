@@ -26,6 +26,32 @@ struct PageView: View {
                 FindBar()
                     .transition(.move(edge: .top).combined(with: .opacity))
             }
+            if let current = model.current, !current.highlights.isEmpty {
+                FeedbackButton(
+                    count: current.highlights.count,
+                    help: "Copy this file's feedback for an agent (⇧⌘C)",
+                    copy: model.copyFeedback,
+                    menu: {
+                        Button("Copy File Feedback") { model.copyFeedback() }
+                        Divider()
+                        Button("Clear File Feedback…") { model.clearFeedback() }
+                    },
+                    icon: { Image(systemName: "text.bubble").font(.system(size: 12.5)) }
+                )
+            }
+            if let workspace = model.selectedWorkspace, workspace.feedbackCount > 0 {
+                FeedbackButton(
+                    count: workspace.feedbackCount,
+                    help: "Copy all feedback in \(workspace.name) for an agent",
+                    copy: model.copyWorkspaceFeedback,
+                    menu: {
+                        Button("Copy Workspace Feedback") { model.copyWorkspaceFeedback() }
+                        Divider()
+                        Button("Clear All Feedback in \(workspace.name)…") { model.clearWorkspaceFeedback() }
+                    },
+                    icon: { WorkspaceIcon(workspace: workspace, size: 15) }
+                )
+            }
             if model.current?.changes.isEmpty == false {
                 IconButton(systemName: "arrow.down.to.line.compact", help: "Next Change (⌘J)") {
                     model.jumpToChange(1)
@@ -162,5 +188,78 @@ private struct FindBar: View {
         )
         .onAppear { isFocused = true }
         .onChange(of: model.findFocusRequest) { _, _ in isFocused = true }
+    }
+}
+
+/// Copy feedback in one click, with the rest a chevron away: the count and
+/// what it is about on the left, a menu on the right, one shape around both.
+private struct FeedbackButton<Icon: View, Items: View>: View {
+    let count: Int
+    let help: String
+    let copy: () -> Void
+    @ViewBuilder let menu: () -> Items
+    @ViewBuilder let icon: () -> Icon
+    @Environment(\.palette) private var palette
+    @State private var isHovered = false
+    @State private var copied = false
+    @State private var reset: Task<Void, Never>?
+
+    var body: some View {
+        HStack(spacing: 0) {
+            Button {
+                copy()
+                withAnimation(.snappy(duration: 0.15)) { copied = true }
+                reset?.cancel()
+                reset = Task {
+                    try? await Task.sleep(for: .seconds(1.4))
+                    guard !Task.isCancelled else { return }
+                    withAnimation(.easeOut(duration: 0.2)) { copied = false }
+                }
+            } label: {
+                HStack(spacing: 5) {
+                    if copied {
+                        Image(systemName: "checkmark")
+                            .font(.system(size: 11, weight: .semibold))
+                            .foregroundStyle(palette.accent)
+                            .transition(.scale.combined(with: .opacity))
+                    } else {
+                        icon()
+                    }
+                    Text(copied ? "Copied" : "\(count)")
+                        .font(.system(size: 11.5, weight: .semibold).monospacedDigit())
+                        .contentTransition(.numericText())
+                }
+                .foregroundStyle(isHovered ? palette.ink : palette.ink2)
+                .padding(.leading, 8)
+                .padding(.trailing, 5)
+                .frame(height: 26)
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .help(help)
+            .accessibilityLabel(help)
+
+            Rectangle()
+                .fill(palette.ink.opacity(isHovered ? 0.12 : 0))
+                .frame(width: 1, height: 14)
+
+            Menu { menu() } label: {
+                Image(systemName: "chevron.down")
+                    .font(.system(size: 8, weight: .bold))
+                    .foregroundStyle(isHovered ? palette.ink2 : palette.ink3)
+                    .frame(width: 18, height: 26)
+                    .contentShape(Rectangle())
+            }
+            .menuStyle(.button)
+            .buttonStyle(.plain)
+            .menuIndicator(.hidden)
+            .fixedSize()
+            .help("Copy or clear")
+        }
+        .background(
+            RoundedRectangle(cornerRadius: 7, style: .continuous)
+                .fill(palette.mark.opacity(isHovered ? 0.55 : 0.32))
+        )
+        .onHover { isHovered = $0 }
     }
 }
