@@ -20,7 +20,6 @@ struct MainView: View {
                 ColumnStack()
             }
         }
-        .environment(\.palette, palette)
         .frame(minWidth: 560, minHeight: 420)
         .background(palette.paper)
         .ignoresSafeArea()
@@ -34,7 +33,7 @@ struct MainView: View {
                     palette.paper.opacity(0.35)
                         .ignoresSafeArea()
                         .onTapGesture { model.isQuickOpenVisible = false }
-                    QuickOpenView()
+                    QuickOpenView(seed: model.quickOpenSeed)
                         .padding(.top, 86)
                 }
                 .transition(.opacity)
@@ -54,6 +53,9 @@ struct MainView: View {
             configure(window)
         })
         .navigationTitle(windowTitle)
+        // Set after the overlays, so the palette, the panel button and the
+        // drop highlight wear the theme too, not the default light paper.
+        .environment(\.palette, palette)
         .tint(palette.accent)
     }
 
