@@ -78,6 +78,12 @@ lights up.
 - **Sample workspace on the welcome screen** — "Look at a sample" opening a
   bundled read-only set (needs a folder reference so the tree survives the
   bundle's flattening).
+- **Quick Look preview** — Space in Finder showing the page typeset.
+  Deferred on purpose: it is a separate extension target (its own sandbox,
+  WebKit's network entitlement again, the renderer and web assets shared
+  into it), and its use is browsing files in Finder, which double-click into
+  Galley now covers. Worth it when the app goes public — competitors list it,
+  and it puts the typography in front of people who have not opened Galley.
 - **Distribution** — Developer ID + notarization path; decide whether to keep
   the sandbox.
 - **Store/site media** — the screenshot script on top of `DebugAutomation`.
