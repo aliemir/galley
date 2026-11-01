@@ -203,8 +203,7 @@ swift tools/galley-debug.swift level.3 theme.sepia open.1 snapshot
 # open a single file as Finder would (outside a workspace → Opened Files):
 open -a app/…/Debug/Galley.app /path/to/file.md
 # the Galley Guide's pictures: a debug copy on a throwaway library
-# (-GalleyLibrary, under /private/tmp/galley-debug/ — the only place the
-# debug sandbox may write) and a copy of the Showcase workspace
+# (-GalleyLibrary <dir>) and a copy of the Showcase workspace
 tools/capture-guide.sh
 # real on-screen captures (needs Screen Recording for the terminal) —
 # popovers and Settings are their own windows, so capture by window id:
@@ -239,12 +238,19 @@ simulator ones).
   mouse and keyboard and may trigger an Accessibility prompt. Run unit tests
   (`-only-testing:GalleyTests`) by default; run UI tests only when
   they are the point, and say so first. Quit the app after `build-and-run`.
-- **WebKit needs the network entitlement in the sandbox.** Without
-  `ENABLE_OUTGOING_NETWORK_CONNECTIONS` the reader page never loads (stuck at
-  10%). The page itself has no network: its CSP allows only `galley:` and
-  `data:`. Debug builds also carry `app/Galley-Debug.entitlements`; adding any
-  entitlements file stops Xcode injecting its own Debug read exception, so
-  that file declares it.
+- **No App Sandbox; the reader page is the locked part.** Galley ships from
+  GitHub (Developer ID, notarized), not the App Store, so
+  `ENABLE_APP_SANDBOX = NO` and there are no entitlements files. The page
+  stays shut: its CSP allows only `galley:` and `data:` (no network, no inline
+  script), navigation is cancelled in Swift, and raw HTML is cleaned by the
+  renderer. If the sandbox ever comes back, WebKit needs
+  `ENABLE_OUTGOING_NETWORK_CONNECTIONS` or the page sticks at 10%.
+- **The data left the sandbox container once.** `SandboxMigration` copies the
+  library and settings out of `~/Library/Containers/com.aliemir.galley` on the
+  first unsandboxed launch. macOS guards that container from other processes:
+  a Galley started from a terminal (its binary run directly) is the
+  terminal's process and cannot read it — start it with `open` when testing
+  the copy.
 - **One Galley at a time.** Each running copy keeps the whole library in
   memory and writes `library.json` in full, so two copies (a test build
   launched by its binary while the user's is open) overwrite each other's
@@ -257,14 +263,9 @@ simulator ones).
 - **Bundle resources are flattened.** Files under `app/Galley/Reader/Web/`
   (including `vendor/fonts/`) land at the bundle root; the `galley://app/`
   handler looks them up by name. Names must stay unique.
-- **App Sandbox is on, file access is read-only.** `ENABLE_APP_SANDBOX` and
-  `ENABLE_USER_SELECTED_FILES = readonly` generate the entitlements from build
-  settings — there is no `.entitlements` file yet. The app can read only
-  folders the user picked (open panel or drag-and-drop), and only for that
-  launch: reopening workspaces after a relaunch needs a security-scoped
-  bookmark stored per workspace. Read-only is deliberate — the app never writes
-  to a markdown file. The sandbox also blocks spawning CLI tools, so the
-  "pipe to `claude -p`" idea needs a different shape (or direct distribution).
+- **Read-only is a rule of the code, not the sandbox.** The app never writes
+  to a Markdown file. Workspaces still store security-scoped bookmarks (from
+  the sandboxed days); they resolve fine unsandboxed and fall back to the path.
 - **Flat plist keys are build settings.** `GENERATE_INFOPLIST_FILE = YES`, so
   plist keys live as `INFOPLIST_KEY_*` build settings in `project.pbxproj`. To
   add a usage description or `ITSAppUsesNonExemptEncryption`, add the build

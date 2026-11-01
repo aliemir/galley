@@ -26,6 +26,10 @@ otherwise have to re-derive. Not worth one: typo fixes and formatting.
 
 ## 2026-11-01
 
+- The App Sandbox is off (free GitHub releases, see decisions): no
+  entitlements files; the first launch copies the library, snapshots and
+  settings out of the old sandbox container (`SandboxMigration`). Checked on
+  the real library: 4 workspaces, tabs, 38 read records, snapshots, settings
 - The Galley Guide ships inside the app (`app/Galley/Guide/`): what Galley
   does, with five screenshots, and a page that shows every syntax it renders.
   Opened from the welcome screen ("New here? Read the guide →") and Help →

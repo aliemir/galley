@@ -21,7 +21,7 @@ cross-platform.
 - *Deployment target 27.0* (the current SDK). 26.0 keeps last year's Macs
   without giving up the current SwiftUI/AppKit design language.
 
-## 2026-10-31 — App Sandbox on, files read-only
+## 2026-10-31 — App Sandbox on, files read-only (sandbox superseded 2026-11-01)
 
 **Chosen:** `ENABLE_APP_SANDBOX = YES`, `ENABLE_USER_SELECTED_FILES = readonly`,
 hardened runtime on, category `public.app-category.productivity`.
@@ -117,7 +117,7 @@ document actually contains a diagram, math or code. The reader's own script
 has no dependencies. `gemoji` is data only (shortcode → emoji JSON). Licenses
 are bundled in `Reader/Web/vendor/Acknowledgements.txt`.
 
-## 2026-11-01 — Outgoing-network entitlement, with a page that has no network
+## 2026-11-01 — Outgoing-network entitlement, with a page that has no network (moot without the sandbox)
 
 **Chosen:** `ENABLE_OUTGOING_NETWORK_CONNECTIONS = YES`
 (`com.apple.security.network.client`).

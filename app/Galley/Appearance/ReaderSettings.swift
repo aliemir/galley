@@ -148,6 +148,7 @@ final class ReaderSettings {
     static let fontSizes: ClosedRange<Double> = 13...28
 
     private init() {
+        SandboxMigration.defaults()
         let d = UserDefaults.standard
         appearance = AppearanceMode(rawValue: d.string(forKey: "appearance") ?? "") ?? .system
         lightTheme = d.string(forKey: "lightTheme") ?? Theme.paper.id

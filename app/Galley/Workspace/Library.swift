@@ -135,6 +135,11 @@ final class Library {
         }
         #endif
         self.directory = directory
+        #if DEBUG
+        if UserDefaults.standard.string(forKey: "GalleyLibrary") == nil { SandboxMigration.library(into: directory) }
+        #else
+        SandboxMigration.library(into: directory)
+        #endif
         try? FileManager.default.createDirectory(at: directory.appendingPathComponent("Snapshots"), withIntermediateDirectories: true)
         let file = directory.appendingPathComponent("library.json")
         if let data = try? Data(contentsOf: file) {

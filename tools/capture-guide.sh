@@ -12,7 +12,6 @@ cd "$(dirname "$0")/.."
 PRODUCTS=$(xcodebuild -project app/Galley.xcodeproj -scheme Galley -configuration Debug -showBuildSettings 2>/dev/null \
   | awk -F' = ' '/ BUILT_PRODUCTS_DIR /{print $2; exit}')
 APP="$PRODUCTS/Galley.app"
-# Under galley-debug/: the only place the debug sandbox lets the app write.
 WORK=/private/tmp/galley-debug/guide
 OUT=app/Galley/Guide
 
