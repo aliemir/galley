@@ -362,6 +362,21 @@ ins.g-ins { text-decoration: none; background: var(--insert); border-radius: 2px
 .flash { animation: flash 1.1s ease; }
 @keyframes flash { 0%, 30% { background-color: var(--insert); } 100% { background-color: transparent; } }
 
+/* HTML comments: what the file hides from a reader but not from an agent.
+   Off the page unless View → Show Hidden Comments; then faint, labelled. */
+.html-comment { display: none; }
+:root.show-comments .html-comment {
+  font: 12.5px/1.5 var(--font-ui); color: var(--ink-3);
+  white-space: pre-wrap; hyphens: none;
+  border: 1px dashed color-mix(in srgb, var(--ink) 18%, transparent); border-radius: 6px;
+}
+:root.show-comments div.html-comment { display: block; margin: .6em 0; padding: .45em .75em; }
+:root.show-comments span.html-comment { display: inline; padding: 0 .35em; }
+:root.show-comments div.html-comment::before {
+  content: "Comment"; display: block; margin-bottom: .15em;
+  font-size: 10px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; opacity: .8;
+}
+
 /* The guide's screenshots: paper pictured on paper needs an edge. */
 img[src*="/guide-"] {
   border-radius: 10px;

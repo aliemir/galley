@@ -27,6 +27,8 @@ nonisolated struct RenderedDocument {
     var outline: [OutlineItem]
     var units: [DiffUnit]
     var wordCount: Int
+    /// HTML comments in the file: hidden on the page unless asked for.
+    var hiddenComments = 0
 
     var readingMinutes: Int { max(1, Int((Double(wordCount) / 230).rounded())) }
 }
@@ -56,7 +58,8 @@ nonisolated struct MarkdownRenderer {
             title: builder.firstTitle,
             outline: builder.outline,
             units: builder.units,
-            wordCount: builder.wordCount
+            wordCount: builder.wordCount,
+            hiddenComments: builder.hiddenComments
         )
     }
 }
@@ -114,6 +117,7 @@ nonisolated private final class HTMLBuilder {
     var outline: [OutlineItem] = []
     var firstTitle: String?
     var wordCount = 0
+    var hiddenComments = 0
     private var slugs: [String: Int] = [:]
 
     init(baseURL: URL?, preprocessor: Preprocessor) {
@@ -213,7 +217,9 @@ nonisolated private final class HTMLBuilder {
             return "<pre data-b=\"\(index)\"\(languageAttribute)><code\(codeClass)>\(escaped)</code></pre>"
 
         case let html as HTMLBlock:
-            return html.rawHTML
+            let cleaned = HTMLSanitizer.clean(html.rawHTML, inline: false)
+            hiddenComments += cleaned.comments
+            return cleaned.html
 
         case is ThematicBreak:
             return "<hr>"
@@ -382,7 +388,9 @@ nonisolated private final class HTMLBuilder {
         case let image as Markdown.Image:
             return self.image(image)
         case let html as InlineHTML:
-            return html.rawHTML
+            let cleaned = HTMLSanitizer.clean(html.rawHTML, inline: true)
+            hiddenComments += cleaned.comments
+            return cleaned.html
         case let symbol as SymbolLink:
             return "<code>\(HTML.escape(symbol.destination ?? ""))</code>"
         default:

@@ -26,6 +26,14 @@ otherwise have to re-derive. Not worth one: typo fixes and formatting.
 
 ## 2026-11-01
 
+- Raw HTML in Markdown is cleaned (`HTMLSanitizer`): GitHub's harmless tags
+  stay, scripts/styles/frames/forms/SVG go with their content, and only safe
+  attributes survive — no `style`, `class`, `id` or `on…`, so a file cannot
+  hide text or fake a change mark or highlight; links and images only
+  http(s), mailto, relative (and raster `data:` images)
+- HTML comments are kept hidden; View → Show Hidden Comments (⇧⌘H), a
+  Settings switch, and an eye button on pages that have some show them faint
+  and labelled — what an agent reads, the reader can see
 - The App Sandbox is off (free GitHub releases, see decisions): no
   entitlements files; the first launch copies the library, snapshots and
   settings out of the old sandbox container (`SandboxMigration`). Checked on

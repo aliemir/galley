@@ -71,7 +71,7 @@ enum ShortcutAction: String, CaseIterable, Identifiable {
     case closeTab, closeOtherTabs, print
     case find, findNext, findPrevious
     case toggleWorkspaces, toggleFiles, toggleContents, togglePanels, showNextPanel, hideLastPanel, workspacesAsIcons
-    case biggerText, smallerText, actualSize, markChanges
+    case biggerText, smallerText, actualSize, markChanges, showComments
     case nextTab, previousTab
     case nextDocument, previousDocument, nextUnread, nextChange, previousChange
     case toggleRead, togglePin, markAllRead, highlight, addNote, copyFeedback, foldAll, unfoldAll
@@ -105,6 +105,7 @@ enum ShortcutAction: String, CaseIterable, Identifiable {
         case .smallerText: "Smaller Text"
         case .actualSize: "Actual Size"
         case .markChanges: "Mark Changes"
+        case .showComments: "Show Hidden Comments"
         case .nextTab: "Show Next Tab"
         case .previousTab: "Show Previous Tab"
         case .nextDocument: "Next Document"
@@ -129,7 +130,7 @@ enum ShortcutAction: String, CaseIterable, Identifiable {
              .closeTab, .closeOtherTabs, .print: "File"
         case .find, .findNext, .findPrevious: "Find"
         case .toggleWorkspaces, .toggleFiles, .toggleContents, .togglePanels, .showNextPanel, .hideLastPanel, .workspacesAsIcons,
-             .biggerText, .smallerText, .actualSize, .markChanges: "View"
+             .biggerText, .smallerText, .actualSize, .markChanges, .showComments: "View"
         case .nextTab, .previousTab: "Tabs"
         case .nextDocument, .previousDocument, .nextUnread, .nextChange, .previousChange: "Go"
         case .toggleRead, .togglePin, .markAllRead, .highlight, .addNote, .copyFeedback, .foldAll, .unfoldAll: "Document"
@@ -165,6 +166,7 @@ enum ShortcutAction: String, CaseIterable, Identifiable {
         case .smallerText: KeyShortcut("-")
         case .actualSize: KeyShortcut("0")
         case .markChanges: KeyShortcut("d", [.command, .shift])
+        case .showComments: KeyShortcut("h", [.command, .shift])
         case .nextTab: KeyShortcut("tab", .control)
         case .previousTab: KeyShortcut("tab", [.control, .shift])
         case .nextDocument: KeyShortcut("down", [.command, .option])

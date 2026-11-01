@@ -61,6 +61,7 @@ struct ReaderConfiguration: Encodable, Equatable {
     var top: Double
     var dark: Bool
     var showChanges: Bool
+    var showComments: Bool
     var lang: String
 }
 

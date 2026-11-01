@@ -249,7 +249,7 @@ final class AppModel {
         withObservationTracking {
             _ = settings.appearance; _ = settings.lightTheme; _ = settings.darkTheme
             _ = settings.font; _ = settings.fontSize; _ = settings.lineSpacing; _ = settings.lineWidth
-            _ = settings.showChanges
+            _ = settings.showChanges; _ = settings.showComments
         } onChange: { [weak self] in
             Task { @MainActor in
                 self?.configureReader()
@@ -280,6 +280,7 @@ final class AppModel {
             top: 58,
             dark: theme.isDark,
             showChanges: settings.showChanges,
+            showComments: settings.showComments,
             lang: "en"
         ))
     }

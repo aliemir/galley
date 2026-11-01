@@ -124,6 +124,8 @@ final class ReaderSettings {
     var lineSpacing: LineSpacing { didSet { save(lineSpacing.rawValue, "lineSpacing") } }
     var lineWidth: LineWidth { didSet { save(lineWidth.rawValue, "lineWidth") } }
     var showChanges: Bool { didSet { save(showChanges, "showChanges") } }
+    /// HTML comments in a file, faint and labelled on the page.
+    var showComments: Bool { didSet { save(showComments, "showComments") } }
     var nameStyle: NameStyle { didSet { save(nameStyle.rawValue, "nameStyle") } }
     var continueOrder: ContinueOrder { didSet { save(continueOrder.rawValue, "continueOrder") } }
     var pullToContinue: Bool { didSet { save(pullToContinue, "pullToContinue") } }
@@ -159,6 +161,7 @@ final class ReaderSettings {
         lineSpacing = LineSpacing(rawValue: d.string(forKey: "lineSpacing") ?? "") ?? .regular
         lineWidth = LineWidth(rawValue: d.string(forKey: "lineWidth") ?? "") ?? .regular
         showChanges = d.object(forKey: "showChanges") as? Bool ?? true
+        showComments = d.bool(forKey: "showComments")
         nameStyle = NameStyle(rawValue: d.string(forKey: "nameStyle") ?? "") ?? .pretty
         continueOrder = ContinueOrder(rawValue: d.string(forKey: "continueOrder") ?? "") ?? .folder
         pullToContinue = d.object(forKey: "pullToContinue") as? Bool ?? true

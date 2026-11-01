@@ -50,6 +50,10 @@ private struct GeneralSettings: View {
                 }
                 Toggle("Pull past the top or end of a page for the previous or next one", isOn: $settings.pullToContinue)
                 Toggle("Mark what changed since I last read a file", isOn: $settings.showChanges)
+                Toggle(isOn: $settings.showComments) {
+                    Text("Show hidden comments")
+                    Text("HTML comments (<!-- … -->) are invisible in a rendered page but plain to an agent reading the file.")
+                }
                 Toggle("Show the number of files to read on the Dock icon", isOn: $settings.dockBadge)
             }
 

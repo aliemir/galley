@@ -111,6 +111,11 @@ struct GalleyCommands: Commands {
                 set: { model.settings.showChanges = $0 }
             ))
             .shortcut(.markChanges)
+            Toggle("Show Hidden Comments", isOn: Binding(
+                get: { model.settings.showComments },
+                set: { model.settings.showComments = $0 }
+            ))
+            .shortcut(.showComments)
             Divider()
         }
 

@@ -568,7 +568,7 @@
   // rewritten around it; when the text is gone it becomes an orphan.
 
   const CONTEXT = 48;
-  const skipForText = (node) => node.parentElement && node.parentElement.closest('button, .katex-mathml, svg, .copy, .hl-note');
+  const skipForText = (node) => node.parentElement && node.parentElement.closest('button, .katex-mathml, svg, .copy, .hl-note, .html-comment');
 
   function readingNodes(root) {
     const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
@@ -984,6 +984,7 @@
       root.style.setProperty('--top', `${config.top}px`);
       root.classList.toggle('dark', !!config.dark);
       root.classList.toggle('hide-changes', !config.showChanges);
+      root.classList.toggle('show-comments', !!config.showComments);
       root.style.colorScheme = config.dark ? 'dark' : 'light';
       if (config.lang) root.lang = config.lang;
       const anchor = doc ? topAnchor() : null;
