@@ -6,6 +6,10 @@ and Download buttons), **privacy** and **support**. Galley ships from GitHub
 releases, not the App Store. A Cloudflare Worker serving static assets out of
 `public/`, styled with Tailwind v4 (`input.css` holds plain CSS on top of it).
 
+**Before deploying:** the GitHub links are a placeholder,
+`https://github.com/OWNER/REPO` (and `…/releases/latest` for Download) — put
+the real repository in all three pages.
+
 `public/images/guide-*` are the guide's pictures, copied here by
 `tools/capture-guide.sh` — recapture there, not by hand.
 
