@@ -26,6 +26,9 @@ otherwise have to re-derive. Not worth one: typo fixes and formatting.
 
 ## 2026-11-01
 
+- Palette: "#" switches to sections and leaves the field (the icon shows it;
+  Backspace in an empty field goes back); rows are identified by their
+  result only, which fixes a stale, clipped row when results changed kind
 - Highlights snap to whole words without crossing into the next block: a
   drag to the end of the front matter no longer took the heading's first
   word with it (which put the note under the heading); a note on the front

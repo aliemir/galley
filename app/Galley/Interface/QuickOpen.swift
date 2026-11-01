@@ -33,7 +33,9 @@ nonisolated enum Fuzzy {
 
 struct QuickOpenView: View {
     init(seed: String) {
-        _query = State(initialValue: seed)
+        // "#" is a mode, not part of the query: the icon shows it.
+        _sectionMode = State(initialValue: seed.hasPrefix("#"))
+        _query = State(initialValue: seed.hasPrefix("#") ? String(seed.dropFirst()) : seed)
     }
 
     @Environment(AppModel.self) private var model
@@ -41,6 +43,9 @@ struct QuickOpenView: View {
     /// Starts with the seed ("#" for sections) rather than being set after
     /// appearing: a change during the palette's fade-in left the list stale.
     @State private var query: String
+    /// Going to a section of the open document; typing "#" turns it on,
+    /// Backspace in an empty field turns it off.
+    @State private var sectionMode: Bool
     @State private var selection = 0
     @State private var textHits: [Result] = []
     @State private var isSearchingText = false
@@ -65,22 +70,30 @@ struct QuickOpenView: View {
 
     private var searchesText: Bool { model.quickOpenSearchesText }
 
+    private var placeholder: String {
+        if sectionMode {
+            return model.current.map { "Go to a section of “\(model.settings.displayName(for: $0.file))”" } ?? "Go to a section"
+        }
+        if searchesText { return "Search the text of every file" }
+        return model.quickOpenOpensTab ? "Open in a new tab — type a file name" : "Go to file — type # for sections"
+    }
+
     /// Text is searched from three characters in the file palette (names
     /// come first), from two when searching text alone.
     private var textQuery: String? {
         let trimmed = query.trimmingCharacters(in: .whitespaces)
-        guard !query.hasPrefix("#"), trimmed.count >= (searchesText ? 2 : 3) else { return nil }
+        guard !sectionMode, trimmed.count >= (searchesText ? 2 : 3) else { return nil }
         return trimmed
     }
 
     private var results: [Result] {
-        if searchesText { return textHits }
+        if searchesText, !sectionMode { return textHits }
         return nameResults + (textQuery == nil ? [] : textHits)
     }
 
     private var nameResults: [Result] {
-        if query.hasPrefix("#") {
-            let text = String(query.dropFirst())
+        if sectionMode {
+            let text = query
             let outline = model.current?.rendered.outline ?? []
             if text.trimmingCharacters(in: .whitespaces).isEmpty { return outline.map(Result.heading) }
             return outline
@@ -158,11 +171,11 @@ struct QuickOpenView: View {
         let results = results
         VStack(spacing: 0) {
             HStack(spacing: 10) {
-                Image(systemName: query.hasPrefix("#") ? "number" : (searchesText ? "text.magnifyingglass" : "magnifyingglass"))
+                Image(systemName: sectionMode ? "number" : (searchesText ? "text.magnifyingglass" : "magnifyingglass"))
                     .font(.system(size: 15, weight: .medium))
                     .foregroundStyle(palette.ink3)
                     .frame(width: 18)
-                TextField(searchesText ? "Search the text of every file" : (model.quickOpenOpensTab ? "Open in a new tab — type a file name" : "Go to file — type # for sections"), text: $query)
+                TextField(placeholder, text: $query)
                     .textFieldStyle(.plain)
                     .font(.system(size: 17))
                     .foregroundStyle(palette.ink)
@@ -179,8 +192,15 @@ struct QuickOpenView: View {
                     .onKeyPress(.escape) { close(); return .handled }
                     .onKeyPress(.tab) {
                         // Tab switches between names and text.
-                        model.quickOpenSearchesText.toggle()
+                        if sectionMode { sectionMode = false; model.quickOpenSearchesText = true } else {
+                            model.quickOpenSearchesText.toggle()
+                        }
                         selection = 0
+                        return .handled
+                    }
+                    .onKeyPress(.delete) {
+                        guard sectionMode, query.isEmpty else { return .ignored }
+                        sectionMode = false
                         return .handled
                     }
                 if isSearchingText {
@@ -213,7 +233,10 @@ struct QuickOpenView: View {
                                         .padding(.bottom, 2)
                                 }
                                 row(result, isSelected: index == selection)
-                                    .id(index)
+                                    // Known by the result alone: also keyed by position,
+                                    // a text result swapped for a section in the same
+                                    // place kept showing the old row.
+                                    .id(result.id)
                                     .onTapGesture {
                                         selection = index
                                         choose(results)
@@ -224,7 +247,9 @@ struct QuickOpenView: View {
                     }
                     // A ScrollView takes all the height it is offered; size it to its rows.
                     .frame(height: height(of: results))
-                    .onChange(of: selection) { _, index in proxy.scrollTo(index) }
+                    .onChange(of: selection) { _, index in
+                        if results.indices.contains(index) { proxy.scrollTo(results[index].id) }
+                    }
                 }
             } else if !query.isEmpty, !isSearchingText {
                 Rectangle().fill(palette.rule).frame(height: 1)
@@ -251,8 +276,17 @@ struct QuickOpenView: View {
         }
         // However the palette goes (Escape, a click outside), ⌘T's intent goes with it.
         .onDisappear { model.quickOpenOpensTab = false }
-        .onChange(of: query) { _, _ in selection = 0 }
-        .task(id: "\(searchesText)|\(query)") { await searchText() }
+        .onChange(of: query) { _, value in
+            selection = 0
+            // "#" typed (or pasted) at the start switches to sections and
+            // leaves the field: the icon says it instead.
+            if value.hasPrefix("#") {
+                sectionMode = true
+                model.quickOpenSearchesText = false
+                query = String(value.dropFirst()).trimmingCharacters(in: .whitespaces)
+            }
+        }
+        .task(id: "\(searchesText)|\(sectionMode)|\(query)") { await searchText() }
     }
 
     @ViewBuilder
