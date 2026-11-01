@@ -71,6 +71,15 @@ lights up.
 
 ## Next
 
+- **Margin notes + "Copy as feedback"** (proposed 2026-11-01, recommended
+  next) — a short note on any highlight, shown in the margin; ⌘⇧C copies a
+  paste-ready block for an agent (path, quoted passage, note) for a document
+  or a workspace. Notes anchor like highlights, so they follow rewrites, and
+  an orphaned note reads as "addressed". This is the half of the galley-proof
+  idea that is missing (marked up *and sent back*), and the data the agent
+  CLI will later read.
+- **Full-text search across a workspace** — ⌘K finds names and headings
+  only; a folder of fifty agent reports needs "where did it say X".
 - **Tabs** — deferred on purpose: one window, per-workspace state first. Next
   step is real tabs inside the page column (preview tab reused on single
   click, pinned on double click), not native window tabs.
