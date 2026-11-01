@@ -213,12 +213,20 @@ struct QuickOpenView: View {
                 if isSearchingText {
                     ProgressView().controlSize(.small)
                 }
-                Text(searchesText ? "Tab: names" : "Tab: text")
-                    .font(.system(size: 10.5, weight: .medium))
-                    .foregroundStyle(palette.ink3)
-                    .padding(.horizontal, 6)
-                    .padding(.vertical, 2)
-                    .background(RoundedRectangle(cornerRadius: 4, style: .continuous).strokeBorder(palette.rule))
+                // Where Tab goes: the key as a keycap, then the other mode.
+                HStack(spacing: 5) {
+                    Text("⇥")
+                        .font(.system(size: 11, weight: .semibold))
+                        .frame(minWidth: 18, minHeight: 16)
+                        .background(RoundedRectangle(cornerRadius: 4, style: .continuous).fill(palette.ink.opacity(0.06)))
+                        .overlay(RoundedRectangle(cornerRadius: 4, style: .continuous).strokeBorder(palette.rule))
+                    Text(searchesText ? "Names" : "Text")
+                        .font(.system(size: 10.5, weight: .medium))
+                }
+                .foregroundStyle(palette.ink3)
+                .help(searchesText ? "Tab: search file names" : "Tab: search the text of every file")
+                .accessibilityElement(children: .ignore)
+                .accessibilityLabel(searchesText ? "Tab searches file names" : "Tab searches the text")
             }
             .padding(.horizontal, 16)
             .frame(height: 52)

@@ -26,6 +26,7 @@ otherwise have to re-derive. Not worth one: typo fixes and formatting.
 
 ## 2026-11-01
 
+- The palette's "Tab: text" hint is a ⇥ keycap followed by where Tab goes
 - ⌘K is names only again; text matches show there only when no file name
   matches, labelled "No file names match — in the text" (before, they always
   followed the names, and with no names they looked like ⇧⌘F)
