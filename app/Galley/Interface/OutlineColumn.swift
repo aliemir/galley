@@ -7,9 +7,7 @@ struct OutlineColumn: View {
     var body: some View {
         VStack(spacing: 0) {
             ColumnHeader(title: "Contents", subtitle: subtitle) {
-                if model.current?.rendered.outline.isEmpty == false {
-                    foldMenu
-                }
+                foldMenu
             }
             if let current = model.current, !current.rendered.outline.isEmpty || !current.highlights.isEmpty {
                 OutlineList(document: current)
@@ -30,13 +28,18 @@ struct OutlineColumn: View {
 
     private var foldMenu: some View {
         Menu {
-            Button("Fold All Sections") { model.foldAll(true) }
-            Button("Unfold All Sections") { model.foldAll(false) }
+            if model.current?.rendered.outline.isEmpty == false {
+                Button("Fold All Sections") { model.foldAll(true) }
+                Button("Unfold All Sections") { model.foldAll(false) }
+            }
             if model.current?.changes.isEmpty == false {
                 Divider()
                 Button("Next Change") { model.jumpToChange(1) }
                 Button("Previous Change") { model.jumpToChange(-1) }
             }
+            Divider()
+            Button("Hide Contents Column") { model.setColumnHidden(.outline, true) }
+                .keyboardShortcut("2", modifiers: [.command, .option])
         } label: {
             Image(systemName: "ellipsis")
                 .font(.system(size: 13, weight: .medium))

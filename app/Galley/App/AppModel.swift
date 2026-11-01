@@ -22,16 +22,16 @@ struct OpenDocument {
     var id: String { "\(workspaceID.uuidString)/\(file.id)" }
 }
 
-/// Panels, from the page outwards. Each level adds a column to the left.
-enum PanelLevel: Int, CaseIterable, Comparable {
-    case page = 1, outline, files, workspaces
+/// A column beside the page. The reader orders them (Settings → Reading);
+/// each swipe right reveals the next one, further from the page.
+enum PanelColumn: String, CaseIterable, Identifiable {
+    case outline, files, workspaces
 
-    static func < (a: PanelLevel, b: PanelLevel) -> Bool { a.rawValue < b.rawValue }
+    var id: String { rawValue }
 
-    var label: String {
+    var title: String {
         switch self {
-        case .page: "Page Only"
-        case .outline: "Outline"
+        case .outline: "Contents"
         case .files: "Files"
         case .workspaces: "Workspaces"
         }
@@ -48,7 +48,8 @@ final class AppModel {
     private(set) var current: OpenDocument?
     private(set) var currentHeading: String?
 
-    var level: PanelLevel = .files
+    /// How many of `columns` are showing, from the page outwards; 0 is the page alone.
+    private(set) var depth = 2
     /// -1…1 while a horizontal swipe is in flight: positive reveals the next
     /// column, negative hides the outermost one.
     var swipeProgress: Double = 0
@@ -70,7 +71,8 @@ final class AppModel {
     let settings = ReaderSettings.shared
     let reader = ReaderController()
     @ObservationIgnored private let library = Library()
-    @ObservationIgnored private var lastPanelLevel: PanelLevel = .files
+    /// The depth the panel button brings back.
+    @ObservationIgnored private var lastDepth = 2
     @ObservationIgnored private var pendingRestore: String?
     @ObservationIgnored private var readerAtBottom = false
     @ObservationIgnored private var readerAtTop = true
@@ -97,8 +99,9 @@ final class AppModel {
 
     init() {
         let state = library.state
-        level = PanelLevel(rawValue: state.level) ?? .files
-        lastPanelLevel = PanelLevel(rawValue: state.lastPanelLevel) ?? .files
+        // Stored as the old 1-based level, whose numbers mean the same depth.
+        depth = max(0, state.level - 1)
+        lastDepth = max(1, state.lastPanelLevel - 1)
         for record in state.workspaces {
             attach(Workspace(record: record, library: library), baseline: false)
         }
@@ -269,7 +272,7 @@ final class AppModel {
             pendingRestore = String(url.standardizedFileURL.path.dropFirst(folder.standardizedFileURL.path.count + 1))
         }
         selectWorkspace(workspace.id)
-        if level < .files { setLevel(.files) }
+        reveal(.files)
     }
 
     func removeWorkspace(_ id: UUID) {
@@ -635,12 +638,24 @@ final class AppModel {
 
     // MARK: Panels
 
-    func setLevel(_ newLevel: PanelLevel, animated: Bool = true) {
+    /// The columns in play, from the page outwards: the reader's order,
+    /// without the ones switched off.
+    var columns: [PanelColumn] {
+        settings.columnOrder.filter { !settings.hiddenColumns.contains($0) }
+    }
+
+    /// The columns showing now, from the page outwards.
+    var shownColumns: ArraySlice<PanelColumn> { columns.prefix(depth) }
+
+    func isShowing(_ column: PanelColumn) -> Bool { shownColumns.contains(column) }
+
+    func setDepth(_ requested: Int, animated: Bool = true) {
+        let newDepth = min(columns.count, max(0, requested))
         let apply = {
-            self.level = newLevel
+            self.depth = newDepth
             self.swipeProgress = 0
         }
-        if animated {
+        if animated, newDepth != depth {
             beginPanelMotion()
             withAnimation(.galleyPanel, completionCriteria: .logicallyComplete) { apply() } completion: {
                 self.endPanelMotion()
@@ -648,11 +663,17 @@ final class AppModel {
         } else {
             apply()
         }
-        if newLevel != .page { lastPanelLevel = newLevel }
+        if newDepth > 0 { lastDepth = newDepth }
         library.update {
-            $0.level = newLevel.rawValue
-            $0.lastPanelLevel = self.lastPanelLevel.rawValue
+            $0.level = newDepth + 1
+            $0.lastPanelLevel = self.lastDepth + 1
         }
+    }
+
+    /// Shows `column`, and every column between it and the page.
+    func reveal(_ column: PanelColumn) {
+        guard let index = columns.firstIndex(of: column), index >= depth else { return }
+        setDepth(index + 1)
     }
 
     // MARK: Panel motion
@@ -689,14 +710,55 @@ final class AppModel {
     }
 
     func stepLevel(_ delta: Int) {
-        let target = PanelLevel(rawValue: min(4, max(1, level.rawValue + delta))) ?? level
-        if target == level { NSSound.beep(); return }
-        setLevel(target)
+        let target = depth + delta
+        guard (0...columns.count).contains(target) else { NSSound.beep(); return }
+        setDepth(target)
+    }
+
+    // MARK: Columns
+
+    func setColumnHidden(_ column: PanelColumn, _ hidden: Bool) {
+        let wasShowing = isShowing(column)
+        if hidden { settings.hiddenColumns.insert(column) } else { settings.hiddenColumns.remove(column) }
+        // Keep the same columns on screen, less (or plus) this one.
+        setDepth(depth + (hidden ? (wasShowing ? -1 : 0) : 0), animated: true)
+    }
+
+    func moveColumns(from source: IndexSet, to destination: Int) {
+        let showing = Set(shownColumns)
+        settings.columnOrder.move(fromOffsets: source, toOffset: destination)
+        // Whatever was on screen stays on screen where the order allows.
+        let newDepth = (columns.lastIndex { showing.contains($0) }).map { $0 + 1 } ?? 0
+        setDepth(showing.isEmpty ? 0 : newDepth)
+    }
+
+    static let columnLimits: [PanelColumn: ClosedRange<CGFloat>] = [
+        .workspaces: 150...340, .files: 200...460, .outline: 180...400,
+    ]
+    static let defaultColumnWidths: [PanelColumn: CGFloat] = [.workspaces: 208, .files: 284, .outline: 244]
+    static let railWidth: CGFloat = 60
+
+    private static func widthKey(_ column: PanelColumn) -> String { column.rawValue }
+
+    /// A column's width: the reader's own, or the default.
+    func columnWidth(_ column: PanelColumn) -> CGFloat {
+        if column == .workspaces, settings.workspacesAsIcons { return Self.railWidth }
+        if let stored = settings.columnWidths[Self.widthKey(column)] { return CGFloat(stored) }
+        return Self.defaultColumnWidths[column] ?? 240
+    }
+
+    func setColumnWidth(_ column: PanelColumn, _ width: CGFloat?) {
+        guard let width else {
+            settings.columnWidths[Self.widthKey(column)] = nil
+            return
+        }
+        let limits = Self.columnLimits[column] ?? 150...460
+        settings.columnWidths[Self.widthKey(column)] = Double(min(limits.upperBound, max(limits.lowerBound, width)).rounded())
     }
 
     /// The toolbar button: page alone, or back to the panels you had.
     func togglePanels() {
-        setLevel(level == .page ? (lastPanelLevel == .page ? .files : lastPanelLevel) : .page)
+        setDepth(depth == 0 ? max(1, min(lastDepth, columns.count)) : 0)
     }
 
     // MARK: Reader events

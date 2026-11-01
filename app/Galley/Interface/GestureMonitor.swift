@@ -194,19 +194,17 @@ final class GestureMonitor {
     /// -1…1, with rubber-banding where there is no further level to go to.
     private func swipeProgress() -> Double {
         let raw = Double(fingerX / swipeDistance)
-        let level = model.level.rawValue
-        if raw > 0, level >= PanelLevel.workspaces.rawValue { return 0 }
-        if raw < 0, level <= PanelLevel.page.rawValue { return 0 }
+        if raw > 0, model.depth >= model.columns.count { return 0 }
+        if raw < 0, model.depth == 0 { return 0 }
         return min(1, max(-1, raw))
     }
 
     private func finishSwipe(cancelled: Bool) {
         let progress = model.swipeProgress
-        let level = model.level.rawValue
-        if !cancelled, progress > 0.32, let next = PanelLevel(rawValue: level + 1) {
-            model.setLevel(next)
-        } else if !cancelled, progress < -0.32, let previous = PanelLevel(rawValue: level - 1) {
-            model.setLevel(previous)
+        if !cancelled, progress > 0.32, model.depth < model.columns.count {
+            model.setDepth(model.depth + 1)
+        } else if !cancelled, progress < -0.32, model.depth > 0 {
+            model.setDepth(model.depth - 1)
         } else {
             let model = model
             model.beginPanelMotion()

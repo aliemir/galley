@@ -127,6 +127,14 @@ final class ReaderSettings {
     var nameStyle: NameStyle { didSet { save(nameStyle.rawValue, "nameStyle") } }
     var continueOrder: ContinueOrder { didSet { save(continueOrder.rawValue, "continueOrder") } }
     var pullToContinue: Bool { didSet { save(pullToContinue, "pullToContinue") } }
+    /// The columns beside the page, from the page outwards: the order swipes
+    /// reveal them in. Always all of them; `hiddenColumns` switches some off.
+    var columnOrder: [PanelColumn] { didSet { save(columnOrder.map(\.rawValue), "columnOrder") } }
+    var hiddenColumns: Set<PanelColumn> { didSet { save(hiddenColumns.map(\.rawValue).sorted(), "hiddenColumns") } }
+    /// Workspaces as a narrow rail of icons instead of a named list.
+    var workspacesAsIcons: Bool { didSet { save(workspacesAsIcons, "workspacesAsIcons") } }
+    /// Column widths the reader dragged, by column; absent means the default.
+    var columnWidths: [String: Double] { didSet { save(columnWidths, "columnWidths") } }
 
     static let fontSizes: ClosedRange<Double> = 13...28
 
@@ -144,6 +152,13 @@ final class ReaderSettings {
         nameStyle = NameStyle(rawValue: d.string(forKey: "nameStyle") ?? "") ?? .pretty
         continueOrder = ContinueOrder(rawValue: d.string(forKey: "continueOrder") ?? "") ?? .folder
         pullToContinue = d.object(forKey: "pullToContinue") as? Bool ?? true
+        let order = (d.stringArray(forKey: "columnOrder") ?? []).compactMap(PanelColumn.init(rawValue:))
+        // Unknown or missing columns join at the end, so a new one is never lost.
+        var seen = Set<PanelColumn>()
+        columnOrder = (order + PanelColumn.allCases).filter { seen.insert($0).inserted }
+        hiddenColumns = Set((d.stringArray(forKey: "hiddenColumns") ?? []).compactMap(PanelColumn.init(rawValue:)))
+        workspacesAsIcons = d.object(forKey: "workspacesAsIcons") as? Bool ?? false
+        columnWidths = d.dictionary(forKey: "columnWidths") as? [String: Double] ?? [:]
     }
 
     private func save(_ value: Any, _ key: String) {

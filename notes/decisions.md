@@ -131,3 +131,20 @@ re-wrap, scrollbar movement included.
 What actually bothered the user was only the scrollbar popping up and moving
 while the page's length changed under the slide, so the page now hides its
 scrollbar (`scrollbar-width: none`) for the duration of the motion.
+
+## 2026-11-01 — Columns are an ordered stack the reader arranges
+
+**Chosen:** the panel state is a *depth* — how many columns of the reader's
+order are showing — instead of fixed levels (page, outline, files,
+workspaces). The order runs outward from the page and also sets the
+on-screen arrangement, so the swipe always adds the next column on the far
+side and removes the outermost one. Any column can be switched off; levels
+simply skip it.
+
+**Rejected:** keeping a fixed left-to-right arrangement and only changing
+the reveal order — a column would then appear in the middle of the others,
+which breaks the "next column slides in from the left" feel of the swipe.
+
+The stored state keeps the old 1-based level number (depth + 1), so
+existing libraries open unchanged with the default order.
+

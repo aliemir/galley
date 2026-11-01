@@ -26,6 +26,10 @@ otherwise have to re-derive. Not worth one: typo fixes and formatting.
 
 ## 2026-11-01
 
+- Columns: the reader sets their swipe order in Settings (drag to reorder),
+  can switch any off (Contents also with ⌥⌘2 or its header menu), and can
+  drag a divider to resize one (double-click resets)
+- Folder and workspace names are tidied like file names
 - The page hides its scrollbar while panels slide; nothing else about the slide changes
 - Reverted the frozen-width panel motion (horizontal scrollbar, content
   shifts); panels resize the page live again — see `decisions.md`

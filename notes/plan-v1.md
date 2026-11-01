@@ -23,12 +23,17 @@ insertions, not in a separate diff view.
 
 ## Navigation — one axis
 
-Columns, left to right: **Workspaces · Files · Outline · Page**. Level 1 is the
-page alone; each step right reveals the next column to the left.
+Columns beside the page: **Contents · Files · Workspaces**, in an order the
+reader sets (Settings → Reading → Columns, drag to reorder; each can be
+switched off, Contents also with ⌥⌘2). The first column in the order sits
+next to the page; each swipe right reveals the next one further left, and
+swiping left puts them away in reverse.
 
 - Two-finger horizontal swipe, **interactive** — the column follows the
   fingers and snaps on release (fingers right = reveal, left = hide).
-- `⌘[` / `⌘]` step, `⌘1`–`⌘4` jump.
+- `⌘[` / `⌘]` step, `⌘1` is the page alone and `⌘2`… add columns in order.
+- Column widths are the reader's: drag a divider, double-click it for the
+  default.
 
 ## Continuous reading
 

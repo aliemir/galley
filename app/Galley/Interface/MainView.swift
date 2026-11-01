@@ -98,16 +98,17 @@ private struct ColumnStack: View {
     @Environment(AppModel.self) private var model
     @Environment(\.palette) private var palette
 
-    private static let widths: [PanelLevel: CGFloat] = [.workspaces: 208, .files: 284, .outline: 244]
     private static let minimumPage: CGFloat = 420
 
     var body: some View {
         GeometryReader { geometry in
             let fit = fitting(available: geometry.size.width)
             HStack(spacing: 0) {
-                column(.workspaces, scale: fit.scale, limit: fit.level) { WorkspacesColumn() }
-                column(.files, scale: fit.scale, limit: fit.level) { FilesColumn() }
-                column(.outline, scale: fit.scale, limit: fit.level) { OutlineColumn() }
+                // The reader's order runs outwards from the page: the last
+                // column in it sits at the far left.
+                ForEach(model.columns.reversed()) { column in
+                    self.column(column, scale: fit.scale, limit: fit.depth)
+                }
                 PageView()
                     .frame(minWidth: 280, maxWidth: .infinity)
                     .layoutPriority(1)
@@ -119,40 +120,54 @@ private struct ColumnStack: View {
 
     /// Columns give up some width before the page does; when even narrowed
     /// columns do not fit, the outermost ones step aside (without changing
-    /// the chosen level, so they return when the window grows).
-    private func fitting(available: CGFloat) -> (scale: CGFloat, level: PanelLevel) {
-        // While a swipe is revealing a column, fit the level it is heading to,
+    /// the chosen depth, so they return when the window grows).
+    private func fitting(available: CGFloat) -> (scale: CGFloat, depth: Int) {
+        let columns = model.columns
+        // While a swipe is revealing a column, fit the depth it is heading to,
         // or the incoming column would be over the limit and stay hidden.
-        var level = model.swipeProgress > 0 ? PanelLevel(rawValue: model.level.rawValue + 1) ?? model.level : model.level
-        while level > .page {
-            let visible = PanelLevel.allCases.filter { $0 != .page && $0 <= level }
-            let needed = visible.reduce(0) { $0 + (Self.widths[$1] ?? 0) }
+        var depth = min(columns.count, model.depth + (model.swipeProgress > 0 ? 1 : 0))
+        while depth > 0 {
+            let needed = columns.prefix(depth).reduce(0) { $0 + model.columnWidth($1) }
             let scale = min(1, (available - Self.minimumPage) / needed)
-            if scale >= Self.minimumScale { return (scale, level) }
-            level = PanelLevel(rawValue: level.rawValue - 1) ?? .page
+            if scale >= Self.minimumScale { return (scale, depth) }
+            depth -= 1
         }
-        return (1, .page)
+        return (1, 0)
     }
 
-    /// How much of a column shows: 1 when its level is in, 0 when out, and
-    /// in between while a swipe is moving it.
-    private func fraction(_ column: PanelLevel, limit: PanelLevel) -> CGFloat {
-        if column > limit { return 0 }
+    /// How much of a column shows: 1 when it is in, 0 when out, and in
+    /// between while a swipe is moving it.
+    private func fraction(_ column: PanelColumn, limit: Int) -> CGFloat {
+        guard let index = model.columns.firstIndex(of: column), index < limit else { return 0 }
         let progress = model.swipeProgress
-        if progress > 0, column.rawValue == model.level.rawValue + 1 { return progress }
-        if progress < 0, column == model.level { return 1 + progress }
-        return model.level >= column ? 1 : 0
+        if progress > 0, index == model.depth { return progress }
+        if progress < 0, index == model.depth - 1 { return 1 + progress }
+        return index < model.depth ? 1 : 0
     }
 
-    private func column<Content: View>(_ level: PanelLevel, scale: CGFloat, limit: PanelLevel, @ViewBuilder content: () -> Content) -> some View {
-        let width = (Self.widths[level] ?? 240) * scale
-        let fraction = fraction(level, limit: limit)
-        return content()
+    @ViewBuilder
+    private func content(_ column: PanelColumn) -> some View {
+        switch column {
+        case .outline: OutlineColumn()
+        case .files: FilesColumn()
+        case .workspaces: WorkspacesColumn()
+        }
+    }
+
+    private func column(_ column: PanelColumn, scale: CGFloat, limit: Int) -> some View {
+        let isRail = column == .workspaces && model.settings.workspacesAsIcons
+        let width = model.columnWidth(column) * (isRail ? 1 : scale)
+        let fraction = fraction(column, limit: limit)
+        return content(column)
             .frame(width: width)
             .frame(maxHeight: .infinity)
             .background(palette.sidebar)
             .overlay(alignment: .trailing) {
-                Rectangle().fill(palette.rule).frame(width: 1)
+                if isRail {
+                    Rectangle().fill(palette.rule).frame(width: 1)
+                } else {
+                    ColumnDivider(column: column, scale: scale)
+                }
             }
             .frame(width: width * fraction, alignment: .trailing)
             .clipped()
@@ -162,13 +177,58 @@ private struct ColumnStack: View {
     }
 }
 
+/// A column's right edge: the hairline, and a wider invisible grip that
+/// drags the width. Double-click puts the default width back.
+private struct ColumnDivider: View {
+    let column: PanelColumn
+    let scale: CGFloat
+    @Environment(AppModel.self) private var model
+    @Environment(\.palette) private var palette
+    @State private var startWidth: CGFloat?
+    @State private var isHovered = false
+
+    var body: some View {
+        ZStack(alignment: .trailing) {
+            Rectangle()
+                .fill(startWidth != nil || isHovered ? palette.accent.opacity(0.55) : palette.rule)
+                .frame(width: startWidth != nil || isHovered ? 2 : 1)
+                .animation(.easeOut(duration: 0.12), value: isHovered)
+            Color.clear
+                .frame(width: 9)
+                .contentShape(Rectangle())
+                .offset(x: 4)
+                .pointerStyle(.columnResize)
+                .onHover { isHovered = $0 }
+                .gesture(
+                    DragGesture(minimumDistance: 1, coordinateSpace: .global)
+                        .onChanged { drag in
+                            if startWidth == nil {
+                                startWidth = model.columnWidth(column)
+                                model.beginPanelMotion()
+                            }
+                            model.setColumnWidth(column, (startWidth ?? 0) + drag.translation.width / max(scale, 0.5))
+                        }
+                        .onEnded { _ in
+                            startWidth = nil
+                            model.endPanelMotion()
+                        }
+                )
+                .onTapGesture(count: 2) {
+                    withAnimation(.galleyPanel) { model.setColumnWidth(column, nil) }
+                }
+                .help("Drag to resize · double-click for the default width")
+        }
+        .frame(maxHeight: .infinity)
+    }
+}
+
 /// The button beside the traffic lights: page alone, or the panels back.
 private struct PanelToggle: View {
     @Environment(AppModel.self) private var model
     @Environment(\.palette) private var palette
 
     var body: some View {
-        IconButton(systemName: "sidebar.left", help: model.level == .page ? "Show Panels (⌘])" : "Focus on the Page") {
+        IconButton(systemName: "sidebar.left", help: model.depth == 0 ? "Show Panels (⌘])" : "Focus on the Page") {
             model.togglePanels()
         }
         .padding(.leading, 80)
