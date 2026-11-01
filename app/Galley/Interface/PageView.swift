@@ -6,7 +6,6 @@ import WebKit
 struct PageView: View {
     @Environment(AppModel.self) private var model
     @Environment(\.palette) private var palette
-    @State private var isAppearanceShown = false
 
     var body: some View {
         ZStack(alignment: .top) {
@@ -37,10 +36,10 @@ struct PageView: View {
                     if model.isFindVisible { model.hideFind() } else { model.showFind() }
                 }
             }
-            IconButton(systemName: "textformat.size", help: "Appearance", isActive: isAppearanceShown) {
-                isAppearanceShown.toggle()
+            IconButton(systemName: "textformat.size", help: "Appearance", isActive: model.isAppearanceVisible) {
+                model.isAppearanceVisible.toggle()
             }
-            .popover(isPresented: $isAppearanceShown, arrowEdge: .bottom) {
+            .popover(isPresented: Bindable(model).isAppearanceVisible, arrowEdge: .bottom) {
                 AppearancePopover()
                     .environment(model)
                     .environment(\.palette, palette)

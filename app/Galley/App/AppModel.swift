@@ -57,6 +57,7 @@ final class AppModel {
     /// Text the palette opens with: "#" jumps straight to sections.
     var quickOpenSeed = ""
     var isFindVisible = false
+    var isAppearanceVisible = false
     /// Bumped by ⌘F to refocus the field when the bar is already open.
     var findFocusRequest = 0
     var findQuery = ""

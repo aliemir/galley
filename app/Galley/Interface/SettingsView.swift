@@ -1,12 +1,16 @@
 import SwiftUI
 
 struct SettingsView: View {
+    @AppStorage("settingsTab") private var tab = "reading"
+
     var body: some View {
-        TabView {
+        TabView(selection: $tab) {
             ReadingSettings()
                 .tabItem { Label("Reading", systemImage: "book") }
+                .tag("reading")
             AppearanceSettings()
                 .tabItem { Label("Appearance", systemImage: "textformat.size") }
+                .tag("appearance")
         }
         .frame(width: 460)
     }
@@ -18,12 +22,12 @@ private struct ReadingSettings: View {
     var body: some View {
         @Bindable var settings = model.settings
         Form {
-            Picker("Show files by", selection: $settings.nameStyle) {
+            Picker(selection: $settings.nameStyle) {
                 ForEach(NameStyle.allCases) { Text($0.label).tag($0) }
+            } label: {
+                Text("Show files by")
+                Text("“2026-10-30_auth-migrationPlan.md” reads as “Auth migration plan”. The real name is always in the tooltip.")
             }
-            Text("“2026-10-30_auth-migrationPlan.md” reads as “Auth migration plan”. The real name is always in the tooltip.")
-                .font(.caption)
-                .foregroundStyle(.secondary)
 
             Picker("Continue to", selection: $settings.continueOrder) {
                 ForEach(ContinueOrder.allCases) { Text($0.label).tag($0) }
@@ -33,7 +37,7 @@ private struct ReadingSettings: View {
         }
         .formStyle(.grouped)
         .scrollDisabled(true)
-        .frame(height: 300)
+        .fixedSize(horizontal: false, vertical: true)
     }
 }
 
@@ -54,8 +58,10 @@ private struct AppearanceSettings: View {
                     }
                 }
                 LabeledContent("Size") {
-                    Stepper(value: $settings.fontSize, in: ReaderSettings.fontSizes, step: 1) {
+                    HStack(spacing: 6) {
                         Text("\(Int(settings.fontSize)) pt").monospacedDigit()
+                        Stepper("Size", value: $settings.fontSize, in: ReaderSettings.fontSizes, step: 1)
+                            .labelsHidden()
                     }
                 }
                 Picker("Line spacing", selection: $settings.lineSpacing) {
@@ -67,6 +73,7 @@ private struct AppearanceSettings: View {
             }
         }
         .formStyle(.grouped)
-        .frame(height: 420)
+        .scrollDisabled(true)
+        .fixedSize(horizontal: false, vertical: true)
     }
 }

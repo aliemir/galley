@@ -23,13 +23,9 @@ struct ThemePicker: View {
     var body: some View {
         @Bindable var settings = model.settings
         VStack(alignment: .leading, spacing: 12) {
-            Picker("Appearance", selection: $settings.appearance) {
-                Text("Auto").tag(AppearanceMode.system)
-                Text("Light").tag(AppearanceMode.light)
-                Text("Dark").tag(AppearanceMode.dark)
+            Segments(title: "Appearance", options: AppearanceMode.allCases, selection: $settings.appearance) {
+                $0 == .system ? "Auto" : $0.label
             }
-            .pickerStyle(.segmented)
-            .labelsHidden()
 
             HStack(spacing: 10) {
                 ForEach(Theme.light) { swatch($0) }
@@ -60,12 +56,15 @@ struct ThemePicker: View {
                     Text("Aa")
                         .font(.system(size: 15, weight: .semibold, design: .serif))
                         .foregroundStyle(Color(css: theme.ink))
+                }
+                .overlay(alignment: .leading) {
                     RoundedRectangle(cornerRadius: 2)
                         .fill(Color(css: theme.change))
                         .frame(width: 3, height: 14)
-                        .offset(x: -24)
+                        .padding(.leading, 13)
                 }
-                .frame(width: 78, height: 46)
+                .frame(maxWidth: .infinity)
+                .frame(height: 46)
                 .overlay(
                     RoundedRectangle(cornerRadius: 9, style: .continuous)
                         .strokeBorder(isActive ? Color.accentColor : Color.primary.opacity(isChosen ? 0.35 : 0.12),
@@ -115,49 +114,103 @@ struct LayoutControls: View {
 
     var body: some View {
         @Bindable var settings = model.settings
-        VStack(alignment: .leading, spacing: 12) {
-            HStack {
-                Text("Size")
-                    .foregroundStyle(.secondary)
-                Spacer()
-                Button { settings.adjustFontSize(by: -1) } label: {
-                    Image(systemName: "textformat.size.smaller").frame(width: 26, height: 20)
+        // Labels in one column, controls filling the other, so every control
+        // shares one left edge and one right edge.
+        Grid(alignment: .leading, horizontalSpacing: 12, verticalSpacing: 10) {
+            GridRow {
+                label("Size")
+                HStack(spacing: 0) {
+                    Button { settings.adjustFontSize(by: -1) } label: {
+                        Image(systemName: "textformat.size.smaller")
+                            .frame(width: 44, height: 24)
+                            .contentShape(Rectangle())
+                    }
+                    .disabled(settings.fontSize <= ReaderSettings.fontSizes.lowerBound)
+                    .help("Smaller Text (⌘−)")
+                    Text("\(Int(settings.fontSize)) pt")
+                        .monospacedDigit()
+                        .frame(maxWidth: .infinity)
+                    Button { settings.adjustFontSize(by: 1) } label: {
+                        Image(systemName: "textformat.size.larger")
+                            .frame(width: 44, height: 24)
+                            .contentShape(Rectangle())
+                    }
+                    .disabled(settings.fontSize >= ReaderSettings.fontSizes.upperBound)
+                    .help("Bigger Text (⌘+)")
                 }
-                .disabled(settings.fontSize <= ReaderSettings.fontSizes.lowerBound)
-                Text("\(Int(settings.fontSize)) pt")
-                    .monospacedDigit()
-                    .frame(width: 42)
-                Button { settings.adjustFontSize(by: 1) } label: {
-                    Image(systemName: "textformat.size.larger").frame(width: 26, height: 20)
-                }
-                .disabled(settings.fontSize >= ReaderSettings.fontSizes.upperBound)
+                .buttonStyle(.plain)
+                .padding(2)
+                .background(
+                    RoundedRectangle(cornerRadius: 8, style: .continuous)
+                        .fill(Color.primary.opacity(0.06))
+                )
             }
-            .buttonStyle(.borderless)
-            row("Spacing") {
-                Picker("Spacing", selection: $settings.lineSpacing) {
-                    ForEach(LineSpacing.allCases) { Text($0.label).tag($0) }
-                }
+            GridRow {
+                label("Spacing")
+                Segments(title: "Spacing", options: LineSpacing.allCases, selection: $settings.lineSpacing) { $0.label }
             }
-            row("Width") {
-                Picker("Width", selection: $settings.lineWidth) {
-                    ForEach(LineWidth.allCases) { Text($0.label).tag($0) }
-                }
+            GridRow {
+                label("Width")
+                Segments(title: "Width", options: LineWidth.allCases, selection: $settings.lineWidth) { $0.label }
             }
-            Toggle("Mark changes since last read", isOn: $settings.showChanges)
-                .toggleStyle(.switch)
-                .controlSize(.small)
+            GridRow {
+                HStack {
+                    Text("Mark changes since last read")
+                    Spacer()
+                    Toggle("Mark changes since last read", isOn: $settings.showChanges)
+                        .toggleStyle(.switch)
+                        .controlSize(.small)
+                        .labelsHidden()
+                }
+                .gridCellColumns(2)
+            }
         }
         .font(.system(size: 12))
     }
 
-    private func row<Content: View>(_ title: String, @ViewBuilder content: () -> Content) -> some View {
-        HStack {
-            Text(title).foregroundStyle(.secondary)
-            Spacer()
-            content()
-                .pickerStyle(.segmented)
-                .labelsHidden()
-                .frame(width: 190)
+    private func label(_ title: String) -> some View {
+        Text(title)
+            .foregroundStyle(.secondary)
+            .gridColumnAlignment(.leading)
+    }
+}
+
+/// A segmented choice whose segments share the full width equally. The
+/// system segmented picker keeps its intrinsic width on macOS, so rows of
+/// them never line up.
+struct Segments<Value: Hashable & Identifiable>: View {
+    let title: String
+    let options: [Value]
+    @Binding var selection: Value
+    let label: (Value) -> String
+
+    var body: some View {
+        HStack(spacing: 2) {
+            ForEach(options) { option in
+                let isSelected = option == selection
+                Button { selection = option } label: {
+                    Text(label(option))
+                        .lineLimit(1)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 4)
+                        .foregroundStyle(isSelected ? Color.white : .primary)
+                        .background(
+                            RoundedRectangle(cornerRadius: 6, style: .continuous)
+                                .fill(isSelected ? Color.accentColor : .clear)
+                        )
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .accessibilityAddTraits(isSelected ? .isSelected : [])
+            }
         }
+        .padding(2)
+        .background(
+            RoundedRectangle(cornerRadius: 8, style: .continuous)
+                .fill(Color.primary.opacity(0.06))
+        )
+        .font(.system(size: 12))
+        .accessibilityElement(children: .contain)
+        .accessibilityLabel(title)
     }
 }
