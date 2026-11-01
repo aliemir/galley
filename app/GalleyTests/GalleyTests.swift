@@ -553,3 +553,37 @@ struct FeedbackClearingTests {
         #expect(CLI.arguments(["/Applications/Galley.app/Contents/MacOS/Galley"]) == nil)
     }
 }
+
+struct FeedbackSectionTests {
+    let source = """
+    # Auth migration plan
+
+    Intro paragraph about tokens.
+
+    ## Rollout
+
+    Dual-write first.
+
+    ### Token shape
+
+    Tokens expire after fifteen minutes.
+
+    ## Risks
+
+    Tokens expire after fifteen minutes.
+    """
+
+    @Test func namesTheHeadingsAPassageSitsUnder() {
+        let sections = Feedback.Sections(source)
+        #expect(sections.path(for: Highlight(text: "Intro paragraph", prefix: "Auth migration plan", suffix: "")) == [])
+        #expect(sections.path(for: Highlight(text: "Dual-write first.", prefix: "Rollout", suffix: "")) == ["Rollout"])
+        #expect(sections.path(for: Highlight(text: "expire after fifteen", prefix: "Token shapeTokens ", suffix: "")) == ["Rollout", "Token shape"])
+        // The same sentence twice: the text before it decides which.
+        #expect(sections.path(for: Highlight(text: "expire after fifteen", prefix: "RisksTokens ", suffix: "")) == ["Risks"])
+    }
+
+    @Test func formatsThePlaceInTheItem() {
+        let text = Feedback.format([.init(path: "/w/a.md", items: Feedback.items([Highlight(text: "Dual-write first.", prefix: "Rollout", suffix: "")], in: source))])
+        #expect(text.contains("1. Marked in Rollout:\n   > Dual-write first."))
+    }
+}

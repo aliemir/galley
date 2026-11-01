@@ -1363,9 +1363,7 @@ final class AppModel {
     /// longer in the text are left out: the agent has dealt with them.
     func copyFeedback() {
         guard let current else { NSSound.beep(); return }
-        let items = current.highlights
-            .filter { !current.orphans.contains($0.id) }
-            .map { Feedback.Item(text: $0.text, note: $0.note) }
+        let items = Feedback.items(current.highlights.filter { !current.orphans.contains($0.id) }, in: current.source)
         copy(Feedback.format([Feedback.File(path: current.file.url.path, items: items)]))
     }
 
@@ -1375,10 +1373,7 @@ final class AppModel {
         let files: [Feedback.File] = workspace.tree.readingOrder.compactMap { file in
             guard let highlights = record.files[file.id]?.highlights, !highlights.isEmpty else { return nil }
             let source = WorkspaceScanner.read(file.url) ?? ""
-            let items = highlights
-                .filter { Feedback.isStillPresent($0.text, in: source) }
-                .map { Feedback.Item(text: $0.text, note: $0.note) }
-            return Feedback.File(path: file.url.path, items: items)
+            return Feedback.File(path: file.url.path, items: Feedback.items(highlights, in: source))
         }
         copy(Feedback.format(files))
     }

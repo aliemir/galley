@@ -84,7 +84,7 @@ nonisolated enum CLI {
         }
         let files = collect(state, under: target)
         if json {
-            let items = files.map { ["path": $0.path, "items": $0.items.map { ["text": $0.text, "note": $0.note ?? ""] }] as [String: Any] }
+            let items = files.map { ["path": $0.path, "items": $0.items.map { ["text": $0.text, "note": $0.note ?? "", "section": $0.section] as [String: Any] }] as [String: Any] }
             let data = (try? JSONSerialization.data(withJSONObject: items, options: [.prettyPrinted, .sortedKeys])) ?? Data("[]".utf8)
             print(String(decoding: data, as: UTF8.self))
             return 0
@@ -107,9 +107,7 @@ nonisolated enum CLI {
                 let path = workspace.kind == "files" ? id : URL(fileURLWithPath: workspace.path).appendingPathComponent(id).standardizedFileURL.path
                 guard path == prefix || path.hasPrefix(prefix.hasSuffix("/") ? prefix : prefix + "/") else { continue }
                 let source = WorkspaceScanner.read(URL(fileURLWithPath: path)) ?? ""
-                let items = highlights
-                    .filter { Feedback.isStillPresent($0.text, in: source) }
-                    .map { Feedback.Item(text: $0.text, note: $0.note) }
+                let items = Feedback.items(highlights, in: source)
                 if !items.isEmpty { files.append(Feedback.File(path: path, items: items)) }
             }
         }
@@ -315,8 +313,9 @@ nonisolated enum AgentSkill {
     ```
 
     The output is Markdown: for each file, its absolute path as a heading,
-    then numbered items — the passage the user marked, quoted, and under it
-    their note when they wrote one. No output (and "No feedback on …" on
+    then numbered items — where the passage is (`Marked in Rollout › Token
+    shape`, the headings it sits under), the passage quoted, and under it
+    the user's note when they wrote one. No output (and "No feedback on …" on
     stderr) means there is none.
 
     ## Act on it

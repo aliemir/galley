@@ -26,6 +26,10 @@ otherwise have to re-derive. Not worth one: typo fixes and formatting.
 
 ## 2026-11-01
 
+- Feedback says where each passage is: "Marked in Rollout › Token shape"
+  (its headings, outermost first, without the document's own title), worked
+  out when copied or read so it follows the file as it is now; in Copy
+  Feedback and `galley feedback` (JSON: `section`)
 - The `galley` command (`App/CLI.swift`): Galley's own binary, run as a
   command when called `galley` (or with `--cli`). `galley [path]` opens,
   `galley feedback [path] [--json]` prints the feedback on a file or folder,
