@@ -18,7 +18,7 @@ final class DebugAutomation {
         "snapshot", "probe", "reload", "reset", "palette", "palette.close", "highlight", "next", "previous", "fold", "unfold", "change", "find.close", "resize.small", "resize.large",
         "scroll.top", "scroll.bottom", "dark", "light", "system",
         "appearance", "appearance.close", "settings", "settings.close", "settings.reading", "settings.appearance",
-        "js", "note", "feedback.copy", "feedback.copyall", "pin", "movepin", "movews", "divider.narrow", "divider.wide", "toggle.outline", "toggle.files", "toggle.workspaces", "focusfiles", "type.api", "type.rate", "type.s", "type.sta", "key.return", "key.escape", "key.down", "columns.reset", "columns.filesfirst", "columns.nocontents", "rail", "rail.off", "identity", "identity.close", "icon.test", "icon.reset", "swipe.right", "swipe.left", "swipe.hold", "swipe.release", "swipe.wobble", "pull.hold", "pull.half", "pull.back", "pull.backhalf", "pull.release",
+        "js", "searchopen", "search.token", "search.rate limits", "names.rate", "note", "feedback.copy", "feedback.copyall", "pin", "movepin", "movews", "divider.narrow", "divider.wide", "toggle.outline", "toggle.files", "toggle.workspaces", "focusfiles", "type.api", "type.rate", "type.s", "type.sta", "key.return", "key.escape", "key.down", "columns.reset", "columns.filesfirst", "columns.nocontents", "rail", "rail.off", "identity", "identity.close", "icon.test", "icon.reset", "swipe.right", "swipe.left", "swipe.hold", "swipe.release", "swipe.wobble", "pull.hold", "pull.half", "pull.back", "pull.backhalf", "pull.release",
     ] + (1...4).map { "level.\($0)" }
         + Theme.all.map { "theme.\($0.id)" }
         + (0..<30).map { "open.\($0)" }
@@ -50,6 +50,17 @@ final class DebugAutomation {
             web.evaluateJavaScript("document.readyState + ' ' + typeof window.Reader + ' ' + document.body.innerHTML.length") { result, error in
                 debugLog("[probe] js=\(String(describing: result)) error=\(String(describing: error))")
             }
+        case "searchopen":
+            // What choosing a text result does: open API rate limits, find "rate limits".
+            if let workspace = model.selectedWorkspace, let file = workspace.file("plans/api-rate-limits.md") {
+                model.isQuickOpenVisible = false
+                model.openSearchResult(file, in: workspace, term: "rate limits")
+            }
+        case "search", "names":
+            // The palette, seeded: text search or the file palette.
+            model.quickOpenSearchesText = parts[0] == "search"
+            model.quickOpenSeed = argument
+            model.isQuickOpenVisible = true
         case "note":
             // Selects a phrase in the second paragraph and opens a note on it.
             model.reader.webView.evaluateJavaScript(Self.selectPhrase) { _, _ in
