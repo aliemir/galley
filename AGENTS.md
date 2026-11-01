@@ -235,6 +235,13 @@ simulator ones).
   `data:`. Debug builds also carry `app/Galley-Debug.entitlements`; adding any
   entitlements file stops Xcode injecting its own Debug read exception, so
   that file declares it.
+- **One Galley at a time.** Each running copy keeps the whole library in
+  memory and writes `library.json` in full, so two copies (a test build
+  launched by its binary while the user's is open) overwrite each other's
+  highlights, notes and pins — last writer wins. `pkill -x Galley` before
+  launching a test build, and don't drive the app while the user is using
+  it (check `ioreg -c IOHIDSystem` idle time). Test highlights and notes on
+  fixture files the user has not marked up.
 - **Debug output goes to stderr** (`debugLog`) — stdout is block-buffered when
   the app is launched from a script, so `print` output is lost.
 - **Bundle resources are flattened.** Files under `app/Galley/Reader/Web/`
