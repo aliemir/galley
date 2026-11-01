@@ -3,7 +3,7 @@
 # debug build: a throwaway library on a copy of the Showcase workspace, the
 # Paper theme passed at launch, so the reader's own library and settings are
 # never touched. Needs Screen Recording for the terminal, and ffmpeg
-# (Homebrew) for the GIFs. Quits any running Galley first (one Galley at a
+# (Homebrew) for the GIFs (recorded by tools/record-window.swift). Quits any running Galley first (one Galley at a
 # time — see AGENTS.md).
 #
 # Usage: tools/capture-guide.sh   (after building the Debug scheme)
@@ -41,19 +41,21 @@ shot() {
   echo "wrote $file"
 }
 
-# gif <name> <seconds> <debug commands…>: records the main window while the
-# commands run (a moment of stillness either side), then makes a GIF.
+# gif <name> <seconds> <debug commands…>: records the main window — that
+# window alone, so nothing in front of it gets in — while the commands run,
+# then makes a GIF. The window's top strip is cropped off: macOS badges a
+# window being recorded where its traffic lights are.
 gif() {
   local name=$1 seconds=$2; shift 2
-  local id=$(window)
-  local bounds=$(swift tools/window-bounds.swift Galley | awk -v id="$id" '$1 == id { print $3 }')
-  screencapture -x -v -V "$seconds" -R"$bounds" "$WORK/$name.mov" &
+  local frames="$WORK/$name-frames"
+  rm -rf "$frames"
+  swift tools/record-window.swift "$(window)" "$seconds" 15 "$frames" &
   local recording=$!
-  sleep 0.8
+  sleep 1.6
   debug "$@"
   wait $recording
-  ffmpeg -loglevel error -y -i "$WORK/$name.mov" \
-    -vf "fps=12,scale=760:-1:flags=lanczos,split[a][b];[a]palettegen=stats_mode=diff[p];[b][p]paletteuse=dither=bayer:bayer_scale=4:diff_mode=rectangle" \
+  ffmpeg -loglevel error -y -framerate "$(cat "$frames/rate")" -i "$frames/frame%05d.png" \
+    -vf "crop=iw-24:ih-52:12:40,fps=12,scale=760:-1:flags=lanczos,split[a][b];[a]palettegen=stats_mode=diff[p];[b][p]paletteuse=dither=bayer:bayer_scale=4:diff_mode=rectangle" \
     "$OUT/guide-$name.gif"
   xattr -c "$OUT/guide-$name.gif"
   echo "wrote $OUT/guide-$name.gif"
@@ -125,7 +127,7 @@ open(p, "w").write(s)
 EOF
 sleep 2
 debug level.1 open.2 wait.2500
-shot changes "$(window)" 1100 1480 120 700
+shot changes "$(window)" 860 1480 330 700
 
 # 3. Feedback: a highlight with a note under it, on the plan.
 debug open.1 wait.1500 highlight.note wait.1800
@@ -148,4 +150,6 @@ debug level.1 open.3 wait.1500 scroll.bottom wait.900
 gif pull 5 pull.slow
 
 osascript -e 'tell application id "com.aliemir.galley" to quit' 2>/dev/null || true
+# The website shows the same pictures.
+cp "$OUT"/guide-*.png "$OUT"/guide-*.gif website/public/images/
 echo "done — check $OUT/guide-*.png"
