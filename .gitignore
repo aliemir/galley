@@ -35,3 +35,6 @@ __pycache__/
 
 # --- claude code (local overrides only) ---
 .claude/settings.local.json
+
+# LLVM coverage output: an instrumented (test) build run from the repo root
+*.profraw
