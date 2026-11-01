@@ -225,6 +225,19 @@ final class AppModel {
     private func observeSettings() {
         observeAppearance()
         observeNaming()
+        // After launch: the Dock tile is not there while the model is made.
+        Task { @MainActor in self.observeDockBadge() }
+    }
+
+    /// The Dock icon carries the number of new and changed files across
+    /// every workspace, unless the reader switched it off.
+    private func observeDockBadge() {
+        withObservationTracking {
+            let count = settings.dockBadge ? workspaces.reduce(0) { $0 + $1.unreadCount } : 0
+            NSApp.dockTile.badgeLabel = count == 0 ? nil : (count > 999 ? "999+" : "\(count)")
+        } onChange: { [weak self] in
+            Task { @MainActor in self?.observeDockBadge() }
+        }
     }
 
     /// Each tracker re-arms only itself; re-arming both from either would

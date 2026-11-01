@@ -169,6 +169,7 @@ final class DebugAutomation {
             default:
                 let list = model.tabs.map { ($0.id == model.activeTabID ? "*" : "") + ($0.fileID ?? "-") }
                 debugLog("[tabs] \(list.joined(separator: " | ")) current=\(model.current?.file.id ?? "-")")
+                debugLog("[tabs] dock badge=\(NSApp.dockTile.badgeLabel ?? "none")")
                 for workspace in model.workspaces {
                     debugLog("[tabs] workspace \(workspace.name) files=\(workspace.files.count) scanned=\(workspace.hasScanned) root=\(workspace.root.path)")
                 }

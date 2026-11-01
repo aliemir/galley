@@ -135,6 +135,8 @@ final class ReaderSettings {
     var workspacesAsIcons: Bool { didSet { save(workspacesAsIcons, "workspacesAsIcons") } }
     /// Column widths the reader dragged, by column; absent means the default.
     var columnWidths: [String: Double] { didSet { save(columnWidths, "columnWidths") } }
+    /// The number of files to read, on the Dock icon.
+    var dockBadge: Bool { didSet { save(dockBadge, "dockBadge") } }
     /// The Dock icon's palette (`AppIcon.variants`).
     var appIcon: String {
         didSet {
@@ -175,6 +177,7 @@ final class ReaderSettings {
         workspacesAsIcons = d.object(forKey: "workspacesAsIcons") as? Bool ?? true
         columnWidths = d.dictionary(forKey: "columnWidths") as? [String: Double] ?? [:]
         appIcon = d.string(forKey: "appIcon") ?? AppIcon.standard
+        dockBadge = d.object(forKey: "dockBadge") as? Bool ?? true
     }
 
     private func save(_ value: Any, _ key: String) {

@@ -26,6 +26,9 @@ otherwise have to re-derive. Not worth one: typo fixes and formatting.
 
 ## 2026-11-01
 
+- The Dock icon carries the number of new and changed files across every
+  workspace; Settings → General → "Show the number of files to read on the
+  Dock icon" turns it off
 - App Icon pane: the icon in ten palettes (Paper, Snow, Sepia, Lavender,
   Mint, Solarized, Graphite, Midnight, Rosé Pine, Nord), drawn by
   `tools/make-icon.swift --variants`; the pick is the Dock icon while Galley
