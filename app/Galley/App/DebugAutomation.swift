@@ -18,7 +18,7 @@ final class DebugAutomation {
         "snapshot", "probe", "reload", "reset", "palette", "palette.close", "highlight", "next", "previous", "fold", "unfold", "change", "find.close", "resize.small", "resize.large",
         "scroll.top", "scroll.bottom", "dark", "light", "system",
         "appearance", "appearance.close", "settings", "settings.close", "settings.reading", "settings.appearance",
-        "js", "toggle.outline", "toggle.files", "toggle.workspaces", "focusfiles", "type.api", "type.rate", "type.s", "type.sta", "key.return", "key.escape", "key.down", "columns.reset", "columns.filesfirst", "columns.nocontents", "rail", "rail.off", "identity", "identity.close", "icon.test", "icon.reset", "swipe.right", "swipe.left", "swipe.hold", "swipe.release", "swipe.wobble", "pull.hold", "pull.half", "pull.back", "pull.backhalf", "pull.release",
+        "js", "divider.narrow", "divider.wide", "toggle.outline", "toggle.files", "toggle.workspaces", "focusfiles", "type.api", "type.rate", "type.s", "type.sta", "key.return", "key.escape", "key.down", "columns.reset", "columns.filesfirst", "columns.nocontents", "rail", "rail.off", "identity", "identity.close", "icon.test", "icon.reset", "swipe.right", "swipe.left", "swipe.hold", "swipe.release", "swipe.wobble", "pull.hold", "pull.half", "pull.back", "pull.backhalf", "pull.release",
     ] + (1...4).map { "level.\($0)" }
         + Theme.all.map { "theme.\($0.id)" }
         + (0..<30).map { "open.\($0)" }
@@ -122,6 +122,16 @@ final class DebugAutomation {
             } else {
                 model.setWorkspaceIcon(.monogram, for: id)
                 model.setWorkspaceName(nil, for: id)
+            }
+        case "divider":
+            // The steps a drag of the Workspaces edge makes, 150 pt either way.
+            let start = model.columnWidth(.workspaces)
+            let dx: CGFloat = argument == "narrow" ? -260 : 150
+            Task {
+                for step in 1...20 {
+                    try? await Task.sleep(for: .milliseconds(12))
+                    model.dragColumnEdge(.workspaces, to: start + dx * CGFloat(step) / 20)
+                }
             }
         case "toggle": if let column = PanelColumn(rawValue: argument) { model.toggleColumn(column) }
         case "focusfiles": model.filesFocusRequest += 1
