@@ -198,13 +198,14 @@ private struct ColumnDivider: View {
                 .fill(startWidth != nil || isHovered ? palette.accent.opacity(0.55) : palette.rule)
                 .frame(width: startWidth != nil || isHovered ? 2 : 1)
                 .animation(.easeOut(duration: 0.12), value: isHovered)
-                // The title band is one clean strip: the line fades in below
-                // it, so it never runs through the traffic lights.
+                // The rail is narrower than the window buttons: its line fades
+                // in below the title band instead of running through them.
+                // Wider columns clear the buttons and keep the full line.
                 .mask(
                     LinearGradient(
                         stops: [
-                            .init(color: .clear, location: 0),
-                            .init(color: .clear, location: MainView.bandHeight / max(1, dividerHeight)),
+                            .init(color: isRail ? .clear : .black, location: 0),
+                            .init(color: isRail ? .clear : .black, location: MainView.bandHeight / max(1, dividerHeight)),
                             .init(color: .black, location: (MainView.bandHeight + 16) / max(1, dividerHeight)),
                         ],
                         startPoint: .top, endPoint: .bottom
