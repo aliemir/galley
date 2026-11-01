@@ -26,6 +26,12 @@ otherwise have to re-derive. Not worth one: typo fixes and formatting.
 
 ## 2026-11-02
 
+- Website pictures are sharp on Retina: full-resolution screenshots, each
+  shown at no more than half its pixel width, and the two animations as
+  H.264 videos (1600 px) instead of GIFs; the theme picture is smaller.
+  `tools/record-window.swift` now records a window straight to a movie
+  (ScreenCaptureKit), from which the capture script makes the guide's GIF
+  and the site's MP4
 - The agent skill shows `galley feedback --json` as data (path, items with
   text, note, section) and a `jq` line for picking out notes
 - Links to files: Markdown opens in Galley wherever it is — this workspace,

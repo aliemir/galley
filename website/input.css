@@ -116,8 +116,12 @@ main { padding: 0 24px 96px; }
 
 /* Pictures break out of the column, wider than the text. */
 figure { margin: 48px auto; max-width: 1100px; }
-figure.medium { max-width: 820px; }
-figure img { display: block; width: 100%; height: auto; border-radius: 12px; box-shadow: var(--shadow); }
+/* Never wider than half their pixels, so they stay sharp on Retina. */
+figure.video { max-width: 800px; }
+figure.detail { max-width: 740px; }
+figure.small { max-width: 520px; }
+figure img, figure video { display: block; width: 100%; height: auto; border-radius: 12px; box-shadow: var(--shadow); }
+figure video { background: var(--paper-2); }
 figcaption { max-width: var(--measure); margin: 14px auto 0; font: 400 13.5px/1.5 var(--font-ui); color: var(--ink-3); text-align: center; }
 .hero + figure { margin-top: 56px; }
 

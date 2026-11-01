@@ -33,6 +33,9 @@ shot() {
   local file="$OUT/guide-$1.png"
   screencapture -x -o -l "$2" "$file"
   if [[ $# -ge 6 ]]; then sips -c "$3" "$4" --cropOffset "$5" "$6" "$file" --out "$file" >/dev/null; fi
+  # The website shows it at full Retina size; the guide's copy is lighter.
+  xattr -c "$file"
+  cp "$file" website/public/images/
   if (( $(sips -g pixelWidth "$file" | awk '/pixelWidth/{print $2}') > 1600 )); then
     sips --resampleWidth 1600 "$file" --out "$file" >/dev/null
   fi
@@ -43,22 +46,26 @@ shot() {
 
 # gif <name> <seconds> <debug commands…>: records the main window — that
 # window alone, so nothing in front of it gets in — while the commands run,
-# then makes a GIF. The window's top strip is cropped off: macOS badges a
-# window being recorded where its traffic lights are.
+# then makes a GIF for the guide and a sharp MP4 for the website. The
+# window's top strip is cropped (macOS badges a window being recorded where
+# its traffic lights are), and so are its rounded corners.
 gif() {
   local name=$1 seconds=$2; shift 2
-  local frames="$WORK/$name-frames"
-  rm -rf "$frames"
-  swift tools/record-window.swift "$(window)" "$seconds" 15 "$frames" &
+  local movie="$WORK/$name.mov"
+  swift tools/record-window.swift "$(window)" "$seconds" "$movie" &
   local recording=$!
   sleep 1.6
   debug "$@"
   wait $recording
-  ffmpeg -loglevel error -y -framerate "$(cat "$frames/rate")" -i "$frames/frame%05d.png" \
-    -vf "crop=iw-24:ih-52:12:40,fps=12,scale=760:-1:flags=lanczos,split[a][b];[a]palettegen=stats_mode=diff[p];[b][p]paletteuse=dither=bayer:bayer_scale=4:diff_mode=rectangle" \
+  local crop="crop=iw-48:ih-104:24:80"
+  ffmpeg -loglevel error -y -i "$movie" \
+    -vf "$crop,fps=12,scale=760:-1:flags=lanczos,split[a][b];[a]palettegen=stats_mode=diff[p];[b][p]paletteuse=dither=bayer:bayer_scale=4:diff_mode=rectangle" \
     "$OUT/guide-$name.gif"
-  xattr -c "$OUT/guide-$name.gif"
-  echo "wrote $OUT/guide-$name.gif"
+  ffmpeg -loglevel error -y -i "$movie" -vf "$crop,scale=1600:-2:flags=lanczos" \
+    -c:v libx264 -preset slow -crf 22 -pix_fmt yuv420p -movflags +faststart -an \
+    "website/public/images/guide-$name.mp4"
+  xattr -c "$OUT/guide-$name.gif" "website/public/images/guide-$name.mp4"
+  echo "wrote $OUT/guide-$name.gif and website/public/images/guide-$name.mp4"
 }
 
 osascript -e 'tell application id "com.aliemir.galley" to quit' 2>/dev/null || true
@@ -150,6 +157,4 @@ debug level.1 open.3 wait.1500 scroll.bottom wait.900
 gif pull 5 pull.slow
 
 osascript -e 'tell application id "com.aliemir.galley" to quit' 2>/dev/null || true
-# The website shows the same pictures.
-cp "$OUT"/guide-*.png "$OUT"/guide-*.gif website/public/images/
 echo "done — check $OUT/guide-*.png"

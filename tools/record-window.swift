@@ -1,48 +1,35 @@
-// Records one window — only that window, whatever is in front of it — as
-// PNG frames, for the guide's GIFs (tools/capture-guide.sh turns them into
-// a GIF with ffmpeg). A screen-region recording would also catch any window
-// that happens to overlap.
-// Usage: swift tools/record-window.swift <window id> <seconds> <fps> <out folder>
+// Records one window — only that window, whatever is in front of it — to a
+// movie at full Retina resolution, for the guide's GIFs and the website's
+// videos (tools/capture-guide.sh converts it with ffmpeg). A screen-region
+// recording would also catch any window that happens to overlap.
+// Usage: swift tools/record-window.swift <window id> <seconds> <out.mov>
 import AppKit
-import CoreMedia
 import ScreenCaptureKit
 
 let arguments = CommandLine.arguments
-guard arguments.count == 5, let windowID = CGWindowID(arguments[1]),
-      let seconds = Double(arguments[2]), let fps = Int32(arguments[3]) else {
-    print("usage: record-window.swift <window id> <seconds> <fps> <out folder>")
+guard arguments.count == 4, let windowID = CGWindowID(arguments[1]), let seconds = Double(arguments[2]) else {
+    print("usage: record-window.swift <window id> <seconds> <out.mov>")
     exit(2)
 }
-let folder = URL(fileURLWithPath: arguments[4], isDirectory: true)
-try? FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+// ScreenCaptureKit needs the window-server connection AppKit sets up.
+_ = NSApplication.shared
+let movie = URL(fileURLWithPath: arguments[3])
+try? FileManager.default.removeItem(at: movie)
 
-/// Keeps the latest picture of the window; `tick` writes it out at a steady
-/// rate, so still moments last as long in the GIF as they did on screen
-/// (the stream sends nothing while the window does not change).
-final class Recorder: NSObject, SCStreamOutput {
-    var frame = 0
-    var latest: CGImage?
-    let folder: URL
-    let context = CIContext()
-    init(folder: URL) { self.folder = folder }
-
-    func stream(_ stream: SCStream, didOutputSampleBuffer buffer: CMSampleBuffer, of type: SCStreamOutputType) {
-        guard type == .screen, let pixels = CMSampleBufferGetImageBuffer(buffer) else { return }
-        // Half size: the GIF is smaller still, and a frame must be written
-        // faster than the next one is due.
-        let image = CIImage(cvPixelBuffer: pixels).transformed(by: CGAffineTransform(scaleX: 0.5, y: 0.5))
-        latest = context.createCGImage(image, from: image.extent)
+/// Says when the movie file is complete.
+final class Finish: NSObject, SCRecordingOutputDelegate {
+    var done: CheckedContinuation<Void, Never>?
+    func recordingOutputDidFinishRecording(_ recordingOutput: SCRecordingOutput) {
+        done?.resume()
+        done = nil
     }
-
-    func tick() {
-        guard let latest else { return }
-        frame += 1
-        let url = folder.appendingPathComponent(String(format: "frame%05d.png", frame))
-        try? NSBitmapImageRep(cgImage: latest).representation(using: .png, properties: [:])?.write(to: url)
+    func recordingOutput(_ recordingOutput: SCRecordingOutput, didFailWithError error: any Error) {
+        print("recording failed: \(error)")
+        exit(1)
     }
 }
 
-let recorder = Recorder(folder: folder)
+let finish = Finish()
 Task {
     do {
         let content = try await SCShareableContent.excludingDesktopWindows(false, onScreenWindowsOnly: false)
@@ -55,26 +42,25 @@ Task {
         let scale = CGFloat(filter.pointPixelScale)
         configuration.width = Int(window.frame.width * scale)
         configuration.height = Int(window.frame.height * scale)
-        configuration.minimumFrameInterval = CMTime(value: 1, timescale: fps)
+        configuration.minimumFrameInterval = CMTime(value: 1, timescale: 30)
         configuration.showsCursor = false
         configuration.ignoreShadowsSingleWindow = true
+
+        let output = SCRecordingOutputConfiguration()
+        output.outputURL = movie
+        output.outputFileType = .mov
+        output.videoCodecType = .h264
+        let recording = SCRecordingOutput(configuration: output, delegate: finish)
+
         let stream = SCStream(filter: filter, configuration: configuration, delegate: nil)
-        try stream.addStreamOutput(recorder, type: .screen, sampleHandlerQueue: .main)
+        try stream.addRecordingOutput(recording)
         try await stream.startCapture()
-        // On a clock, so a slow write delays one frame, not every one after.
-        let start = Date()
-        var next = start
-        while Date().timeIntervalSince(start) < seconds {
-            recorder.tick()
-            next = next.addingTimeInterval(1 / Double(fps))
-            let wait = next.timeIntervalSinceNow
-            if wait > 0 { try await Task.sleep(for: .milliseconds(Int(wait * 1000))) }
+        try await Task.sleep(for: .seconds(seconds))
+        await withCheckedContinuation { continuation in
+            finish.done = continuation
+            Task { try? await stream.stopCapture() }
         }
-        try await stream.stopCapture()
-        // The rate the frames were really written at, for the GIF's timing.
-        let rate = Double(recorder.frame) / Date().timeIntervalSince(start)
-        try? String(format: "%.2f", rate).write(to: folder.appendingPathComponent("rate"), atomically: true, encoding: .utf8)
-        print("\(recorder.frame) frames in \(folder.path) at \(String(format: "%.1f", rate)) fps")
+        print("recorded \(movie.path)")
         exit(0)
     } catch {
         print("recording failed: \(error)")
