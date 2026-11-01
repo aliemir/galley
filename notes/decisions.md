@@ -35,15 +35,36 @@ because the app is meant to feel calm, not like a dev tool.
 from a sandboxed app and would need another shape (copy to clipboard, a URL
 scheme, or an MCP server the agent connects to).
 
-## Leaning — distribution channel: direct download
+## 2026-11-01 — Distribution: free, on GitHub, no App Store, no sandbox
 
-**Leaning (not final):** direct download — Developer ID signing + notarization —
-rather than the Mac App Store. Said "probably" on 2026-10-31.
+**Chosen:** Galley is free and open source, published on GitHub, with
+releases downloaded from there: Developer ID signing, hardened runtime,
+notarization, a DMG per release. No Mac App Store. The App Sandbox is off.
 
-**Not yet acted on:** the project is still configured for the Mac App Store
-(sandbox on, `testflight-release` skill uploads a `.pkg`). Revisit the sandbox
-and write a Developer ID + `notarytool` release path when release work starts,
-not before.
+**Why:** the store adds nothing to a free app shipped from GitHub, and the
+sandbox stood in the way of the features that make Galley more than a
+viewer: a `galley` command an agent can run to read the reader's feedback
+(another program cannot read a sandboxed app's data), installing that command
+on the PATH the way VS Code installs `code`, and opening a single file or a
+folder without a permission panel. VS Code, Cursor, Obsidian and most
+developer tools on the Mac ship the same way.
+
+**What stays locked down:** the reader page — scripts only from the app, no
+network, no navigation, raw HTML cleaned (see below) — and the app never
+writes to a Markdown file. "Read-only by design" replaces "sandboxed" in the
+privacy story.
+
+**Moving off the sandbox:** the first launch without it copies the library
+(`library.json`, snapshots) and the settings out of the old container
+(`~/Library/Containers/com.aliemir.galley`) — copied, not moved, so the old
+copy remains if anything goes wrong.
+
+**Rejected:** the Mac App Store (and with it the sandbox, a sandboxed CLI and
+an app-group container to share data with it — all cost, no benefit for a free
+GitHub release).
+
+**Later:** an update mechanism (Sparkle, its feed on GitHub), the release
+script (archive → sign → notarize → DMG → GitHub release).
 
 ## 2026-10-31 — Focus: reading experience first
 
@@ -248,4 +269,10 @@ cannot reach keys handled outside the menus (⌃Tab).
 so the set regenerates when the real icon replaces the placeholder. The
 choice sets the Dock icon while Galley runs; a sandboxed app cannot change
 the icon Finder shows (Bear behaves the same).
+
+## 2026-11-01 — The website reads like the guide
+
+**Chosen (not built yet):** the website looks like Galley's own page — the
+guide's content and typography on the Paper theme — with GitHub and Download
+buttons added. One look across app, guide and site.
 
