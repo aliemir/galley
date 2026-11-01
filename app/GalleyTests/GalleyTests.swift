@@ -4,17 +4,20 @@ import Testing
 
 struct PrettyNameTests {
     @Test(arguments: [
-        ("2026-10-30_auth-migration-plan.md", "Auth migration plan"),
+        ("2026-10-30_auth-migration-plan.md", "Auth Migration Plan"),
         ("03-onboarding.md", "Onboarding"),
-        ("authMigrationPlan.md", "Auth migration plan"),
+        ("authMigrationPlan.md", "Auth Migration Plan"),
         ("README.md", "README"),
         ("CLAUDE.md", "CLAUDE"),
-        ("api_design_notes.md", "API design notes"),
+        ("api_design_notes.md", "API Design Notes"),
         ("prd-v2.md", "PRD v2"),
         ("20261030-1415-standup.md", "Standup"),
         ("2026.md", "2026"),
         ("plan.markdown", "Plan"),
-        ("MCP-server-ideas.md", "MCP server ideas"),
+        ("MCP-server-ideas.md", "MCP Server Ideas"),
+        ("state-of-the-art-review.md", "State of the Art Review"),
+        ("the-plan-to-ship.md", "The Plan to Ship"),
+        ("what-to-think-about.md", "What to Think About"),
         ("q3OKRs.md", "Q3 OKRs"),
     ])
     func names(input: String, expected: String) {
@@ -22,10 +25,10 @@ struct PrettyNameTests {
     }
 
     @Test(arguments: [
-        ("doodle-cases", "Doodle cases"),
+        ("doodle-cases", "Doodle Cases"),
         ("03-research", "Research"),
-        ("store_metadata", "Store metadata"),
-        ("v1.2-notes", "V1.2 notes"),
+        ("store_metadata", "Store Metadata"),
+        ("v1.2-notes", "V1.2 Notes"),
         ("notes", "Notes"),
         ("API", "API"),
     ])

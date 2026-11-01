@@ -26,6 +26,8 @@ otherwise have to re-derive. Not worth one: typo fixes and formatting.
 
 ## 2026-11-01
 
+- Tidied names are title case: "Auth Migration Plan", with short words
+  ("of", "the", "to"…) lowercase inside a title, acronyms as before
 - Your marks are purple everywhere: highlights and note cards on the page
   match the feedback colour of the chrome, so they no longer look like the
   agent's changes (amber). Notes are a bubble pointing at their passage, not

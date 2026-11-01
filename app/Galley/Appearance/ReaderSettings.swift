@@ -186,7 +186,7 @@ final class ReaderSettings {
         nameStyle == .filename ? name : PrettyName.make(fromFolderName: name)
     }
 
-    /// `plans/q3-launch` → "Plans / Q3 launch".
+    /// `plans/q3-launch` → "Plans / Q3 Launch".
     func displayFolderPath(_ path: String) -> String {
         path.split(separator: "/").map { displayFolderName(String($0)) }.joined(separator: " / ")
     }

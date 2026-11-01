@@ -1,7 +1,7 @@
 import SwiftUI
 
 /// Subsequence matching with bonuses for word starts and runs, so "amp"
-/// finds "Auth migration plan" and "rl" finds "rate limits".
+/// finds "Auth Migration Plan" and "rl" finds "rate limits".
 nonisolated enum Fuzzy {
     static func score(_ query: String, in text: String) -> Int? {
         let needle = Array(query.lowercased().filter { !$0.isWhitespace })

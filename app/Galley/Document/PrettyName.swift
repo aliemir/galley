@@ -1,6 +1,6 @@
 import Foundation
 
-/// Turns `2026-10-30_auth-migrationPlan.md` into "Auth migration plan".
+/// Turns `2026-10-30_auth-migrationPlan.md` into "Auth Migration Plan".
 nonisolated enum PrettyName {
     /// Words kept in capitals wherever they appear.
     static let acronyms: Set<String> = [
@@ -9,6 +9,13 @@ nonisolated enum PrettyName {
         "QA", "README", "REST", "RFC", "SDK", "SDKs", "SEO", "SQL", "SSO", "TODO", "UI", "UX", "URL", "URLs",
         "UUID", "v1", "v2", "v3", "XML", "YAML", "CLAUDE", "AGENTS", "GEMINI", "CHANGELOG", "LICENSE",
         "macOS", "GitHub", "TestFlight", "OAuth",
+    ]
+
+    /// Short words left lowercase inside a title, as in a book's: "State of
+    /// the Art Review". Never the first or last word.
+    static let minorWords: Set<String> = [
+        "a", "an", "and", "as", "at", "but", "by", "for", "from", "in", "into", "nor", "of",
+        "on", "or", "per", "the", "to", "via", "vs", "with",
     ]
 
     private static let acronymLookup: [String: String] = {
@@ -25,7 +32,7 @@ nonisolated enum PrettyName {
         return tidy(name, original: filename)
     }
 
-    /// `03-research_notes` → "Research notes". Dots stay: a folder has no extension.
+    /// `03-research_notes` → "Research Notes". Dots stay: a folder has no extension.
     static func make(fromFolderName folder: String) -> String {
         tidy(folder, original: folder)
     }
@@ -54,7 +61,7 @@ nonisolated enum PrettyName {
         guard !words.isEmpty else { return filename }
 
         // An all-caps name is shouting by convention (README, CLAUDE): keep
-        // known words as written, sentence-case the rest.
+        // known words as written, title-case the rest.
         var result: [String] = []
         for (index, word) in words.enumerated() {
             if let acronym = acronymLookup[word.lowercased()] {
@@ -62,10 +69,10 @@ nonisolated enum PrettyName {
             } else if word.count > 1, word == word.uppercased(), word.contains(where: \.isLetter), words.count > 1 {
                 // An unknown all-caps word inside a phrase is likely an acronym.
                 result.append(word)
-            } else if index == 0 {
-                result.append(word.prefix(1).uppercased() + word.dropFirst().lowercased())
-            } else {
+            } else if index > 0, index < words.count - 1, minorWords.contains(word.lowercased()) {
                 result.append(word.lowercased())
+            } else {
+                result.append(word.prefix(1).uppercased() + word.dropFirst().lowercased())
             }
         }
         return result.joined(separator: " ")
