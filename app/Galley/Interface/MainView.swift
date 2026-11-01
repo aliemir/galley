@@ -121,7 +121,9 @@ private struct ColumnStack: View {
     /// columns do not fit, the outermost ones step aside (without changing
     /// the chosen level, so they return when the window grows).
     private func fitting(available: CGFloat) -> (scale: CGFloat, level: PanelLevel) {
-        var level = model.level
+        // While a swipe is revealing a column, fit the level it is heading to,
+        // or the incoming column would be over the limit and stay hidden.
+        var level = model.swipeProgress > 0 ? PanelLevel(rawValue: model.level.rawValue + 1) ?? model.level : model.level
         while level > .page {
             let visible = PanelLevel.allCases.filter { $0 != .page && $0 <= level }
             let needed = visible.reduce(0) { $0 + (Self.widths[$1] ?? 0) }
