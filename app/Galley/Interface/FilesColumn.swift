@@ -75,6 +75,15 @@ struct FilesColumn: View {
             ScrollViewReader { proxy in
                 ScrollView {
                     LazyVStack(alignment: .leading, spacing: 1) {
+                        let pinned = workspace.pinnedFiles
+                        if !pinned.isEmpty {
+                            SectionLabel(title: "Pinned", count: pinned.count)
+                                .padding(.horizontal, -8)
+                            ForEach(pinned) { file in
+                                FileRow(file: file, workspace: workspace, depth: 0, showsLocation: true, marksPin: false)
+                                    .id("pin/" + file.id)
+                            }
+                        }
                         let feed = workspace.feed
                         if !feed.isEmpty, sort == .folders {
                             SectionLabel(title: "Unread", count: feed.count)
@@ -83,13 +92,16 @@ struct FilesColumn: View {
                                 FileRow(file: file, workspace: workspace, depth: 0, showsLocation: true)
                                     .id("feed/" + file.id)
                             }
+                        }
+                        if !pinned.isEmpty || (!feed.isEmpty && sort == .folders) {
                             SectionLabel(title: "All files")
                                 .padding(.horizontal, -8)
                         }
                         if sort == .folders {
                             FolderContents(folder: workspace.tree, workspace: workspace, depth: 0)
                         } else {
-                            ForEach(workspace.files.sorted { $0.modified > $1.modified }) { file in
+                            // Pinned files are listed once, above.
+                            ForEach(workspace.files.filter { !workspace.isPinned($0.id) }.sorted { $0.modified > $1.modified }) { file in
                                 FileRow(file: file, workspace: workspace, depth: 0, showsLocation: true)
                                     .id(file.id)
                             }
@@ -128,9 +140,12 @@ struct FilesColumn: View {
         }
     }
 
-    /// The files in the order the column shows them.
+    /// The files in the order the column shows them: pinned first, then the
+    /// tree or the recent list, each file once.
     private func order(_ workspace: Workspace) -> [DocumentFile] {
-        sort == .folders ? visibleFiles(workspace.tree, workspace: workspace) : workspace.files.sorted { $0.modified > $1.modified }
+        let pinned = workspace.pinnedFiles
+        let rest = sort == .folders ? visibleFiles(workspace.tree, workspace: workspace) : workspace.files.sorted { $0.modified > $1.modified }
+        return pinned + rest.filter { !workspace.isPinned($0.id) }
     }
 
     /// Arrows open as they go, starting from wherever typing landed.
@@ -297,6 +312,8 @@ struct FileRow: View {
     let workspace: Workspace
     let depth: Int
     let showsLocation: Bool
+    /// The pin mark, left off in the Pinned section where it says nothing.
+    var marksPin = true
     @Environment(AppModel.self) private var model
     @Environment(\.palette) private var palette
     @State private var isHovered = false
@@ -331,6 +348,13 @@ struct FileRow: View {
                 }
             }
             Spacer(minLength: 0)
+            if marksPin, workspace.isPinned(file.id) {
+                Image(systemName: "pin.fill")
+                    .font(.system(size: 8.5))
+                    .foregroundStyle(palette.ink3)
+                    .rotationEffect(.degrees(45))
+                    .accessibilityLabel("Pinned")
+            }
         }
         .padding(.leading, 4 + CGFloat(depth) * 14)
         .padding(.trailing, 8)
@@ -349,6 +373,9 @@ struct FileRow: View {
         .onHover { isHovered = $0 }
         .help(file.relativePath)
         .contextMenu {
+            Button(workspace.isPinned(file.id) ? "Unpin" : "Pin") {
+                withAnimation(.snappy(duration: 0.2)) { model.togglePin(file, in: workspace) }
+            }
             Button(status == .read ? "Mark as Unread" : "Mark as Read") { model.toggleRead(file, in: workspace) }
             Divider()
             Button("Open in Default App") { model.openInEditor(file) }

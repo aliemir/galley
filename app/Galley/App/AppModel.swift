@@ -667,6 +667,26 @@ final class AppModel {
             refreshPage(transition: "none", keepPosition: true)
         }
     }
+    func togglePin(_ file: DocumentFile, in workspace: Workspace) {
+        let pin = !workspace.isPinned(file.id)
+        library.updateWorkspace(workspace.id) { record in
+            record.pinned.removeAll { $0 == file.id }
+            if pin { record.pinned.append(file.id) }
+        }
+        workspace.touch()
+    }
+
+    /// ⌥⌘P: pins or unpins the open document.
+    func togglePinCurrent() {
+        guard let current, let workspace = currentWorkspace else { return }
+        togglePin(current.file, in: workspace)
+    }
+
+    var isCurrentPinned: Bool {
+        guard let current, let workspace = currentWorkspace else { return false }
+        return workspace.isPinned(current.file.id)
+    }
+
 
     // MARK: Panels
 

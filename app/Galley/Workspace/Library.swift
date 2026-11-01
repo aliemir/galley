@@ -37,6 +37,8 @@ nonisolated struct WorkspaceRecord: Codable, Identifiable, Sendable {
     var icon: String?
     /// One of `WorkspaceIcon.colors` by name; nil picks one from the id.
     var color: String?
+    /// Pinned files by relative path, in the order they were pinned.
+    var pinned: [String] = []
 
     init(id: UUID, bookmark: Data?, path: String, addedAt: Date) {
         self.id = id
@@ -59,6 +61,7 @@ nonisolated struct WorkspaceRecord: Codable, Identifiable, Sendable {
         customName = try c.decodeIfPresent(String.self, forKey: .customName)
         icon = try c.decodeIfPresent(String.self, forKey: .icon)
         color = try c.decodeIfPresent(String.self, forKey: .color)
+        pinned = try c.decodeIfPresent([String].self, forKey: .pinned) ?? []
     }
 }
 

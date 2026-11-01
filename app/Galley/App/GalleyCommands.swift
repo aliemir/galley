@@ -107,6 +107,9 @@ struct GalleyCommands: Commands {
             Button(model.current?.status == .read ? "Mark as Unread" : "Mark as Read") { model.toggleRead() }
                 .keyboardShortcut("u", modifiers: [.command, .shift])
                 .disabled(model.current == nil)
+            Button(model.isCurrentPinned ? "Unpin" : "Pin") { model.togglePinCurrent() }
+                .keyboardShortcut("p", modifiers: [.command, .option])
+                .disabled(model.current == nil)
             Button("Mark All as Read") { model.markAllRead() }
                 .keyboardShortcut("u", modifiers: [.command, .option, .shift])
                 .disabled((model.selectedWorkspace?.unreadCount ?? 0) == 0)

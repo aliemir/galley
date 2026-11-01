@@ -108,6 +108,16 @@ final class Workspace: Identifiable {
         files.first { $0.id == relativePath }
     }
 
+    /// Pinned files that exist, in pin order. A pin outlives its file, so a
+    /// file that is deleted and written again comes back pinned.
+    var pinnedFiles: [DocumentFile] {
+        (record?.pinned ?? []).compactMap(file)
+    }
+
+    func isPinned(_ relativePath: String) -> Bool {
+        record?.pinned.contains(relativePath) ?? false
+    }
+
     func status(of file: DocumentFile) -> ReadStatus {
         statuses[file.id] ?? .read
     }
