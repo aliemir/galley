@@ -26,6 +26,7 @@ otherwise have to re-derive. Not worth one: typo fixes and formatting.
 
 ## 2026-11-01
 
+- Workspaces show as the icon rail by default (names: ⌥⌘4, drag the edge, or Settings)
 - Full-text search: ⇧⌘F searches every file's text (all words, at word
   starts, case and accents ignored) with snippets; ⌘K shows text matches
   under the name matches; Tab switches; choosing one opens the file with

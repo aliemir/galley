@@ -164,7 +164,8 @@ final class ReaderSettings {
         var seen = Set<PanelColumn>()
         columnOrder = (order + PanelColumn.defaultOrder).filter { seen.insert($0).inserted }
         swipeSkips = Set((d.stringArray(forKey: "hiddenColumns") ?? []).compactMap(PanelColumn.init(rawValue:)))
-        workspacesAsIcons = d.object(forKey: "workspacesAsIcons") as? Bool ?? false
+        // The rail by default: workspaces are switched between, not read.
+        workspacesAsIcons = d.object(forKey: "workspacesAsIcons") as? Bool ?? true
         columnWidths = d.dictionary(forKey: "columnWidths") as? [String: Double] ?? [:]
     }
 
