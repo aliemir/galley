@@ -70,7 +70,7 @@ private struct WorkspaceRow: View {
                 .font(.system(size: 13, weight: isSelected ? .semibold : .regular))
                 .foregroundStyle(workspace.isAvailable ? palette.ink : palette.ink3)
                 .lineLimit(1)
-                .truncationMode(.middle)
+                .truncationMode(.tail)
             Spacer(minLength: 4)
             WorkspaceBadges(workspace: workspace)
         }
