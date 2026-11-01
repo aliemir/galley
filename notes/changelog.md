@@ -26,6 +26,12 @@ otherwise have to re-derive. Not worth one: typo fixes and formatting.
 
 ## 2026-11-01
 
+- The website (`website/`, not deployed yet): a landing page that reads like
+  the guide — Paper theme, the reader's serif, Graphite when the system is
+  dark — with the guide's pictures and GIFs, Galley's own change bar,
+  highlight and note shown in its text, GitHub and Download buttons; plus a
+  short, true privacy page (Galley collects nothing; Cloudflare and GitHub
+  named for what they handle) and a support page with the common questions
 - The agent skill lives in `.agents/skills/galley` — the shared convention,
   read by Codex — and is linked from `.claude/skills` (Claude Code, and Cursor
   reads it too) and `.gemini/skills` when those agents are installed; a

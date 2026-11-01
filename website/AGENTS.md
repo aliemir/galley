@@ -1,8 +1,13 @@
 # website/
 
-The public site: **privacy policy** and **support page**, the two URLs App
-Store Connect requires and refuses to accept unless they resolve. A Cloudflare
-Worker serving static assets out of `public/`, styled with Tailwind v4.
+The public site: the **landing page** (`/`, which reads like the in-app
+guide — Paper theme, the reader's serif, Graphite in dark mode — with GitHub
+and Download buttons), **privacy** and **support**. Galley ships from GitHub
+releases, not the App Store. A Cloudflare Worker serving static assets out of
+`public/`, styled with Tailwind v4 (`input.css` holds plain CSS on top of it).
+
+`public/images/guide-*` are the guide's pictures, copied here by
+`tools/capture-guide.sh` — recapture there, not by hand.
 
 Separate from `backend/` on purpose — this is public, cacheable, and has no
 secrets or bindings. Backend API work belongs in `backend/`, not here.

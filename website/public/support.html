@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Support — Galley</title>
+  <meta name="description" content="Help with Galley, the reader for what your agents write.">
+  <meta name="theme-color" content="#fcfbf8" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#1d1d1f" media="(prefers-color-scheme: dark)">
+  <link rel="icon" type="image/png" href="/favicon.png">
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <header class="bar">
+    <a class="brand" href="/"><img src="/images/icon.png" alt="">Galley</a>
+    <nav>
+      <a class="button primary" href="https://github.com/OWNER/REPO/releases/latest">Download</a>
+    </nav>
+  </header>
+
+  <main>
+    <article class="column doc">
+      <h1>Support</h1>
+      <p class="meta"><span>Help with Galley</span></p>
+
+      <p>Galley comes with a guide: choose <strong>Help → Galley Guide</strong> in the app. For anything it does not answer, <a href="https://github.com/OWNER/REPO/issues">open an issue on GitHub</a> — bugs, questions and ideas are all welcome there.</p>
+
+      <h2>Where are my highlights and notes?</h2>
+      <p>On your Mac, in <code>~/Library/Application Support/Galley</code>. Galley never writes them into your Markdown files.</p>
+
+      <h2>How does an agent read my feedback?</h2>
+      <p>Open <strong>Settings → Agents</strong> (or the terminal button at the top right of a page) and install the <code>galley</code> command and the agent skill. Then ask your agent to <em>address your feedback in Galley</em>. You can also copy it with <strong>Copy Feedback</strong> (<span class="keys">⇧⌘C</span>) and paste it in.</p>
+
+      <h2>A file looks different from GitHub</h2>
+      <p>Galley removes scripts, styles and frames from the HTML in a Markdown file before showing it, and keeps only the tags that cannot change how the page behaves. If something you expect to see is missing, please open an issue with the file.</p>
+
+      <h2>How do I remove Galley completely?</h2>
+      <ul class="plain">
+        <li>Quit Galley and move it to the Trash.</li>
+        <li>Delete <code>~/Library/Application Support/Galley</code> (your library) and, if you like, its settings: <code>defaults delete com.aliemir.galley</code> in Terminal.</li>
+        <li>If you installed them, remove the command and the skill first, from <strong>Settings → Agents</strong>.</li>
+      </ul>
+    </article>
+  </main>
+
+  <footer>
+    <div class="column">
+      <span>Galley — a reader for what your agents write.</span>
+      <nav>
+        <a href="/support">Support</a>
+        <a href="/privacy">Privacy</a>
+        <a href="https://github.com/OWNER/REPO">GitHub</a>
+      </nav>
+    </div>
+  </footer>
+  <script>
+    const bar = document.querySelector('.bar');
+    const update = () => bar.classList.toggle('scrolled', window.scrollY > 8);
+    addEventListener('scroll', update, { passive: true });
+    update();
+  </script>
+</body>
+</html>

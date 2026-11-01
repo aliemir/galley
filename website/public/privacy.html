@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Privacy — Galley</title>
+  <meta name="description" content="Galley collects nothing about you. What it keeps stays on your Mac.">
+  <meta name="theme-color" content="#fcfbf8" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#1d1d1f" media="(prefers-color-scheme: dark)">
+  <link rel="icon" type="image/png" href="/favicon.png">
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <header class="bar">
+    <a class="brand" href="/"><img src="/images/icon.png" alt="">Galley</a>
+    <nav>
+      <a class="button primary" href="https://github.com/OWNER/REPO/releases/latest">Download</a>
+    </nav>
+  </header>
+
+  <main>
+    <article class="column doc">
+      <h1>Privacy</h1>
+      <p class="meta"><span>Last updated November 1, 2026</span></p>
+
+      <p>Galley collects nothing about you. This page says exactly what it does with the things it does handle.</p>
+
+      <h2>The app</h2>
+      <ul class="plain">
+        <li><strong>No account, no analytics, no tracking.</strong> Galley has no sign-in, sends no usage data and contains no third-party analytics or advertising code.</li>
+        <li><strong>No network.</strong> The app makes no requests of its own. The page it draws your files on cannot reach the network: remote images in a file are shown as links, not loaded. A link you click opens in your browser.</li>
+        <li><strong>Your files stay where they are.</strong> Galley reads the folders and files you open and never writes to them.</li>
+        <li><strong>What Galley keeps, it keeps on your Mac.</strong> Your workspaces, read positions, highlights, notes and a copy of each file as you last read it (to show what changed) live in <code>~/Library/Application Support/Galley</code>; your settings in Galley's preferences. Nothing is synced or uploaded. Deleting that folder removes it all.</li>
+        <li><strong>The <code>galley</code> command</strong> reads the same folder, on your Mac, when you or an agent run it. What an agent does with your feedback is up to the agent and its provider.</li>
+      </ul>
+
+      <h2>This website</h2>
+      <p>This site has no cookies, no analytics and no forms. It is served by Cloudflare, which processes requests — including IP addresses — to deliver the pages and protect them from abuse, under <a href="https://www.cloudflare.com/privacypolicy/">Cloudflare's privacy policy</a>.</p>
+
+      <h2>Downloads and issues</h2>
+      <p>Galley is downloaded from GitHub, and questions and bug reports go to GitHub Issues. GitHub handles both under <a href="https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement">GitHub's privacy statement</a>; anything you write in an issue is public.</p>
+
+      <h2>Changes</h2>
+      <p>If this ever changes, this page will say so first, with a new date at the top.</p>
+    </article>
+  </main>
+
+  <footer>
+    <div class="column">
+      <span>Galley — a reader for what your agents write.</span>
+      <nav>
+        <a href="/support">Support</a>
+        <a href="/privacy">Privacy</a>
+        <a href="https://github.com/OWNER/REPO">GitHub</a>
+      </nav>
+    </div>
+  </footer>
+  <script>
+    const bar = document.querySelector('.bar');
+    const update = () => bar.classList.toggle('scrolled', window.scrollY > 8);
+    addEventListener('scroll', update, { passive: true });
+    update();
+  </script>
+</body>
+</html>
