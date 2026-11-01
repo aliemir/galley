@@ -199,7 +199,7 @@ swift tools/galley-debug.swift level.3 theme.sepia open.1 snapshot
 #             tab.new|newnext|next|close|others|move|state (state logs the
 #             tabs and workspaces) key.ctrltab|ctrlshifttab|cmdw|cmdt|cmdreturn|backspace|tab
 #             menus (logs every menu shortcut) opened.remove shortcut.test|reset
-#             settings.general|reading|themes|shortcuts|icon
+#             settings.general|reading|themes|shortcuts|icon|agents agents[.close]
 # open a single file as Finder would (outside a workspace → Opened Files):
 open -a app/…/Debug/Galley.app /path/to/file.md
 # the Galley Guide's pictures and GIFs (ffmpeg): a debug copy on a throwaway library

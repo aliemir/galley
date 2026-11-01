@@ -167,6 +167,7 @@ final class AppModel {
         reader.webView.extraMenuItems = { [weak self] in self?.contextMenuItems() ?? [] }
         configureReader()
         observeSettings()
+        agents.refresh()
 
         #if DEBUG
         // `-GalleyOpen <folder>` adds a workspace without the open panel, for
@@ -1443,39 +1444,30 @@ final class AppModel {
 
     // MARK: Command line
 
+    /// The `galley` command and the agent skill: installed or not.
+    let agents = AgentSetup()
+    /// The top strip's panel for connecting agents.
+    var isAgentSetupVisible = false
+
     /// Galley → Install Command Line Tool…: `galley` in /usr/local/bin, with
     /// the administrator password when that folder needs it, as VS Code
     /// installs `code`.
     func installCommandLineTool() {
-        let link = URL(fileURLWithPath: "/usr/local/bin/galley")
-        let executable = CLI.executableURL.path
-        switch CLI.link(at: link) {
-        case .done:
-            inform("The galley command is installed", "Try `galley feedback` in a folder you read in Galley, or `galley help`.")
-        case .occupied:
-            inform("/usr/local/bin/galley is something else", "Remove it, then choose Install Command Line Tool again.")
-        case .denied:
-            let quoted = { (path: String) in "'" + path.replacingOccurrences(of: "'", with: "'\\''") + "'" }
-            let command = "mkdir -p /usr/local/bin && ln -sfn \(quoted(executable)) \(quoted(link.path))"
-            let script = "do shell script \"\(command.replacingOccurrences(of: "\\", with: "\\\\").replacingOccurrences(of: "\"", with: "\\\""))\" with administrator privileges"
-            var error: NSDictionary?
-            NSAppleScript(source: script)?.executeAndReturnError(&error)
-            if let error, (error[NSAppleScript.errorNumber] as? Int) != -128 {
-                inform("The galley command could not be installed", (error[NSAppleScript.errorMessage] as? String) ?? "Run `galley install ~/.local/bin` from Terminal instead.")
-            } else if error == nil {
-                inform("The galley command is installed", "Try `galley feedback` in a folder you read in Galley, or `galley help`.")
-            }
+        agents.refresh()
+        if let problem = agents.installCommand() {
+            inform("The galley command could not be installed", problem)
+        } else if case .installed(let path) = agents.command {
+            inform("The galley command is installed", "It is at \(path). Try `galley help` in Terminal.")
         }
     }
 
     /// Galley → Install Agent Skill: the skill that teaches agents to read
     /// and clear feedback, for every project (`~/.claude/skills/galley`).
     func installAgentSkill() {
-        do {
-            let file = try AgentSkill.install(into: AgentSkill.globalFolder)
-            inform("The Galley skill is installed", "Agents that read \((file.deletingLastPathComponent().deletingLastPathComponent().path as NSString).abbreviatingWithTildeInPath) can now read your feedback with `galley feedback`. For one project only, run `galley skill install --project` in it.")
-        } catch {
-            inform("The skill could not be installed", error.localizedDescription)
+        if let problem = agents.installSkill() {
+            inform("The skill could not be installed", problem)
+        } else {
+            inform("The Galley skill is installed", "Claude Code can now read your feedback with `galley feedback` in every project. For one project only, run `galley skill install --project` in it.")
         }
     }
 

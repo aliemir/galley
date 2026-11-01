@@ -26,6 +26,13 @@ otherwise have to re-derive. Not worth one: typo fixes and formatting.
 
 ## 2026-11-01
 
+- Connecting agents has a home: a terminal button in the top strip (until
+  the command and the skill are both installed, or "Don't show this button
+  again") opens a panel — what the command does, Install for the command
+  (admin prompt for /usr/local/bin) and the skill, copyable lines (what to
+  tell the agent, the per-project skill, `galley skill print`). Settings →
+  Agents keeps it for good, with Remove, and spots a link to another copy of
+  Galley ("Point It Here") (`AgentSetup`)
 - The guide, rewritten to cover everything: reading, columns and pulling (as
   GIFs), changes, marking up, handing back — Copy Feedback and the `galley`
   command with its skill — finding, tabs, single files, hidden comments (with

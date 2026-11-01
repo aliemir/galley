@@ -20,6 +20,9 @@ struct SettingsView: View {
             AppIconSettings()
                 .tabItem { Label("App Icon", systemImage: "app.badge.checkmark") }
                 .tag("icon")
+            AgentSetupView(place: .settings)
+                .tabItem { Label("Agents", systemImage: "terminal") }
+                .tag("agents")
         }
         .frame(width: SettingsView.width)
     }

@@ -7,6 +7,8 @@ struct PageView: View {
     @Environment(AppModel.self) private var model
     @Environment(\.palette) private var palette
 
+    @AppStorage("hideAgentButton") private var hideAgentButton = false
+
     /// Where the page starts in the window: at the left edge, the tabs keep
     /// clear of the traffic lights and the panel button.
     @State private var pageMinX: CGFloat = 0
@@ -77,6 +79,16 @@ struct PageView: View {
             if model.current?.changes.isEmpty == false {
                 IconButton(systemName: "arrow.down.to.line.compact", help: "Next Change" + Shortcuts.shared.label(.nextChange)) {
                     model.jumpToChange(1)
+                }
+            }
+            // Until agents are connected (or the reader says not to ask).
+            if !model.agents.isComplete, !hideAgentButton {
+                IconButton(systemName: "terminal", help: "Let your agents read your feedback", isActive: model.isAgentSetupVisible) {
+                    model.isAgentSetupVisible.toggle()
+                }
+                .popover(isPresented: Bindable(model).isAgentSetupVisible, arrowEdge: .bottom) {
+                    AgentSetupView(place: .panel)
+                        .environment(model)
                 }
             }
             IconButton(systemName: "magnifyingglass", help: "Find" + Shortcuts.shared.label(.find), isActive: model.isFindVisible) {
