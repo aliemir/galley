@@ -18,7 +18,7 @@ final class DebugAutomation {
         "snapshot", "probe", "reload", "reset", "palette", "palette.close", "highlight", "next", "previous", "fold", "unfold", "change", "find.close", "resize.small", "resize.large",
         "scroll.top", "scroll.bottom", "dark", "light", "system",
         "appearance", "appearance.close", "settings", "settings.close", "settings.reading", "settings.appearance",
-        "js", "pin", "movews", "divider.narrow", "divider.wide", "toggle.outline", "toggle.files", "toggle.workspaces", "focusfiles", "type.api", "type.rate", "type.s", "type.sta", "key.return", "key.escape", "key.down", "columns.reset", "columns.filesfirst", "columns.nocontents", "rail", "rail.off", "identity", "identity.close", "icon.test", "icon.reset", "swipe.right", "swipe.left", "swipe.hold", "swipe.release", "swipe.wobble", "pull.hold", "pull.half", "pull.back", "pull.backhalf", "pull.release",
+        "js", "pin", "movepin", "movews", "divider.narrow", "divider.wide", "toggle.outline", "toggle.files", "toggle.workspaces", "focusfiles", "type.api", "type.rate", "type.s", "type.sta", "key.return", "key.escape", "key.down", "columns.reset", "columns.filesfirst", "columns.nocontents", "rail", "rail.off", "identity", "identity.close", "icon.test", "icon.reset", "swipe.right", "swipe.left", "swipe.hold", "swipe.release", "swipe.wobble", "pull.hold", "pull.half", "pull.back", "pull.backhalf", "pull.release",
     ] + (1...4).map { "level.\($0)" }
         + Theme.all.map { "theme.\($0.id)" }
         + (0..<30).map { "open.\($0)" }
@@ -136,6 +136,11 @@ final class DebugAutomation {
                 }
             }
         case "pin": model.togglePinCurrent()
+        case "movepin":
+            // The last pinned file to the top, as a drag onto the first would.
+            if let workspace = model.selectedWorkspace, let last = workspace.record?.pinned.last, let first = workspace.record?.pinned.first {
+                model.movePin(last, to: first, in: workspace)
+            }
         case "movews":
             // The last workspace to the top, as a drag onto the first would.
             if let last = model.workspaces.last, let first = model.workspaces.first { model.moveWorkspace(last.id, to: first.id) }
