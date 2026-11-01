@@ -117,27 +117,42 @@ private struct WorkspaceRail: View {
                 .frame(maxWidth: .infinity)
             }
             .scrollIndicators(.never)
-            VStack(spacing: 2) {
-                railButton("plus", help: "Open Folder… (⌘O)") { model.openFolderPanel() }
-                railButton("sidebar.squares.left", help: "Show Workspace Names (⌥⌘4)") {
-                    model.settings.workspacesAsIcons = false
-                }
-            }
-            .padding(.bottom, 10)
+            AddWorkspaceTile()
+                .padding(.top, 6)
+                .padding(.bottom, 12)
         }
         .background(alignment: .top) { TitleBand() }
     }
+}
 
-    private func railButton(_ symbol: String, help: String, action: @escaping () -> Void) -> some View {
-        Button(action: action) {
-            Image(systemName: symbol)
-                .font(.system(size: 13, weight: .medium))
-                .foregroundStyle(palette.ink3)
-                .frame(width: 32, height: 28)
+/// The rail's "Open Folder…": a tile the size of a workspace's, so it reads
+/// as one more place to go.
+private struct AddWorkspaceTile: View {
+    @Environment(AppModel.self) private var model
+    @Environment(\.palette) private var palette
+    @State private var isHovered = false
+
+    var body: some View {
+        Button { model.openFolderPanel() } label: {
+            RoundedRectangle(cornerRadius: 34 * 0.28, style: .continuous)
+                .fill(palette.ink.opacity(isHovered ? 0.09 : 0.05))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 34 * 0.28, style: .continuous)
+                        .strokeBorder(palette.ink.opacity(isHovered ? 0.22 : 0.12), style: StrokeStyle(lineWidth: 1, dash: [3, 2.5]))
+                )
+                .overlay(
+                    Image(systemName: "plus")
+                        .font(.system(size: 14, weight: .medium))
+                        .foregroundStyle(isHovered ? palette.ink : palette.ink2)
+                )
+                .frame(width: 34, height: 34)
+                .padding(3)
                 .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .help(help)
+        .onHover { isHovered = $0 }
+        .help("Open Folder… (⌘O)")
+        .accessibilityLabel("Open Folder")
     }
 }
 
