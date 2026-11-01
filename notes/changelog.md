@@ -26,6 +26,13 @@ otherwise have to re-derive. Not worth one: typo fixes and formatting.
 
 ## 2026-11-01
 
+- Your marks are purple everywhere: highlights and note cards on the page
+  match the feedback colour of the chrome, so they no longer look like the
+  agent's changes (amber). Notes are a bubble pointing at their passage, not
+  a barred box. The document's own `==marks==` stay yellow. The current
+  section in Contents lost its left bar (the row's shade already says it)
+- Welcome screen copy rewritten: "Read what your agents write.", the three
+  things Galley does, and feedback among the hints
 - Single Markdown files open on their own — Finder's Open With, a
   double-click (once Galley is the default), the Dock icon, ⌘O (now "Open…",
   folders or files), a drop on the window. A file inside a workspace opens

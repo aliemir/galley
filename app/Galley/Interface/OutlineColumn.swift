@@ -200,15 +200,10 @@ private struct OutlineRow: View {
         .padding(.leading, 2 + CGFloat(depth) * 12)
         .padding(.trailing, 8)
         .padding(.vertical, 4.5)
-        .background(alignment: .leading) {
-            ZStack(alignment: .leading) {
-                RoundedRectangle(cornerRadius: 6, style: .continuous)
-                    .fill(isCurrent ? palette.selection : (isHovered ? palette.hover : .clear))
-                if isCurrent {
-                    Capsule().fill(palette.accent).frame(width: 2.5).padding(.vertical, 5)
-                }
-            }
-        }
+        .background(
+            RoundedRectangle(cornerRadius: 6, style: .continuous)
+                .fill(isCurrent ? palette.selection : (isHovered ? palette.hover : .clear))
+        )
         .contentShape(Rectangle())
         .onTapGesture { model.scrollToHeading(item.id) }
         .onHover { isHovered = $0 }
@@ -230,7 +225,7 @@ private struct HighlightRow: View {
     var body: some View {
         HStack(alignment: .top, spacing: 8) {
             RoundedRectangle(cornerRadius: 1.5)
-                .fill(isOrphan ? palette.ink3.opacity(0.5) : Color(css: palette.theme.mark))
+                .fill(isOrphan ? palette.ink3.opacity(0.5) : palette.feedback.opacity(0.75))
                 .frame(width: 3)
             VStack(alignment: .leading, spacing: 3) {
                 Text(highlight.text.trimmingCharacters(in: .whitespacesAndNewlines))

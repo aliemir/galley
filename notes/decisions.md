@@ -211,3 +211,20 @@ its resource values, which hid every change in the first build).
 behind it (no highlights, no change tracking, nothing restored on relaunch);
 one workspace per opened file (a rail full of single files).
 
+## 2026-11-01 — One colour per source of marks
+
+**Chosen:** blue is new, amber is what the agent changed, purple is what the
+reader marked — highlights, notes, feedback counts and buttons alike. The
+page's highlight is `Theme.highlight` (`--hl`), a wash of the chrome's
+feedback purple; `Theme.mark` stays yellow for `==marked==` text, which is
+the author's, not the reader's. Notes under a passage are a bubble with a
+caret, never a box with a side bar: a bar is how the page marks a change and
+how a callout begins.
+
+**Why:** the highlighter's yellow and the change amber were a shade apart (in
+Ink and Lamplight, the same value), so a highlighted passage read as a
+change and a change read as a highlight.
+
+**Rejected:** gold for feedback with a yellower change colour — any two warm
+yellows stay too close to tell apart at a glance.
+

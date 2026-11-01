@@ -22,7 +22,11 @@ nonisolated struct Theme: Identifiable, Hashable, Sendable {
     let changeWash: String
     /// Inserted words inside a modified block.
     let insert: String
+    /// `==marked==` text: the document's own emphasis, the highlighter's yellow.
     let mark: String
+    /// The reader's highlights: the feedback purple, washed, so they never
+    /// read as the agent's changes (amber) or as something new (blue).
+    let highlight: String
     let unread: String
 
     let codeKeyword: String
@@ -35,7 +39,7 @@ nonisolated struct Theme: Identifiable, Hashable, Sendable {
         [
             "--paper": paper, "--ink": ink, "--ink-2": inkSecondary, "--ink-3": inkTertiary,
             "--accent": accent, "--rule": rule, "--code-bg": codeBackground, "--selection": selection,
-            "--change": change, "--change-wash": changeWash, "--insert": insert, "--mark": mark,
+            "--change": change, "--change-wash": changeWash, "--insert": insert, "--mark": mark, "--hl": highlight,
             "--code-keyword": codeKeyword, "--code-string": codeString, "--code-number": codeNumber,
             "--code-type": codeType, "--code-function": codeFunction,
         ]
@@ -49,7 +53,7 @@ extension Theme {
         accent: "#2C5E91", rule: "#E7E3DB", codeBackground: "#F4F1EA", sidebar: "#F3F0E9",
         selection: "rgba(44, 94, 145, 0.18)",
         change: "#D3802A", changeWash: "rgba(237, 178, 72, 0.13)", insert: "rgba(237, 178, 72, 0.34)",
-        mark: "rgba(255, 214, 79, 0.55)", unread: "#2C6FD1",
+        mark: "rgba(255, 214, 79, 0.55)", highlight: "rgba(146, 98, 222, 0.26)", unread: "#2C6FD1",
         codeKeyword: "#A3366E", codeString: "#3F7A3A", codeNumber: "#B05B12", codeType: "#6A44A8", codeFunction: "#2C5E91"
     )
 
@@ -59,7 +63,7 @@ extension Theme {
         accent: "#0A63D2", rule: "#E5E5EA", codeBackground: "#F5F5F7", sidebar: "#F2F2F4",
         selection: "rgba(10, 99, 210, 0.16)",
         change: "#0A84FF", changeWash: "rgba(10, 132, 255, 0.07)", insert: "rgba(10, 132, 255, 0.2)",
-        mark: "rgba(255, 214, 10, 0.5)", unread: "#0A84FF",
+        mark: "rgba(255, 214, 10, 0.5)", highlight: "rgba(146, 98, 222, 0.24)", unread: "#0A84FF",
         codeKeyword: "#AD3DA4", codeString: "#C41A16", codeNumber: "#1C00CF", codeType: "#5C2699", codeFunction: "#326D74"
     )
 
@@ -69,7 +73,7 @@ extension Theme {
         accent: "#9A4A1F", rule: "#E4D8C2", codeBackground: "#EEE4D0", sidebar: "#EEE5D3",
         selection: "rgba(154, 74, 31, 0.16)",
         change: "#B8661A", changeWash: "rgba(196, 128, 46, 0.12)", insert: "rgba(196, 128, 46, 0.3)",
-        mark: "rgba(240, 196, 76, 0.5)", unread: "#B5521F",
+        mark: "rgba(240, 196, 76, 0.5)", highlight: "rgba(140, 92, 200, 0.26)", unread: "#B5521F",
         codeKeyword: "#9A3A5C", codeString: "#5B6E24", codeNumber: "#A2541A", codeType: "#6B4A8A", codeFunction: "#2F5E7A"
     )
 
@@ -79,7 +83,7 @@ extension Theme {
         accent: "#8DB6F7", rule: "#303033", codeBackground: "#262628", sidebar: "#18181A",
         selection: "rgba(141, 182, 247, 0.26)",
         change: "#E3A64E", changeWash: "rgba(227, 166, 78, 0.10)", insert: "rgba(227, 166, 78, 0.28)",
-        mark: "rgba(227, 186, 60, 0.38)", unread: "#5EA0FF",
+        mark: "rgba(227, 186, 60, 0.38)", highlight: "rgba(184, 153, 242, 0.34)", unread: "#5EA0FF",
         codeKeyword: "#F08DC0", codeString: "#A6D189", codeNumber: "#F2B482", codeType: "#C3A6F2", codeFunction: "#8DB6F7"
     )
 
@@ -89,7 +93,7 @@ extension Theme {
         accent: "#82B1FF", rule: "#232833", codeBackground: "#181C23", sidebar: "#0C0F13",
         selection: "rgba(130, 177, 255, 0.24)",
         change: "#F0BF4F", changeWash: "rgba(240, 191, 79, 0.08)", insert: "rgba(240, 191, 79, 0.26)",
-        mark: "rgba(240, 191, 79, 0.34)", unread: "#6AA5FF",
+        mark: "rgba(240, 191, 79, 0.34)", highlight: "rgba(184, 153, 242, 0.32)", unread: "#6AA5FF",
         codeKeyword: "#C792EA", codeString: "#A5D6A7", codeNumber: "#F7A072", codeType: "#82AAFF", codeFunction: "#89DDFF"
     )
 
@@ -99,7 +103,7 @@ extension Theme {
         accent: "#E2A86E", rule: "#322A22", codeBackground: "#29221C", sidebar: "#1A1612",
         selection: "rgba(226, 168, 110, 0.24)",
         change: "#E9B44F", changeWash: "rgba(233, 180, 79, 0.09)", insert: "rgba(233, 180, 79, 0.27)",
-        mark: "rgba(233, 180, 79, 0.36)", unread: "#E9934F",
+        mark: "rgba(233, 180, 79, 0.36)", highlight: "rgba(196, 160, 236, 0.32)", unread: "#E9934F",
         codeKeyword: "#E59A86", codeString: "#B7C78A", codeNumber: "#E9B44F", codeType: "#C9A3D9", codeFunction: "#E2A86E"
     )
 
@@ -152,11 +156,9 @@ struct Palette {
     var sidebar: Color { Color(css: theme.sidebar) }
     var change: Color { Color(css: theme.change) }
     var unread: Color { Color(css: theme.unread) }
-    /// The highlighter, washed, as on the page.
-    var mark: Color { Color(css: theme.mark) }
-    /// Feedback in the chrome (dots, counts, the copy buttons): a purple of
-    /// its own, apart from new (blue) and changed (orange) on every theme.
-    /// The page keeps the highlighter's yellow.
+    /// Feedback, in the chrome (dots, counts, the copy buttons) and on the
+    /// page (highlights, notes): a purple of its own, apart from new (blue)
+    /// and changed (amber) on every theme.
     var feedback: Color { theme.isDark ? Color(red: 0.72, green: 0.60, blue: 0.95) : Color(red: 0.50, green: 0.33, blue: 0.78) }
     var feedbackWash: Color { feedback.opacity(theme.isDark ? 0.2 : 0.13) }
     /// Row selection: the ink at low opacity reads as a pencil shade on any paper.

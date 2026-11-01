@@ -6,7 +6,7 @@
   --paper: #fcfbf8; --ink: #1e1d1a; --ink-2: #6b665d; --ink-3: #a29c92;
   --accent: #2c5e91; --rule: #e7e3db; --code-bg: #f4f1ea; --selection: rgba(44, 94, 145, .18);
   --change: #d3802a; --change-wash: rgba(237, 178, 72, .13); --insert: rgba(237, 178, 72, .34);
-  --mark: rgba(255, 214, 79, .55);
+  --mark: rgba(255, 214, 79, .55); --hl: rgba(146, 98, 222, .26);
   --code-keyword: #a3366e; --code-string: #3f7a3a; --code-number: #b05b12; --code-type: #6a44a8; --code-function: #2c5e91;
 
   --font-body: ui-serif, "New York", Georgia, serif;
@@ -369,11 +369,11 @@ ins.g-ins { text-decoration: none; background: var(--insert); border-radius: 2px
 
 mark.hl {
   color: inherit; border-radius: 3px; padding: .02em 0;
-  background: linear-gradient(to bottom, transparent 8%, var(--mark) 8%, var(--mark) 94%, transparent 94%);
+  background: linear-gradient(to bottom, transparent 8%, var(--hl) 8%, var(--hl) 94%, transparent 94%);
   cursor: pointer;
 }
 mark.hl.flash-hl { animation: flash-hl 1.2s ease; }
-@keyframes flash-hl { 0%, 35% { box-shadow: 0 0 0 3px var(--mark); } 100% { box-shadow: 0 0 0 0 transparent; } }
+@keyframes flash-hl { 0%, 35% { box-shadow: 0 0 0 3px var(--hl); } 100% { box-shadow: 0 0 0 0 transparent; } }
 .pill {
   position: absolute; z-index: 10; display: flex;
   background: var(--ink); border-radius: 99px; overflow: hidden;
@@ -387,13 +387,15 @@ mark.hl.flash-hl { animation: flash-hl 1.2s ease; }
 .pill button + button { border-left: 1px solid color-mix(in srgb, var(--paper) 22%, transparent); }
 .pill button:hover { background: color-mix(in srgb, var(--paper) 12%, transparent); }
 
-/* A note under its passage: the reader's words, in the interface face. */
+/* A note under its passage: the reader's words, in the interface face, in
+   a bubble that points up at what it is about. No bar down its side — a
+   bar is how the page marks a change, and how a callout starts. */
 .hl-note {
+  --note-bg: color-mix(in srgb, var(--hl) 55%, var(--paper));
   position: relative; display: block;
-  margin: .5em 0 1.1em; padding: .6em 2.2em .65em .85em;
-  border-left: 3px solid color-mix(in srgb, var(--mark) 100%, var(--ink) 25%);
-  border-radius: 0 6px 6px 0;
-  background: color-mix(in srgb, var(--mark) 26%, var(--paper));
+  margin: .75em 0 1.1em; padding: .6em 2.2em .65em .85em;
+  border-radius: 8px;
+  background: var(--note-bg);
   font: 13.5px/1.5 var(--font-ui); color: var(--ink);
   white-space: pre-wrap; cursor: text; -webkit-user-select: text;
   hyphens: none; text-wrap: pretty;
@@ -403,6 +405,10 @@ li > .hl-note, td > .hl-note, th > .hl-note { margin: .45em 0 .3em; }
   position: absolute; top: .35em; right: .35em; width: 1.6em; height: 1.6em;
   border: 0; border-radius: 50%; background: none; color: var(--ink-3);
   font: 15px/1 var(--font-ui); cursor: pointer; opacity: 0; transition: opacity .12s ease;
+}
+.hl-note::before {
+  content: ""; position: absolute; top: -6px; left: 1.1em;
+  border: 6px solid transparent; border-top: 0; border-bottom-color: var(--note-bg);
 }
 .hl-note:hover .hl-note-remove { opacity: 1; }
 .hl-note-remove:hover { background: color-mix(in srgb, var(--ink) 8%, transparent); color: var(--ink); }
@@ -465,7 +471,7 @@ footer.doc-end.end .title { font: 12px/1.4 var(--font-ui); color: var(--ink-3); 
 @media print {
   :root {
     --paper: #fff; --ink: #000; --ink-2: #333; --ink-3: #666; --accent: #000; --rule: #ccc;
-    --code-bg: #f4f4f4; --mark: #ffe680; --change-wash: transparent; --insert: transparent;
+    --code-bg: #f4f4f4; --mark: #ffe680; --hl: #e2d3fa; --change-wash: transparent; --insert: transparent;
     --code-keyword: #000; --code-string: #000; --code-number: #000; --code-type: #000; --code-function: #000;
   }
   html { font-size: 11pt; background: #fff; }
