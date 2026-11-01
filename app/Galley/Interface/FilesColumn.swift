@@ -383,11 +383,16 @@ struct FileRow: View {
                 .strokeBorder(palette.accent.opacity(isCursor ? 0.7 : 0), lineWidth: 1.5)
         )
         .contentShape(Rectangle())
-        .onTapGesture { model.open(file) }
+        .onTapGesture {
+            // ⌘-click, as in a browser: a tab of its own.
+            if NSEvent.modifierFlags.contains(.command) { model.openInNewTab(file, in: workspace) } else { model.open(file) }
+        }
         .onHover { isHovered = $0 }
         .help(file.relativePath)
         .modifier(DragToPin(file: file, enabled: marksPin))
         .contextMenu {
+            Button("Open in New Tab") { model.openInNewTab(file, in: workspace) }
+            Divider()
             Button(workspace.isPinned(file.id) ? "Unpin" : "Pin") {
                 withAnimation(.snappy(duration: 0.2)) { model.togglePin(file, in: workspace) }
             }
@@ -456,7 +461,7 @@ private struct PinReorder: ViewModifier {
                         .allowsHitTesting(false)
                 }
             }
-            .draggable(PinDrag.pinned + file.id) {
+            .draggable(FileDrag.pinned + file.id) {
                 Text(model.settings.displayName(for: file))
                     .font(.system(size: 12, weight: .medium))
                     .padding(6)
@@ -465,11 +470,11 @@ private struct PinReorder: ViewModifier {
             .dropDestination(for: String.self) { items, _ in
                 defer { model.draggedPin = nil }
                 guard let item = items.first else { return false }
-                if item.hasPrefix(PinDrag.pinned) {
-                    model.movePin(String(item.dropFirst(PinDrag.pinned.count)), to: file.id, in: workspace)
-                } else if item.hasPrefix(PinDrag.file) {
+                if item.hasPrefix(FileDrag.pinned) {
+                    model.movePin(String(item.dropFirst(FileDrag.pinned.count)), to: file.id, in: workspace)
+                } else if item.hasPrefix(FileDrag.file) {
                     // A file from the list: pinned in this one's place.
-                    model.pin(String(item.dropFirst(PinDrag.file.count)), at: file.id, in: workspace)
+                    model.pin(String(item.dropFirst(FileDrag.file.count)), at: file.id, in: workspace)
                 } else {
                     return false
                 }
@@ -478,11 +483,18 @@ private struct PinReorder: ViewModifier {
     }
 }
 
-/// What a drag inside the Files column carries: a pinned file being
-/// reordered, or a file from the list on its way to being pinned.
-private enum PinDrag {
+/// What a drag carries: a pinned file being reordered, a file from the list
+/// on its way to being pinned (or to a tab of its own), or a tab.
+enum FileDrag {
     static let pinned = "galley-pin:"
     static let file = "galley-file:"
+    static let tab = "galley-tab:"
+
+    /// The file a dragged list row or pinned row stands for.
+    static func fileID(_ item: String) -> String? {
+        for prefix in [pinned, file] where item.hasPrefix(prefix) { return String(item.dropFirst(prefix.count)) }
+        return nil
+    }
 }
 
 /// Any file in the list can be dragged to the Pinned section.
@@ -493,7 +505,7 @@ private struct DragToPin: ViewModifier {
 
     func body(content: Content) -> some View {
         if enabled {
-            content.draggable(PinDrag.file + file.id) {
+            content.draggable(FileDrag.file + file.id) {
                 Label(model.settings.displayName(for: file), systemImage: "pin")
                     .font(.system(size: 12, weight: .medium))
                     .padding(6)
@@ -531,7 +543,7 @@ private struct PinDropZone: ViewModifier {
             }
             .dropDestination(for: String.self) { items, _ in
                 guard let item = items.first else { return false }
-                let prefix = item.hasPrefix(PinDrag.file) ? PinDrag.file : item.hasPrefix(PinDrag.pinned) ? PinDrag.pinned : nil
+                let prefix = item.hasPrefix(FileDrag.file) ? FileDrag.file : item.hasPrefix(FileDrag.pinned) ? FileDrag.pinned : nil
                 guard let prefix else { return false }
                 model.pin(String(item.dropFirst(prefix.count)), at: nil, in: workspace)
                 model.draggedPin = nil

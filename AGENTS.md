@@ -196,6 +196,9 @@ swift tools/galley-debug.swift level.3 theme.sepia open.1 snapshot
 #             posted to the window) rail[.off] identity[.close] icon.test|reset
 #             columns.reset|filesfirst|nocontents toggle.<column>
 #             divider.narrow|wide (drives the Workspaces edge-drag steps)
+#             tab.new|newnext|next|close|others|move|state (state logs the
+#             tabs and workspaces) key.ctrltab|ctrlshifttab|cmdw|cmdt|cmdreturn
+#             menus (logs every menu shortcut)
 # real on-screen captures (needs Screen Recording for the terminal) —
 # popovers and Settings are their own windows, so capture by window id:
 swift tools/window-bounds.swift Galley     # id layer x,y,w,h title

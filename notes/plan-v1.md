@@ -70,12 +70,10 @@ lights up.
 8. ✅ Section folding (page and outline share one fold state)
 9. ✅ Feedback: notes on highlights, Copy Feedback for an agent, Clear Feedback
 10. ✅ Full-text search (⇧⌘F, and under names in ⌘K; Tab switches)
+11. ✅ Tabs in the page column (Safari-style; see `decisions.md`)
 
 ## Next
 
-- **Tabs** — deferred on purpose: one window, per-workspace state first. Next
-  step is real tabs inside the page column (preview tab reused on single
-  click, pinned on double click), not native window tabs.
 - **Sample workspace on the welcome screen** — "Look at a sample" opening a
   bundled read-only set (needs a folder reference so the tree survives the
   bundle's flattening).

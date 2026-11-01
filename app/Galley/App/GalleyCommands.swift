@@ -6,6 +6,14 @@ struct GalleyCommands: Commands {
 
     var body: some Commands {
         CommandGroup(replacing: .newItem) {
+            Button("New Tab…") {
+                // The palette picks what the tab shows; Escape opens nothing.
+                model.quickOpenSearchesText = false
+                model.quickOpenOpensTab = true
+                model.isQuickOpenVisible = true
+            }
+            .keyboardShortcut("t")
+            .disabled(model.workspaces.isEmpty)
             Button("Open Folder…") { model.openFolderPanel() }
                 .keyboardShortcut("o")
             Button("Go to File…") {
@@ -40,7 +48,13 @@ struct GalleyCommands: Commands {
                 .keyboardShortcut("c", modifiers: [.command, .option, .shift])
                 .disabled(model.current == nil)
         }
-        CommandGroup(replacing: .saveItem) {}
+        CommandGroup(replacing: .saveItem) {
+            Button(model.tabs.count > 1 ? "Close Tab" : "Close Window") { model.closeTabOrWindow() }
+                .keyboardShortcut("w")
+            Button("Close Other Tabs") { if let id = model.activeTabID { model.closeOtherTabs(id) } }
+                .keyboardShortcut("w", modifiers: [.command, .option])
+                .disabled(model.tabs.count < 2)
+        }
         CommandGroup(replacing: .printItem) {
             Button("Print…") { model.printPage() }
                 .keyboardShortcut("p")
@@ -96,6 +110,16 @@ struct GalleyCommands: Commands {
                 set: { model.settings.showChanges = $0 }
             ))
             .keyboardShortcut("d", modifiers: [.command, .shift])
+            Divider()
+        }
+
+        CommandGroup(before: .windowList) {
+            Button("Show Next Tab") { model.showTab(offset: 1) }
+                .keyboardShortcut(.tab, modifiers: .control)
+                .disabled(model.tabs.count < 2)
+            Button("Show Previous Tab") { model.showTab(offset: -1) }
+                .keyboardShortcut(.tab, modifiers: [.control, .shift])
+                .disabled(model.tabs.count < 2)
             Divider()
         }
 

@@ -26,6 +26,13 @@ otherwise have to re-derive. Not worth one: typo fixes and formatting.
 
 ## 2026-11-01
 
+- Tabs in the page column, Safari's way: a click opens in the current tab,
+  ⌘-click (files, links), "Open in New Tab", ⌘Return in the palette or ⌘T
+  open a new one; ⌃Tab / ⌃⇧Tab step, ⌘W closes (the window when it is the
+  last), ⌥⌘W closes the others. A file has at most one tab — going to it goes
+  to its tab. The bar only shows from two tabs; back tabs show a dot when an
+  agent rewrites their file; drag to reorder, drop a file to open it. Tabs
+  are restored on relaunch
 - Workspaces show as the icon rail by default (names: ⌥⌘4, drag the edge, or Settings)
 - Full-text search: ⇧⌘F searches every file's text (all words, at word
   starts, case and accents ignored) with snippets; ⌘K shows text matches

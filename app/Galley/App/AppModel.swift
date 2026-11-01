@@ -22,6 +22,21 @@ struct OpenDocument {
     var id: String { "\(workspaceID.uuidString)/\(file.id)" }
 }
 
+/// A tab in the page column: one document in one workspace. A file is open
+/// in at most one tab, so going to a file that has a tab goes to that tab.
+struct ReaderTab: Identifiable, Hashable {
+    let id: UUID
+    var workspaceID: UUID
+    /// nil while the workspace has nothing to show yet.
+    var fileID: String?
+
+    init(id: UUID = UUID(), workspaceID: UUID, fileID: String?) {
+        self.id = id
+        self.workspaceID = workspaceID
+        self.fileID = fileID
+    }
+}
+
 /// A column beside the page. Each has a fixed place (`arrangement`); the
 /// reader's order (Settings → Reading) is only the order swipes reveal them.
 enum PanelColumn: String, CaseIterable, Identifiable {
@@ -57,6 +72,9 @@ final class AppModel {
     private(set) var selectedWorkspaceID: UUID?
     private(set) var current: OpenDocument?
     private(set) var currentHeading: String?
+    /// The page's tabs, left to right; the bar shows from two.
+    private(set) var tabs: [ReaderTab] = []
+    private(set) var activeTabID: UUID?
 
     /// The columns showing; each toggles on its own, swipes follow the order.
     private(set) var visibleColumns: Set<PanelColumn> = [.outline, .files]
@@ -67,6 +85,8 @@ final class AppModel {
     var isQuickOpenVisible = false
     /// ⇧⌘F opens the palette searching file text only.
     var quickOpenSearchesText = false
+    /// ⌘T opens the palette to choose what the new tab shows.
+    var quickOpenOpensTab = false
     /// File text for the palette's search, kept between searches.
     @ObservationIgnored let textIndex = TextIndex()
     /// Text the palette opens with: "#" jumps straight to sections.
@@ -120,8 +140,13 @@ final class AppModel {
         for record in state.workspaces {
             attach(Workspace(record: record, library: library), baseline: false)
         }
-        selectedWorkspaceID = state.selectedWorkspace ?? workspaces.first?.id
-        pendingRestore = selectedWorkspace?.record?.selectedFile
+        tabs = (state.tabs ?? []).compactMap { record in
+            workspaces.contains { $0.id == record.workspace } ? ReaderTab(workspaceID: record.workspace, fileID: record.file) : nil
+        }
+        let active = state.activeTab.flatMap { tabs.indices.contains($0) ? tabs[$0] : nil } ?? tabs.first
+        activeTabID = active?.id
+        selectedWorkspaceID = active?.workspaceID ?? state.selectedWorkspace ?? workspaces.first?.id
+        pendingRestore = active?.fileID ?? selectedWorkspace?.record?.selectedFile
 
         reader.onEvent = { [weak self] event in self?.handle(event) }
         reader.schemeHandler.allowsFile = { [weak self] url in
@@ -341,6 +366,11 @@ final class AppModel {
             leaveCurrent()
             current = nil
         }
+        // Its tabs go with it; the page moves to the nearest tab left.
+        let activeIndex = tabs.firstIndex { $0.id == activeTabID }
+        let closesActive = activeIndex.map { tabs[$0].workspaceID == id } ?? false
+        tabs.removeAll { $0.workspaceID == id }
+        if closesActive { activeTabID = nil }
         workspace.close()
         workspaces.removeAll { $0.id == id }
         library.update { state in
@@ -348,10 +378,13 @@ final class AppModel {
             if state.selectedWorkspace == id { state.selectedWorkspace = nil }
         }
         library.removeSnapshots(workspace: id)
-        if selectedWorkspaceID == id {
+        if closesActive, !tabs.isEmpty {
+            activateTab(tabs[min(activeIndex ?? 0, tabs.count - 1)].id)
+        } else if selectedWorkspaceID == id {
             selectedWorkspaceID = nil
             if let first = workspaces.first { selectWorkspace(first.id) }
         }
+        saveTabs()
     }
 
     func selectWorkspace(_ id: UUID) {
@@ -368,6 +401,7 @@ final class AppModel {
         // Nothing to show yet: the page must not keep another workspace's file.
         leaveCurrent()
         current = nil
+        syncActiveTab(workspace.id, nil)
         if !workspace.hasScanned { pendingRestore = remembered ?? "" }
     }
 
@@ -432,6 +466,10 @@ final class AppModel {
         guard let source = WorkspaceScanner.read(file.url) else { return }
         filesCursor = nil
         leaveCurrent()
+        // Open in another tab already: go there rather than show it twice.
+        if let other = tab(showing: file.id, in: workspace.id), other.id != activeTabID {
+            activeTabID = other.id
+        }
         load(file, in: workspace, source: source, transition: transition, heading: heading, landingAtEnd: landingAtEnd)
         library.updateWorkspace(workspace.id) { $0.selectedFile = file.id }
     }
@@ -486,6 +524,7 @@ final class AppModel {
             currentHeading = nil
             readerAtBottom = false
             readerAtTop = false
+            syncActiveTab(workspace.id, file.id)
         }
         if isFindVisible, !isUpdate { findResult = (0, -1) }
         refreshPage(transition: transition, keepPosition: isUpdate)
@@ -746,6 +785,157 @@ final class AppModel {
             self.current?.changes = .none
             refreshPage(transition: "none", keepPosition: true)
         }
+    }
+
+    // MARK: Tabs
+    //
+    // Tab changes are never wrapped in `withAnimation`: an animated insert
+    // drew the new tab before it was made active, and SwiftUI did not draw
+    // it again. The bar animates its own changes instead.
+
+    var activeTab: ReaderTab? { tabs.first { $0.id == activeTabID } }
+
+    func tab(showing fileID: String, in workspaceID: UUID) -> ReaderTab? {
+        tabs.first { $0.workspaceID == workspaceID && $0.fileID == fileID }
+    }
+
+    /// The front tab follows what the page shows; the first document opened
+    /// makes the first tab.
+    private func syncActiveTab(_ workspaceID: UUID, _ fileID: String?) {
+        if let index = tabs.firstIndex(where: { $0.id == activeTabID }) {
+            guard tabs[index].workspaceID != workspaceID || tabs[index].fileID != fileID else { return }
+            tabs[index].workspaceID = workspaceID
+            tabs[index].fileID = fileID
+        } else {
+            let tab = ReaderTab(workspaceID: workspaceID, fileID: fileID)
+            tabs.append(tab)
+            activeTabID = tab.id
+        }
+        // One tab per file, whatever path led here.
+        if fileID != nil {
+            tabs.removeAll { $0.id != activeTabID && $0.workspaceID == workspaceID && $0.fileID == fileID }
+        }
+        saveTabs()
+    }
+
+    private func saveTabs() {
+        let records = tabs.map { TabRecord(workspace: $0.workspaceID, file: $0.fileID) }
+        let active = tabs.firstIndex { $0.id == activeTabID }
+        library.update {
+            $0.tabs = records
+            $0.activeTab = active
+        }
+    }
+
+    /// Opens `file` in a tab of its own beside the current one, or goes to
+    /// its tab when it has one.
+    func openInNewTab(_ file: DocumentFile, in workspace: Workspace, heading: String? = nil) {
+        if let existing = tab(showing: file.id, in: workspace.id) {
+            activateTab(existing.id, heading: heading)
+            return
+        }
+        // Nothing on the page yet: this is the first tab, not a second.
+        guard current != nil, activeTab?.fileID != nil else {
+            open(file, in: workspace)
+            return
+        }
+        let tab = ReaderTab(workspaceID: workspace.id, fileID: file.id)
+        let index = tabs.firstIndex { $0.id == activeTabID }.map { $0 + 1 } ?? tabs.count
+        tabs.insert(tab, at: index)
+        activateTab(tab.id, heading: heading)
+    }
+
+    /// Brings a tab to the front: its workspace, and its file where the
+    /// reader left it.
+    func activateTab(_ id: UUID, heading: String? = nil) {
+        guard let tab = tabs.first(where: { $0.id == id }) else { return }
+        guard let workspace = workspaces.first(where: { $0.id == tab.workspaceID }) else {
+            tabs.removeAll { $0.id == id }
+            saveTabs()
+            return
+        }
+        if id == activeTabID, current?.workspaceID == tab.workspaceID, current?.file.id == tab.fileID {
+            if let heading { reader.scrollToHeading(heading) }
+            return
+        }
+        // A file deleted while its tab was in the back: the tab goes too.
+        if workspace.hasScanned, let fileID = tab.fileID, workspace.file(fileID) == nil {
+            NSSound.beep()
+            tabs.removeAll { $0.id == id }
+            saveTabs()
+            return
+        }
+        leaveCurrent()
+        filesCursor = nil
+        activeTabID = id
+        if selectedWorkspaceID != workspace.id {
+            selectedWorkspaceID = workspace.id
+            library.update { $0.selectedWorkspace = workspace.id }
+        }
+        guard let fileID = tab.fileID, workspace.hasScanned,
+              let file = workspace.file(fileID), let source = WorkspaceScanner.read(file.url) else {
+            current = nil
+            // A tab that was waiting for files, and they have come.
+            if workspace.hasScanned, let first = workspace.files.first {
+                open(first, transition: "none")
+                return
+            }
+            // Not scanned yet: the rescan opens it.
+            pendingRestore = tab.fileID
+            saveTabs()
+            return
+        }
+        load(file, in: workspace, source: source, transition: "none", heading: heading)
+        library.updateWorkspace(workspace.id) { $0.selectedFile = file.id }
+        saveTabs()
+    }
+
+    /// The tab `offset` places from the front one, wrapping around.
+    func showTab(offset: Int) {
+        guard tabs.count > 1, let index = tabs.firstIndex(where: { $0.id == activeTabID }) else { NSSound.beep(); return }
+        activateTab(tabs[(index + offset + tabs.count) % tabs.count].id)
+    }
+
+    /// Closes a tab; the one to its right, or else its left, comes forward.
+    /// The last tab stays: closing it is closing the window.
+    func closeTab(_ id: UUID) {
+        guard tabs.count > 1, let index = tabs.firstIndex(where: { $0.id == id }) else { return }
+        let wasActive = id == activeTabID
+        tabs.remove(at: index)
+        if wasActive {
+            activeTabID = nil
+            activateTab(tabs[min(index, tabs.count - 1)].id)
+        }
+        saveTabs()
+    }
+
+    func closeOtherTabs(_ id: UUID) {
+        guard tabs.contains(where: { $0.id == id }) else { return }
+        if id != activeTabID { activateTab(id) }
+        tabs.removeAll { $0.id != id }
+        saveTabs()
+    }
+
+    /// ⌘W: the front tab, or the window when it is the last one (or when
+    /// another window, such as Settings, is in front).
+    func closeTabOrWindow() {
+        guard let key = NSApp.keyWindow ?? reader.webView.window else { return }
+        if key == reader.webView.window, tabs.count > 1, let id = activeTabID {
+            closeTab(id)
+        } else {
+            key.performClose(nil)
+        }
+    }
+
+    /// The tab being dragged in the bar, for the drop indicator.
+    var draggedTab: UUID?
+
+    /// Drag-to-reorder: `id` takes `target`'s place.
+    func moveTab(_ id: UUID, to target: UUID) {
+        guard id != target, let from = tabs.firstIndex(where: { $0.id == id }),
+              let to = tabs.firstIndex(where: { $0.id == target }) else { return }
+        tabs.move(fromOffsets: IndexSet(integer: from), toOffset: to > from ? to + 1 : to)
+        saveTabs()
     }
 
     // MARK: Panels
@@ -1152,7 +1342,11 @@ final class AppModel {
                     || $0.heading?.lowercased() == name
             }
             guard let match else { NSSound.beep(); return }
-            open(match, transition: "none", heading: heading)
+            if NSEvent.modifierFlags.contains(.command) {
+                openInNewTab(match, in: workspace, heading: heading)
+            } else {
+                open(match, transition: "none", heading: heading)
+            }
             return
         }
         guard let url = URL(string: href) ?? URL(string: href.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? "") else { return }
@@ -1169,7 +1363,12 @@ final class AppModel {
         if WorkspaceScanner.isMarkdown(standardized), workspace.contains(standardized) {
             let relative = String(standardized.path.dropFirst(workspace.root.standardizedFileURL.path.count + 1))
             if let file = workspace.file(relative) {
-                open(file, transition: "none", heading: fragment)
+                // ⌘-click, as in a browser: a tab of its own.
+                if NSEvent.modifierFlags.contains(.command) {
+                    openInNewTab(file, in: workspace, heading: fragment)
+                } else {
+                    open(file, transition: "none", heading: fragment)
+                }
                 return
             }
         }
@@ -1244,11 +1443,13 @@ final class AppModel {
 
     /// A search result chosen in the palette: open the file and light up
     /// `term` in it with find, so ⌘G steps through the rest.
-    func openSearchResult(_ file: DocumentFile, in workspace: Workspace, term: String) {
+    func openSearchResult(_ file: DocumentFile, in workspace: Workspace, term: String, inNewTab: Bool = false) {
         findQuery = term
         isFindVisible = true
         if current?.file.id == file.id, current?.workspaceID == workspace.id {
             Task { await runFind(direction: 0) }
+        } else if inNewTab {
+            openInNewTab(file, in: workspace)
         } else {
             open(file, in: workspace)
         }

@@ -18,7 +18,7 @@ final class DebugAutomation {
         "snapshot", "probe", "reload", "reset", "palette", "palette.close", "highlight", "next", "previous", "fold", "unfold", "change", "find.close", "resize.small", "resize.large",
         "scroll.top", "scroll.bottom", "dark", "light", "system",
         "appearance", "appearance.close", "settings", "settings.close", "settings.reading", "settings.appearance",
-        "js", "searchopen", "search.token", "search.rate limits", "names.rate", "note", "feedback.copy", "feedback.copyall", "pin", "movepin", "movews", "divider.narrow", "divider.wide", "toggle.outline", "toggle.files", "toggle.workspaces", "focusfiles", "type.api", "type.rate", "type.s", "type.sta", "key.return", "key.escape", "key.down", "columns.reset", "columns.filesfirst", "columns.nocontents", "rail", "rail.off", "identity", "identity.close", "icon.test", "icon.reset", "swipe.right", "swipe.left", "swipe.hold", "swipe.release", "swipe.wobble", "pull.hold", "pull.half", "pull.back", "pull.backhalf", "pull.release",
+        "js", "searchopen", "search.token", "search.rate limits", "names.rate", "note", "feedback.copy", "feedback.copyall", "pin", "movepin", "movews", "divider.narrow", "divider.wide", "toggle.outline", "toggle.files", "toggle.workspaces", "focusfiles", "type.api", "type.rate", "type.s", "type.sta", "key.return", "key.escape", "key.down", "key.ctrltab", "key.ctrlshifttab", "key.cmdw", "key.cmdt", "key.cmdreturn", "tab.new", "tab.newnext", "tab.next", "tab.close", "tab.others", "tab.state", "tab.move", "menus", "columns.reset", "columns.filesfirst", "columns.nocontents", "rail", "rail.off", "identity", "identity.close", "icon.test", "icon.reset", "swipe.right", "swipe.left", "swipe.hold", "swipe.release", "swipe.wobble", "pull.hold", "pull.half", "pull.back", "pull.backhalf", "pull.release",
     ] + (1...4).map { "level.\($0)" }
         + Theme.all.map { "theme.\($0.id)" }
         + (0..<30).map { "open.\($0)" }
@@ -153,6 +153,34 @@ final class DebugAutomation {
         case "movews":
             // The last workspace to the top, as a drag onto the first would.
             if let last = model.workspaces.last, let first = model.workspaces.first { model.moveWorkspace(last.id, to: first.id) }
+        case "tab":
+            switch argument {
+            case "new", "newnext":
+                // "new": the file after the open one, in a tab of its own.
+                // "newnext": the one after that, to have three.
+                guard let workspace = model.selectedWorkspace, let current = model.current,
+                      let index = workspace.files.firstIndex(where: { $0.id == current.file.id }) else { return }
+                let step = argument == "new" ? 1 : 2
+                model.openInNewTab(workspace.files[(index + step) % workspace.files.count], in: workspace)
+            case "next": model.showTab(offset: 1)
+            case "close": if let id = model.activeTabID { model.closeTab(id) }
+            case "others": if let id = model.activeTabID { model.closeOtherTabs(id) }
+            case "move": if let first = model.tabs.first, let last = model.tabs.last { model.moveTab(last.id, to: first.id) }
+            default:
+                let list = model.tabs.map { ($0.id == model.activeTabID ? "*" : "") + ($0.fileID ?? "-") }
+                debugLog("[tabs] \(list.joined(separator: " | ")) current=\(model.current?.file.id ?? "-")")
+                for workspace in model.workspaces {
+                    debugLog("[tabs] workspace \(workspace.name) files=\(workspace.files.count) scanned=\(workspace.hasScanned) root=\(workspace.root.path)")
+                }
+            }
+        case "menus":
+            // Every menu item with a shortcut, to check what a key reaches.
+            for top in NSApp.mainMenu?.items ?? [] {
+                for item in top.submenu?.items ?? [] where !item.keyEquivalent.isEmpty {
+                    let scalars = item.keyEquivalent.unicodeScalars.map { String($0.value, radix: 16) }.joined(separator: ",")
+                    debugLog("[menu] \(top.title) / \(item.title) key=\(scalars) mods=\(item.keyEquivalentModifierMask.rawValue) enabled=\(item.isEnabled)")
+                }
+            }
         case "toggle": if let column = PanelColumn(rawValue: argument) { model.toggleColumn(column) }
         case "focusfiles": model.filesFocusRequest += 1
         case "type": for character in argument { postKey(String(character), keyCode: 0) }
@@ -160,6 +188,12 @@ final class DebugAutomation {
             switch argument {
             case "return": postKey("\r", keyCode: 36)
             case "escape": postKey("\u{1b}", keyCode: 53)
+            case "ctrltab": postKey("\t", keyCode: 48, modifiers: .control)
+            // A real ⇧Tab carries the back-tab character, not a tab.
+            case "ctrlshifttab": postKey("\u{19}", keyCode: 48, modifiers: [.control, .shift])
+            case "cmdw": postKey("w", keyCode: 13, modifiers: .command)
+            case "cmdt": postKey("t", keyCode: 17, modifiers: .command)
+            case "cmdreturn": postKey("\r", keyCode: 36, modifiers: .command)
             default: postKey(String(UnicodeScalar(NSDownArrowFunctionKey)!), keyCode: 125)
             }
         case "columns":
@@ -243,11 +277,11 @@ final class DebugAutomation {
     }
 
     /// A key press as the keyboard would send it to the main window.
-    private func postKey(_ characters: String, keyCode: UInt16) {
+    private func postKey(_ characters: String, keyCode: UInt16, modifiers: NSEvent.ModifierFlags = []) {
         guard let window = mainWindow else { return }
         for type in [NSEvent.EventType.keyDown, .keyUp] {
             guard let event = NSEvent.keyEvent(
-                with: type, location: .zero, modifierFlags: [], timestamp: ProcessInfo.processInfo.systemUptime,
+                with: type, location: .zero, modifierFlags: modifiers, timestamp: ProcessInfo.processInfo.systemUptime,
                 windowNumber: window.windowNumber, context: nil, characters: characters,
                 charactersIgnoringModifiers: characters, isARepeat: false, keyCode: keyCode
             ) else { continue }

@@ -76,6 +76,9 @@ nonisolated struct LibraryState: Codable, Sendable {
     /// libraries have only `level`, a depth into the default order.
     var visibleColumns: [String]?
     var lastVisibleColumns: [String]?
+    /// The page's tabs, left to right, and which one is in front.
+    var tabs: [TabRecord]?
+    var activeTab: Int?
 
     init() {}
 
@@ -87,7 +90,16 @@ nonisolated struct LibraryState: Codable, Sendable {
         lastPanelLevel = try c.decodeIfPresent(Int.self, forKey: .lastPanelLevel) ?? 3
         visibleColumns = try c.decodeIfPresent([String].self, forKey: .visibleColumns)
         lastVisibleColumns = try c.decodeIfPresent([String].self, forKey: .lastVisibleColumns)
+        tabs = try c.decodeIfPresent([TabRecord].self, forKey: .tabs)
+        activeTab = try c.decodeIfPresent(Int.self, forKey: .activeTab)
     }
+}
+
+/// A tab as saved: the workspace, and the file it shows (none yet when the
+/// workspace had nothing to show).
+nonisolated struct TabRecord: Codable, Hashable, Sendable {
+    var workspace: UUID
+    var file: String?
 }
 
 /// Reads and writes the library and the last-read snapshots under

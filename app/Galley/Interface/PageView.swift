@@ -7,6 +7,10 @@ struct PageView: View {
     @Environment(AppModel.self) private var model
     @Environment(\.palette) private var palette
 
+    /// Where the page starts in the window: at the left edge, the tabs keep
+    /// clear of the traffic lights and the panel button.
+    @State private var pageMinX: CGFloat = 0
+
     var body: some View {
         ZStack(alignment: .top) {
             ReaderSurface(controller: model.reader)
@@ -17,11 +21,19 @@ struct PageView: View {
             topStrip
         }
         .background(palette.paper)
+        .onGeometryChange(for: CGFloat.self) { $0.frame(in: .global).minX } action: { pageMinX = $0 }
     }
 
     private var topStrip: some View {
         HStack(spacing: 4) {
-            Spacer()
+            if model.tabs.count > 1 {
+                TabBar()
+                    .padding(.leading, max(0, 104 - pageMinX))
+                    .padding(.trailing, 8)
+                    .transition(.opacity)
+            } else {
+                Spacer()
+            }
             if model.isFindVisible {
                 FindBar()
                     .transition(.move(edge: .top).combined(with: .opacity))
@@ -74,6 +86,7 @@ struct PageView: View {
         .padding(.horizontal, 12)
         .frame(height: MainView.bandHeight)
         .padding(.top, 2)
+        .animation(.snappy(duration: 0.2), value: model.tabs.count > 1)
         .background(alignment: .top) { TitleBand() }
         .background(alignment: .top) {
             // Lets text slide under the controls without colliding with them.

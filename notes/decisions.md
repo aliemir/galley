@@ -170,3 +170,19 @@ cards would collide or vanish exactly where they are needed.
 Highlights now snap to whole words and drop surrounding spaces, so a drag
 that stops a letter short still marks the word.
 
+## 2026-11-01 — Tabs work like Safari's, not like an editor's preview tab
+
+**Chosen:** tabs inside the page column. A click (file list, palette, link,
+pull to next) changes the current tab; a new tab is asked for — ⌘-click,
+"Open in New Tab", ⌘Return in the palette, ⌘T, or dropping a file on the
+bar. A file is open in at most one tab: going to it goes to that tab. The
+bar is not drawn until there are two tabs, so someone who never asks for one
+sees the page exactly as before.
+
+**Rejected:** the preview tab planned in `plan-v1.md` (single click reuses a
+preview tab, double click keeps it, as in VS Code). Finder teaches people to
+double-click files, and every double-click would have left a kept tab behind
+— tabs piling up in a reader meant to be calm. Also rejected: native window
+tabs (`NSWindow` tabbing), which would need a whole window — model, web
+view, columns — per tab.
+

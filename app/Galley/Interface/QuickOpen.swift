@@ -162,15 +162,21 @@ struct QuickOpenView: View {
                     .font(.system(size: 15, weight: .medium))
                     .foregroundStyle(palette.ink3)
                     .frame(width: 18)
-                TextField(searchesText ? "Search the text of every file" : "Go to file — type # for sections", text: $query)
+                TextField(searchesText ? "Search the text of every file" : (model.quickOpenOpensTab ? "Open in a new tab — type a file name" : "Go to file — type # for sections"), text: $query)
                     .textFieldStyle(.plain)
                     .font(.system(size: 17))
                     .foregroundStyle(palette.ink)
                     .focused($isFocused)
                     .onSubmit { choose(results) }
+                    .onKeyPress(.return, phases: .down) { press in
+                        // ⌘Return: a tab of its own.
+                        guard press.modifiers.contains(.command) else { return .ignored }
+                        choose(results, inNewTab: true)
+                        return .handled
+                    }
                     .onKeyPress(.downArrow) { move(1, count: results.count); return .handled }
                     .onKeyPress(.upArrow) { move(-1, count: results.count); return .handled }
-                    .onKeyPress(.escape) { model.isQuickOpenVisible = false; return .handled }
+                    .onKeyPress(.escape) { close(); return .handled }
                     .onKeyPress(.tab) {
                         // Tab switches between names and text.
                         model.quickOpenSearchesText.toggle()
@@ -243,6 +249,8 @@ struct QuickOpenView: View {
             selection = 0
             model.quickOpenSeed = ""
         }
+        // However the palette goes (Escape, a click outside), ⌘T's intent goes with it.
+        .onDisappear { model.quickOpenOpensTab = false }
         .onChange(of: query) { _, _ in selection = 0 }
         .task(id: "\(searchesText)|\(query)") { await searchText() }
     }
@@ -312,13 +320,21 @@ struct QuickOpenView: View {
         selection = min(count - 1, max(0, selection + delta))
     }
 
-    private func choose(_ results: [Result]) {
-        guard results.indices.contains(selection) else { return }
+    private func close() {
         model.isQuickOpenVisible = false
+        model.quickOpenOpensTab = false
+    }
+
+    /// Opens the chosen result: in a new tab after ⌘T or with ⌘Return.
+    private func choose(_ results: [Result], inNewTab: Bool = false) {
+        guard results.indices.contains(selection) else { return }
+        let newTab = inNewTab || model.quickOpenOpensTab
+        close()
         switch results[selection] {
-        case let .file(workspace, file): model.open(file, in: workspace)
+        case let .file(workspace, file):
+            if newTab { model.openInNewTab(file, in: workspace) } else { model.open(file, in: workspace) }
         case let .heading(item): model.scrollToHeading(item.id)
-        case let .text(workspace, file, hit): model.openSearchResult(file, in: workspace, term: hit.findTerm)
+        case let .text(workspace, file, hit): model.openSearchResult(file, in: workspace, term: hit.findTerm, inNewTab: newTab)
         }
     }
 

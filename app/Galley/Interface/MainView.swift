@@ -6,6 +6,7 @@ struct MainView: View {
     @Environment(AppModel.self) private var model
     @Environment(\.colorScheme) private var systemScheme
     @State private var gestures: GestureMonitor?
+    @State private var tabKeys: TabKeys?
     @State private var isDropTargeted = false
 
     /// The empty strip at the top of every column, where the traffic lights sit.
@@ -79,6 +80,7 @@ struct MainView: View {
         window.isMovableByWindowBackground = false
         window.tabbingMode = .disallowed
         if gestures == nil { gestures = GestureMonitor(window: window, model: model) }
+        if tabKeys == nil { tabKeys = TabKeys(window: window, model: model) }
     }
 
     private func handleDrop(_ providers: [NSItemProvider]) -> Bool {
