@@ -124,6 +124,10 @@ struct GalleyCommands: Commands {
             Divider()
         }
 
+        CommandGroup(replacing: .help) {
+            Button("Galley Guide") { model.openGuide() }
+        }
+
         CommandMenu("Go") {
             Button("Next Document") { model.goToNext() }
                 .shortcut(.nextDocument)

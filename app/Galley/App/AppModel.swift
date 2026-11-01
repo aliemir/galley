@@ -159,7 +159,10 @@ final class AppModel {
 
         reader.onEvent = { [weak self] event in self?.handle(event) }
         reader.schemeHandler.allowsFile = { [weak self] url in
-            MainActor.assumeIsolated { self?.workspaces.contains { $0.contains(url) } ?? false }
+            // The guide's pictures sit beside it in the app's own resources.
+            if let resources = Bundle.main.resourceURL?.standardizedFileURL.path,
+               url.standardizedFileURL.path.hasPrefix(resources + "/") { return true }
+            return MainActor.assumeIsolated { self?.workspaces.contains { $0.contains(url) } ?? false }
         }
         reader.webView.extraMenuItems = { [weak self] in self?.contextMenuItems() ?? [] }
         configureReader()
@@ -325,6 +328,13 @@ final class AppModel {
         let group = openedFiles ?? makeOpenedFiles()
         guard let file = group.addDocument(url) else { NSSound.beep(); return }
         openInNewTab(file, in: group)
+    }
+
+    /// Help → Galley Guide, and the welcome screen's button: the guide that
+    /// ships inside the app, opened like any single file.
+    func openGuide() {
+        guard let url = Bundle.main.url(forResource: "Galley Guide", withExtension: "md") else { NSSound.beep(); return }
+        open([url])
     }
 
     /// The workspace that holds files opened one at a time, if there is one.
@@ -660,7 +670,11 @@ final class AppModel {
     private func makePayload(_ document: OpenDocument, in workspace: Workspace, transition: String) -> PagePayload {
         var meta: [String] = []
         let folder = document.file.folder
-        if workspace.isOpenedFiles {
+        if workspace.isOpenedFiles, let resources = Bundle.main.resourceURL?.standardizedFileURL.path,
+           document.file.url.standardizedFileURL.path.hasPrefix(resources + "/") {
+            // The guide, which lives inside the app.
+            meta.append("Galley")
+        } else if workspace.isOpenedFiles {
             // Opened on its own: where it lives says more than the group.
             meta.append(settings.displayFolderName((folder as NSString).lastPathComponent))
         } else {

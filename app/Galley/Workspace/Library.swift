@@ -126,7 +126,15 @@ final class Library {
 
     init() {
         let base = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
-        directory = base.appendingPathComponent("Galley", isDirectory: true)
+        var directory = base.appendingPathComponent("Galley", isDirectory: true)
+        #if DEBUG
+        // `-GalleyLibrary <dir>`: a throwaway library for scripted captures,
+        // so they never touch the reader's own highlights and read state.
+        if let path = UserDefaults.standard.string(forKey: "GalleyLibrary") {
+            directory = URL(fileURLWithPath: path, isDirectory: true)
+        }
+        #endif
+        self.directory = directory
         try? FileManager.default.createDirectory(at: directory.appendingPathComponent("Snapshots"), withIntermediateDirectories: true)
         let file = directory.appendingPathComponent("library.json")
         if let data = try? Data(contentsOf: file) {

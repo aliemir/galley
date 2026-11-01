@@ -26,6 +26,12 @@ otherwise have to re-derive. Not worth one: typo fixes and formatting.
 
 ## 2026-11-01
 
+- The Galley Guide ships inside the app (`app/Galley/Guide/`): what Galley
+  does, with five screenshots, and a page that shows every syntax it renders.
+  Opened from the welcome screen ("New here? Read the guide →") and Help →
+  Galley Guide, like any single file. Pictures come from
+  `tools/capture-guide.sh`, which runs a debug copy on a throwaway library
+  (`-GalleyLibrary`) and a copy of the Showcase workspace
 - The Dock icon carries the number of new and changed files across every
   workspace; Settings → General → "Show the number of files to read on the
   Dock icon" turns it off

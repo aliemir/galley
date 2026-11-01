@@ -18,7 +18,7 @@ final class DebugAutomation {
         "snapshot", "probe", "reload", "reset", "palette", "palette.close", "highlight", "next", "previous", "fold", "unfold", "change", "find.close", "resize.small", "resize.large",
         "scroll.top", "scroll.bottom", "dark", "light", "system",
         "appearance", "appearance.close", "settings", "settings.close", "settings.general", "settings.reading", "settings.themes", "settings.shortcuts", "settings.icon",
-        "js", "searchopen", "search.token", "search.rate limits", "names.rate", "note", "feedback.copy", "feedback.copyall", "pin", "movepin", "movews", "divider.narrow", "divider.wide", "toggle.outline", "toggle.files", "toggle.workspaces", "focusfiles", "type.api", "type.rate", "type.s", "type.sta", "key.return", "key.escape", "key.down", "key.ctrltab", "key.ctrlshifttab", "key.cmdw", "key.cmdt", "key.cmdreturn", "key.backspace", "key.tab", "type.#", "tab.new", "tab.newnext", "tab.next", "tab.close", "tab.others", "tab.state", "tab.move", "menus", "opened.remove", "shortcut.test", "shortcut.reset", "key.cmdy", "key.cmdf", "key.cmdshiftbracket", "columns.reset", "columns.filesfirst", "columns.nocontents", "rail", "rail.off", "identity", "identity.close", "icon.test", "icon.reset", "swipe.right", "swipe.left", "swipe.hold", "swipe.release", "swipe.wobble", "pull.hold", "pull.half", "pull.back", "pull.backhalf", "pull.release",
+        "js", "searchopen", "search.token", "search.rate limits", "names.rate", "names.auth", "note", "feedback.copy", "feedback.copyall", "pin", "movepin", "movews", "divider.narrow", "divider.wide", "toggle.outline", "toggle.files", "toggle.workspaces", "focusfiles", "type.api", "type.rate", "type.s", "type.sta", "key.return", "key.escape", "key.down", "key.ctrltab", "key.ctrlshifttab", "key.cmdw", "key.cmdt", "key.cmdreturn", "key.backspace", "key.tab", "type.#", "tab.new", "tab.newnext", "tab.next", "tab.close", "tab.others", "tab.state", "tab.move", "menus", "opened.remove", "highlight.note", "guide", "shortcut.test", "shortcut.reset", "key.cmdy", "key.cmdf", "key.cmdshiftbracket", "columns.reset", "columns.filesfirst", "columns.nocontents", "rail", "rail.off", "identity", "identity.close", "icon.test", "icon.reset", "swipe.right", "swipe.left", "swipe.hold", "swipe.release", "swipe.wobble", "pull.hold", "pull.half", "pull.back", "pull.backhalf", "pull.release",
     ] + (1...4).map { "level.\($0)" }
         + Theme.all.map { "theme.\($0.id)" }
         + (0..<30).map { "open.\($0)" }
@@ -69,10 +69,19 @@ final class DebugAutomation {
         case "feedback":
             if argument == "copyall" { model.copyWorkspaceFeedback() } else { model.copyFeedback() }
         case "highlight":
-            // Selects a phrase in the second paragraph, then highlights it.
+            // Selects a phrase in the second paragraph, then highlights it;
+            // "note" also writes a note on it, for the guide's picture.
             let select = Self.selectPhrase
             model.reader.webView.evaluateJavaScript(select) { _, _ in
-                MainActor.assumeIsolated { self.model.highlightSelection() }
+                MainActor.assumeIsolated {
+                    self.model.highlightSelection()
+                    guard argument == "note" else { return }
+                    Task { @MainActor in
+                        try? await Task.sleep(for: .milliseconds(400))
+                        guard let id = self.model.current?.highlights.last?.id else { return }
+                        self.model.setNote("Which waves can we skip for internal tools?", for: id)
+                    }
+                }
             }
         case "palette": model.isQuickOpenVisible = argument != "close"
         case "appearance": model.isAppearanceVisible = argument != "close"
@@ -185,6 +194,7 @@ final class DebugAutomation {
             } else {
                 Shortcuts.shared.resetAll()
             }
+        case "guide": model.openGuide()
         case "menus":
             // Every menu item with a shortcut, to check what a key reaches.
             for top in NSApp.mainMenu?.items ?? [] {

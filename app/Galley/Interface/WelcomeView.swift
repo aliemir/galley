@@ -40,6 +40,10 @@ struct WelcomeView: View {
                         .font(.system(size: 12))
                         .foregroundStyle(palette.ink3)
                 }
+                Button("New here? Read the guide →") { model.openGuide() }
+                    .buttonStyle(.plain)
+                    .font(.system(size: 12.5, weight: .medium))
+                    .foregroundStyle(palette.accent)
                 .padding(.top, 6)
             }
             .frame(maxWidth: 440, alignment: .leading)

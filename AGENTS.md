@@ -202,6 +202,10 @@ swift tools/galley-debug.swift level.3 theme.sepia open.1 snapshot
 #             settings.general|reading|themes|shortcuts|icon
 # open a single file as Finder would (outside a workspace → Opened Files):
 open -a app/…/Debug/Galley.app /path/to/file.md
+# the Galley Guide's pictures: a debug copy on a throwaway library
+# (-GalleyLibrary, under /private/tmp/galley-debug/ — the only place the
+# debug sandbox may write) and a copy of the Showcase workspace
+tools/capture-guide.sh
 # real on-screen captures (needs Screen Recording for the terminal) —
 # popovers and Settings are their own windows, so capture by window id:
 swift tools/window-bounds.swift Galley     # id layer x,y,w,h title

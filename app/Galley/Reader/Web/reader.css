@@ -362,6 +362,12 @@ ins.g-ins { text-decoration: none; background: var(--insert); border-radius: 2px
 .flash { animation: flash 1.1s ease; }
 @keyframes flash { 0%, 30% { background-color: var(--insert); } 100% { background-color: transparent; } }
 
+/* The guide's screenshots: paper pictured on paper needs an edge. */
+img[src*="/guide-"] {
+  border-radius: 10px;
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--ink) 10%, transparent), 0 6px 24px rgba(0, 0, 0, .08);
+}
+
 /* — Highlights ———————————————————————————————————————————————— */
 /* No inline element in running text may use box-decoration-break: clone —
    WebKit then drops text-wrap: pretty for the whole paragraph, so adding a
