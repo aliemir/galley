@@ -26,6 +26,9 @@ otherwise have to re-derive. Not worth one: typo fixes and formatting.
 
 ## 2026-11-01
 
+- The guide's pictures show four workspaces in the rail — three more small
+  agent folders made by `tools/capture-guide.sh`, with their own icons and
+  colours (debug `dress`) and a new file's blue dot
 - The eye button for hidden comments is gone from the top strip; ⇧⌘H, the
   View menu and Settings remain
 - Connecting agents has a home: a terminal button in the top strip (until

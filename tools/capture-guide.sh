@@ -64,12 +64,51 @@ sleep 1
 rm -rf "$WORK" && mkdir -p "$WORK"
 cp -R app/Fixtures/Showcase "$WORK/Showcase"
 
+# More workspaces, so the rail looks like a day's work: agent output from
+# three other projects.
+mkdir -p "$WORK/ios-app/plans" "$WORK/api-gateway/docs" "$WORK/design-notes"
+cat > "$WORK/ios-app/plans/onboarding-redesign.md" <<'MD'
+# Onboarding redesign
+
+Three screens instead of five, and the account step moves to the end.
+MD
+cat > "$WORK/ios-app/release-checklist.md" <<'MD'
+# Release checklist
+
+- [x] Bump the build number
+- [ ] Screenshots for the new onboarding
+MD
+cat > "$WORK/api-gateway/docs/rate-limit-design.md" <<'MD'
+# Rate limit design
+
+Token buckets per API key, refilled every second.
+MD
+cat > "$WORK/api-gateway/README.md" <<'MD'
+# API gateway
+
+Routes, auth and rate limits for the public API.
+MD
+cat > "$WORK/design-notes/type-scale.md" <<'MD'
+# Type scale
+
+Body 17 pt, headings on a 1.25 ratio.
+MD
+
 "$APP/Contents/MacOS/Galley" -GalleyLibrary "$WORK/library" -GalleyOpen "$WORK/Showcase" \
   -appearance light -lightTheme paper -font newYork -fontSize 17 >"$WORK/log.txt" 2>&1 &
 sleep 5
 open "$APP"   # to the front: captures of a window behind others can be stale
 sleep 1
-debug resize.large level.4 open.1 wait.2500
+open -a "$APP" "$WORK/ios-app" "$WORK/api-gateway" "$WORK/design-notes"
+sleep 3
+# Written after the workspace was opened: new, so its rail icon gets a dot.
+cat > "$WORK/ios-app/plans/paywall-copy.md" <<'MD'
+# Paywall copy
+
+Lead with what the free tier keeps.
+MD
+sleep 2
+debug dress ws.0 wait.800 resize.large level.4 open.1 wait.2500
 
 # 1. The whole window: rail, files, contents, page.
 shot overview "$(window)"
