@@ -118,10 +118,12 @@ final class DebugAutomation {
             guard let id = model.selectedWorkspaceID else { return }
             if argument == "test" {
                 model.setWorkspaceIcon(.emoji("📐"), for: id)
+                model.setWorkspaceColor("purple", for: id)
                 model.setWorkspaceName("Design notes", for: id)
             } else {
                 model.setWorkspaceIcon(.monogram, for: id)
                 model.setWorkspaceName(nil, for: id)
+                model.setWorkspaceColor(nil, for: id)
             }
         case "divider":
             // The steps a drag of the Workspaces edge makes, 150 pt either way.

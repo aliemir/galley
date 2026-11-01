@@ -26,6 +26,7 @@ otherwise have to re-derive. Not worth one: typo fixes and formatting.
 
 ## 2026-11-01
 
+- Workspaces have a colour (ten swatches or automatic) that tints their icon and rail ring
 - Dragging the Workspaces edge narrower than 105 pt folds it into the icon
   rail, and dragging the rail wider than 130 pt opens the list again
 - Columns toggle independently: ⌘1 Workspaces, ⌘2 Files, ⌘3 Contents (View

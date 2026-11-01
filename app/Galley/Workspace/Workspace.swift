@@ -1,5 +1,6 @@
 import Foundation
 import Observation
+import SwiftUI
 
 /// Where a file stands against the version the reader last read.
 enum ReadStatus: Hashable {
@@ -53,6 +54,9 @@ final class Workspace: Identifiable {
     var defaultName: String { ReaderSettings.shared.displayFolderName(folderName) }
 
     var icon: WorkspaceIcon.Kind { WorkspaceIcon.Kind(stored: record?.icon) }
+
+    /// The workspace's colour: the reader's pick, or one chosen from its id.
+    var color: Color { WorkspaceIcon.color(named: record?.color) ?? WorkspaceIcon.automaticColor(for: id) }
     var record: WorkspaceRecord? {
         _ = revision
         return library.record(id)

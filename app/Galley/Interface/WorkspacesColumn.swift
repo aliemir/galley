@@ -152,7 +152,7 @@ private struct RailTile: View {
             .padding(3)
             .background(
                 RoundedRectangle(cornerRadius: 12, style: .continuous)
-                    .strokeBorder(isSelected ? palette.accent.opacity(0.55) : (isHovered ? palette.rule : .clear), lineWidth: 1.5)
+                    .strokeBorder(isSelected ? workspace.color.opacity(0.7) : (isHovered ? palette.rule : .clear), lineWidth: 1.5)
             )
             .overlay(alignment: .topTrailing) {
                 if workspace.unreadCount > 0 {

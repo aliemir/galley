@@ -29,18 +29,28 @@ struct WorkspaceIcon: View {
     var isSelected = false
     @Environment(\.palette) private var palette
 
-    /// Muted hues that read on every theme, picked by a stable hash of the id.
-    private static let tints: [Color] = [
-        Color(red: 0.36, green: 0.52, blue: 0.80), Color(red: 0.30, green: 0.62, blue: 0.55),
-        Color(red: 0.78, green: 0.50, blue: 0.27), Color(red: 0.64, green: 0.42, blue: 0.72),
-        Color(red: 0.75, green: 0.38, blue: 0.42), Color(red: 0.45, green: 0.58, blue: 0.32),
-        Color(red: 0.42, green: 0.48, blue: 0.62), Color(red: 0.70, green: 0.58, blue: 0.25),
+    /// Muted hues that read on every theme. Stored by name, so the palette
+    /// can be retuned without losing anyone's choice.
+    static let colors: [(name: String, color: Color)] = [
+        ("blue", Color(red: 0.36, green: 0.52, blue: 0.80)), ("teal", Color(red: 0.30, green: 0.62, blue: 0.55)),
+        ("green", Color(red: 0.45, green: 0.60, blue: 0.32)), ("gold", Color(red: 0.72, green: 0.58, blue: 0.22)),
+        ("orange", Color(red: 0.80, green: 0.50, blue: 0.26)), ("red", Color(red: 0.77, green: 0.36, blue: 0.38)),
+        ("pink", Color(red: 0.80, green: 0.42, blue: 0.62)), ("purple", Color(red: 0.60, green: 0.43, blue: 0.75)),
+        ("slate", Color(red: 0.42, green: 0.48, blue: 0.62)), ("graphite", Color(red: 0.45, green: 0.45, blue: 0.47)),
     ]
 
-    private var tint: Color {
-        let sum = workspace.id.uuidString.unicodeScalars.reduce(0) { ($0 &* 31) &+ Int($1.value) }
-        return Self.tints[abs(sum) % Self.tints.count]
+    static func color(named name: String?) -> Color? {
+        colors.first { $0.name == name }?.color
     }
+
+    /// A stable pick from the id, for workspaces without a chosen colour.
+    static func automaticColor(for id: UUID) -> Color {
+        let sum = id.uuidString.unicodeScalars.reduce(0) { ($0 &* 31) &+ Int($1.value) }
+        // The first eight: the greys are for choosing, not for chance.
+        return colors[abs(sum) % 8].color
+    }
+
+    private var tint: Color { workspace.color }
 
     var body: some View {
         let shape = RoundedRectangle(cornerRadius: size * 0.28, style: .continuous)
@@ -57,7 +67,7 @@ struct WorkspaceIcon: View {
                     .font(.system(size: size * 0.5, weight: .medium))
                     .foregroundStyle(isSelected ? Color.white : tint)
             case .emoji(let character):
-                shape.fill(palette.ink.opacity(isSelected ? 0.12 : 0.05))
+                shape.fill(tint.opacity(isSelected ? 0.32 : 0.16))
                 Text(character)
                     .font(.system(size: size * 0.62))
             }
@@ -106,6 +116,8 @@ struct WorkspaceIdentityEditor: View {
                 }
             }
 
+            colorRow
+
             LazyVGrid(columns: Array(repeating: GridItem(.fixed(30), spacing: 4), count: 8), spacing: 4) {
                 choice(.monogram) {
                     Text(String(workspace.defaultName.first ?? "A").uppercased())
@@ -141,6 +153,7 @@ struct WorkspaceIdentityEditor: View {
                     emoji = ""
                     model.setWorkspaceName(nil, for: workspace.id)
                     model.setWorkspaceIcon(.monogram, for: workspace.id)
+                    model.setWorkspaceColor(nil, for: workspace.id)
                 }
                 .controlSize(.small)
             }
@@ -157,6 +170,42 @@ struct WorkspaceIdentityEditor: View {
 
     /// Saves the name only if it was edited here, so closing the editor
     /// never overwrites a name set elsewhere meanwhile.
+    /// Automatic, then the palette: swatches as small circles, the chosen
+    /// one ringed.
+    private var colorRow: some View {
+        let chosen = workspace.record?.color
+        // 11 swatches of 22 pt and 4 pt gaps: 282 of the editor's 288 pt.
+        return HStack(spacing: 4) {
+            swatch(isChosen: chosen == nil, help: "Automatic") {
+                model.setWorkspaceColor(nil, for: workspace.id)
+            } fill: {
+                Circle().fill(WorkspaceIcon.automaticColor(for: workspace.id).opacity(0.35))
+                    .overlay(Image(systemName: "wand.and.stars").font(.system(size: 8, weight: .semibold)).foregroundStyle(.primary.opacity(0.7)))
+            }
+            ForEach(WorkspaceIcon.colors, id: \.name) { entry in
+                swatch(isChosen: chosen == entry.name, help: entry.name.capitalized) {
+                    model.setWorkspaceColor(entry.name, for: workspace.id)
+                } fill: {
+                    Circle().fill(entry.color)
+                }
+            }
+        }
+    }
+
+    private func swatch<Fill: View>(isChosen: Bool, help: String, action: @escaping () -> Void, @ViewBuilder fill: () -> Fill) -> some View {
+        Button(action: action) {
+            fill()
+                .frame(width: 16, height: 16)
+                .padding(3)
+                .overlay(Circle().strokeBorder(isChosen ? Color.primary.opacity(0.55) : .clear, lineWidth: 1.5))
+                .contentShape(Circle())
+        }
+        .buttonStyle(.plain)
+        .help(help)
+        .accessibilityLabel("\(help) colour")
+        .accessibilityAddTraits(isChosen ? .isSelected : [])
+    }
+
     private func commitName() {
         guard name != loadedName else { return }
         model.setWorkspaceName(name, for: workspace.id)

@@ -35,6 +35,8 @@ nonisolated struct WorkspaceRecord: Codable, Identifiable, Sendable {
     var customName: String?
     /// `symbol:<SF Symbol>` or `emoji:<character>`; nil shows a monogram.
     var icon: String?
+    /// One of `WorkspaceIcon.colors` by name; nil picks one from the id.
+    var color: String?
 
     init(id: UUID, bookmark: Data?, path: String, addedAt: Date) {
         self.id = id
@@ -56,6 +58,7 @@ nonisolated struct WorkspaceRecord: Codable, Identifiable, Sendable {
         files = try c.decodeIfPresent([String: FileRecord].self, forKey: .files) ?? [:]
         customName = try c.decodeIfPresent(String.self, forKey: .customName)
         icon = try c.decodeIfPresent(String.self, forKey: .icon)
+        color = try c.decodeIfPresent(String.self, forKey: .color)
     }
 }
 

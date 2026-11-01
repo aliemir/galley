@@ -287,6 +287,11 @@ final class AppModel {
         refreshPage(transition: "none", keepPosition: true)
     }
 
+    func setWorkspaceColor(_ name: String?, for id: UUID) {
+        library.updateWorkspace(id) { $0.color = name }
+        workspaces.first { $0.id == id }?.touch()
+    }
+
     func setWorkspaceIcon(_ icon: WorkspaceIcon.Kind, for id: UUID) {
         library.updateWorkspace(id) { $0.icon = icon.stored }
         workspaces.first { $0.id == id }?.touch()
