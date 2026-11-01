@@ -146,8 +146,13 @@ final class ReaderController: NSObject {
     }
 
     func scrollToHeading(_ id: String) { run("Reader.scrollToHeading(\(Self.json(id)))") }
-    /// Fills the pull ring at the page's `end` (next document) or `start` (previous).
-    func setPull(_ progress: Double, atStart: Bool = false) { run("Reader.setPull(\(progress), \(atStart))") }
+    /// Stretches the page `points` past its end (or, `atStart`, its top) and
+    /// fills that edge's cue toward `threshold`. 0 springs it back.
+    func setPull(_ points: Double, threshold: Double, atStart: Bool) {
+        run("Reader.setPull(\(points), \(threshold), \(atStart))")
+    }
+    /// Keeps WebKit's own bounce out of the way while a pull may start.
+    func armPull(_ armed: Bool) { run("Reader.armPull(\(armed))") }
     func fold(_ id: String, folded: Bool) { run("Reader.fold(\(Self.json(id)), \(folded))") }
     func foldAll(_ folded: Bool) { run("Reader.foldAll(\(folded))") }
     func scrollPage(_ direction: Int) { run("Reader.scrollPage(\(direction))") }

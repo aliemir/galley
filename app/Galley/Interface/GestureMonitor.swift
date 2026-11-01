@@ -30,6 +30,7 @@ final class GestureMonitor {
     private var pullEdge: PullEdge?
     private var pullArmed: Bool { !pullEdges.isEmpty }
     private var pull: CGFloat = 0
+    private var wasReady = false
     private var wheelPull: CGFloat = 0
     private var wheelEdge: PullEdge?
     /// After a pull opens the next page, its momentum must not scroll it.
@@ -85,6 +86,7 @@ final class GestureMonitor {
                 if model.isReaderAtBottom, hasNext { pullEdges.insert(.end) }
                 if model.isReaderAtTop, hasPrevious { pullEdges.insert(.start) }
             }
+            if pullArmed { model.reader.armPull(true) }
         }
 
         if event.phase.contains(.changed) || event.phase.contains(.began) {
@@ -111,7 +113,12 @@ final class GestureMonitor {
                 model.swipeProgress = swipeProgress()
                 return nil
             case .vertical, nil:
-                if pullArmed { updatePull(towardEnd: -event.scrollingDeltaY) }
+                if pullArmed {
+                    updatePull(towardEnd: -event.scrollingDeltaY)
+                    // Past the edge the page draws the stretch itself; WebKit
+                    // gets the scroll back once the reader turns into the text.
+                    if pullEdge != nil { return nil }
+                }
                 return event
             }
         }
@@ -127,10 +134,15 @@ final class GestureMonitor {
             if pullArmed {
                 let ready = pull >= pullDistance && !cancelled
                 let edge = pullEdge
-                resetPull()
                 if ready, let edge {
+                    // The stretched page leaves as it is; the next one replaces it.
+                    clearPullState()
                     swallowMomentum = true
                     if edge == .end { model.goToNext() } else { model.goToPrevious(landingAtEnd: true) }
+                } else {
+                    // Its momentum would only bounce the page a second time.
+                    if edge != nil { swallowMomentum = true }
+                    resetPull()
                 }
             }
         }
@@ -223,11 +235,24 @@ final class GestureMonitor {
             resetPull()
             return
         }
-        model.reader.setPull(Double(max(0, pull) / pullDistance), atStart: edge == .start)
+        model.reader.setPull(Double(max(0, pull)), threshold: Double(pullDistance), atStart: edge == .start)
+        let isReady = pull >= pullDistance
+        if isReady, !wasReady {
+            // Felt, not just seen: letting go now turns the page.
+            NSHapticFeedbackManager.defaultPerformer.perform(.levelChange, performanceTime: .now)
+        }
+        wasReady = isReady
     }
 
+    /// Ends a pull that did not turn the page: the page springs back.
     private func resetPull() {
-        if let pullEdge { model.reader.setPull(0, atStart: pullEdge == .start) }
+        if let pullEdge { model.reader.setPull(0, threshold: Double(pullDistance), atStart: pullEdge == .start) }
+        clearPullState()
+    }
+
+    private func clearPullState() {
+        wasReady = false
+        if pullArmed { model.reader.armPull(false) }
         pullEdges = []
         pullEdge = nil
         pull = 0
@@ -247,9 +272,10 @@ final class GestureMonitor {
         wheelEdge = edge
         wheelPull += abs(towardEnd) * (event.hasPreciseScrollingDeltas ? 1 : 10)
         let threshold = pullDistance * 1.6
-        model.reader.setPull(Double(wheelPull / threshold), atStart: edge == .start)
+        model.reader.setPull(Double(wheelPull), threshold: Double(threshold), atStart: edge == .start)
         if wheelPull >= threshold {
-            clearWheelPull()
+            wheelEdge = nil
+            wheelPull = 0
             if edge == .end { model.goToNext() } else { model.goToPrevious(landingAtEnd: true) }
         }
         wheelReset?.cancel()
@@ -262,7 +288,7 @@ final class GestureMonitor {
     }
 
     private func clearWheelPull() {
-        if let wheelEdge { model.reader.setPull(0, atStart: wheelEdge == .start) }
+        if let wheelEdge { model.reader.setPull(0, threshold: 1, atStart: wheelEdge == .start) }
         wheelEdge = nil
         wheelPull = 0
     }

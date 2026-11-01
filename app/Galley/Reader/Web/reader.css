@@ -57,7 +57,7 @@ body {
   max-width: var(--measure);
   margin: 0 auto;
   padding: calc(var(--top) + 6px) var(--gutter) 0;
-  transition: opacity .16s ease, transform .16s ease, translate .12s ease-out;
+  transition: opacity .16s ease, transform .16s ease, translate .34s cubic-bezier(.2, .9, .3, 1);
 }
 #page.leaving-up { opacity: 0; transform: translateY(-28px); }
 #page.leaving-down { opacity: 0; transform: translateY(28px); }
@@ -391,37 +391,37 @@ mark.find.current { background: color-mix(in srgb, var(--accent) 55%, transparen
 
 /* — The seam to the next document ——————————————————————————— */
 
-footer.next {
-  margin: 4.5em 0 0; padding: 2.4em 0 22vh;
-  border-top: 1px solid var(--rule);
-  text-align: center; font-family: var(--font-ui); color: var(--ink-3);
-  cursor: pointer; -webkit-user-select: none;
-}
-footer.next .ring { display: block; width: 26px; height: 26px; margin: 0 auto .8em; transition: transform .25s ease; }
-.ring circle { fill: none; stroke-width: 2; }
-.ring .track { stroke: var(--rule); }
-.ring .fill { stroke: var(--accent); stroke-linecap: round; transform: rotate(-90deg); transform-origin: 50% 50%; transition: stroke-dashoffset .08s linear; }
-.ring .arrow { fill: none; stroke: var(--ink-3); stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
-footer.next.ready .ring { transform: translateY(-3px); }
-.ready .ring .arrow { stroke: var(--accent); }
+footer.doc-end { padding-bottom: 16vh; }
+footer.doc-end.end { margin-top: 4.5em; padding-top: 2.2em; border-top: 1px solid var(--rule); text-align: center; -webkit-user-select: none; }
+footer.doc-end.end .title { font: 12px/1.4 var(--font-ui); color: var(--ink-3); }
 
-#prev-pull {
-  position: fixed; left: 0; right: 0; top: calc(var(--top) - 10px); z-index: 5;
+/* — Pulling past an edge for the next / previous document ——————————— */
+
+:root.pull-armed { overscroll-behavior-y: none; }
+.pull-cue {
+  position: fixed; left: 0; right: 0; z-index: 5;
   display: flex; align-items: center; justify-content: center; gap: 8px;
   padding: 0 var(--gutter); opacity: 0; pointer-events: none;
-  font-family: var(--font-ui); color: var(--ink-3); transition: opacity .12s linear;
+  font-family: var(--font-ui); color: var(--ink-3);
+  transition: opacity .22s ease;
 }
-#prev-pull:empty { display: none; }
-#prev-pull .ring { width: 20px; height: 20px; flex: none; transition: transform .25s ease; }
-#prev-pull.ready .ring { transform: translateY(3px); }
-#prev-pull .label { font: 600 10px/1 var(--font-ui); letter-spacing: .1em; text-transform: uppercase; }
-#prev-pull .title { font: italic 13px/1.2 var(--font-body); color: var(--ink-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 40ch; }
-footer.next .label { display: block; font: 600 10.5px/1.5 var(--font-ui); letter-spacing: .1em; text-transform: uppercase; }
-footer.next .title { display: block; margin-top: .35em; font: italic 1.12em/1.35 var(--font-body); color: var(--ink-2); text-wrap: balance; }
-footer.next .why { display: block; margin-top: .5em; font-size: 11px; color: var(--ink-3); }
-footer.next:hover .title { color: var(--ink); }
-footer.next.end { cursor: default; }
-footer.next.end .title { font-style: normal; font-family: var(--font-ui); font-size: 12px; color: var(--ink-3); }
+.pull-cue:empty { display: none; }
+#prev-pull { top: calc(var(--top) - 6px); }
+#next-pull { bottom: 26px; }
+.pull-cue .ring { width: 20px; height: 20px; flex: none; transition: transform .25s ease; }
+#prev-pull.ready .ring { transform: translateY(2px); }
+#next-pull.ready .ring { transform: translateY(-2px); }
+.pull-cue .label { font: 600 10px/1 var(--font-ui); letter-spacing: .1em; text-transform: uppercase; }
+.pull-cue .title { font: italic 13px/1.2 var(--font-body); color: var(--ink-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 40ch; }
+.pull-cue .why { font-size: 11px; color: var(--ink-3); white-space: nowrap; }
+.pull-cue .why::before { content: "· "; }
+.ring circle { fill: none; stroke-width: 2; }
+.ring .track { stroke: var(--rule); }
+.ring .fill { stroke: var(--accent); stroke-linecap: round; transform: rotate(-90deg); transform-origin: 50% 50%; }
+.ring .arrow { fill: none; stroke: var(--ink-3); stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; transition: stroke .15s ease; }
+.ready .ring .arrow { stroke: var(--accent); }
+/* The stretch follows the fingers exactly; letting go springs it back. */
+:root.pulling #page, :root.pulling .pull-cue { transition: none; }
 
 /* — Empty and loading states ————————————————————————————————— */
 
@@ -437,7 +437,7 @@ footer.next.end .title { font-style: normal; font-family: var(--font-ui); font-s
   }
   html { font-size: 11pt; background: #fff; }
   #page { max-width: none; padding: 0; }
-  #gutter, button.fold, pre > button.copy, button.pill, footer.next, #prev-pull { display: none !important; }
+  #gutter, button.fold, pre > button.copy, button.pill, footer.doc-end, .pull-cue { display: none !important; }
   .sec.folded > .sec-body { display: block; }
   .sec.folded > :is(h1, h2, h3, h4, h5, h6)::after { content: none; }
   a { color: inherit; text-decoration-color: #999; }

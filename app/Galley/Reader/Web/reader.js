@@ -58,35 +58,43 @@
     return `<header class="doc-header">${meta}${title}</header>`;
   }
 
+  /// The end of the document: room to breathe, and a quiet end mark when
+  /// nothing follows. What comes next is shown only while pulling for it.
   function footerHTML(d) {
-    const ring = `<svg class="ring" viewBox="0 0 26 26" aria-hidden="true"><circle class="track" cx="13" cy="13" r="11"/>` +
-      `<circle class="fill" cx="13" cy="13" r="11" stroke-dasharray="69.12" stroke-dashoffset="69.12"/>` +
-      `<path class="arrow" d="M13 8.5v8.2M9.6 13.4 13 16.8l3.4-3.4"/></svg>`;
-    if (!d.next) {
-      return `<footer class="next end"><span class="title">${esc(d.endLabel || 'End of the stack')}</span></footer>`;
+    if (!d.next && d.endLabel) {
+      return `<footer class="doc-end end"><span class="title">${esc(d.endLabel)}</span></footer>`;
     }
-    const why = d.next.why ? `<span class="why">${esc(d.next.why)}</span>` : '';
-    return `<footer class="next">${ring}<span class="label">${esc(d.next.label || 'Next')}</span>` +
-      `<span class="title">${esc(d.next.title)}</span>${why}</footer>`;
+    return '<footer class="doc-end"></footer>';
   }
 
-  /// The pull-back cue: fixed under the top bar, outside #page so the page
-  /// can slide away from it while the reader pulls.
-  function renderPreviousCue(d) {
-    let cue = document.getElementById('prev-pull');
-    if (!cue) {
-      cue = document.createElement('div');
-      cue.id = 'prev-pull';
-      cue.setAttribute('aria-hidden', 'true');
-      document.body.appendChild(cue);
-    }
-    cue.className = '';
-    cue.style.opacity = '';
-    if (!d.previous) { cue.innerHTML = ''; return; }
-    cue.innerHTML = `<svg class="ring" viewBox="0 0 26 26"><circle class="track" cx="13" cy="13" r="11"/>` +
+  /// The pull cues — "Previous" above the page, "Next" below it. Fixed to
+  /// the window, outside #page, so the page can stretch away from them and
+  /// reveal one only while the reader pulls past an edge.
+  function cueHTML(target, atStart) {
+    if (!target) return '';
+    const arrow = atStart ? 'M13 17.5V9.3M9.6 12.7 13 9.3l3.4 3.4' : 'M13 8.5v8.2M9.6 13.4 13 16.8l3.4-3.4';
+    const why = target.why ? `<span class="why">${esc(target.why)}</span>` : '';
+    return `<svg class="ring" viewBox="0 0 26 26"><circle class="track" cx="13" cy="13" r="11"/>` +
       `<circle class="fill" cx="13" cy="13" r="11" stroke-dasharray="69.12" stroke-dashoffset="69.12"/>` +
-      `<path class="arrow" d="M13 17.5V9.3M9.6 12.7 13 9.3l3.4 3.4"/></svg>` +
-      `<span class="label">${esc(d.previous.label || 'Previous')}</span><span class="title">${esc(d.previous.title)}</span>`;
+      `<path class="arrow" d="${arrow}"/></svg>` +
+      `<span class="label">${esc(target.label || (atStart ? 'Previous' : 'Next'))}</span>` +
+      `<span class="title">${esc(target.title)}</span>${why}`;
+  }
+
+  function renderCues(d) {
+    for (const [id, target, atStart] of [['prev-pull', d.previous, true], ['next-pull', d.next, false]]) {
+      let cue = document.getElementById(id);
+      if (!cue) {
+        cue = document.createElement('div');
+        cue.id = id;
+        cue.className = 'pull-cue';
+        cue.setAttribute('aria-hidden', 'true');
+        document.body.appendChild(cue);
+      }
+      cue.classList.remove('ready');
+      cue.style.opacity = '';
+      cue.innerHTML = cueHTML(target, atStart);
+    }
   }
 
   function render(d) {
@@ -94,8 +102,9 @@
     doc = d;
     const page = $('#page');
     page.innerHTML = headerHTML(d) + `<div id="content">${d.html}</div>` + footerHTML(d) + '<div id="gutter"></div>';
-    renderPreviousCue(d);
+    renderCues(d);
     page.style.translate = '';
+    document.documentElement.classList.remove('pulling');
     if (d.header && d.header.title) {
       // A derived title would repeat a leading H1 in the document itself.
       const first = $('#content > .sec:first-child > h1:first-child, #content > h1:first-child');
@@ -438,8 +447,8 @@
   function report(force = false) {
     if (!doc) return;
     const max = document.documentElement.scrollHeight - window.innerHeight;
-    const footer = $('footer.next');
-    const footerVisible = footer ? footer.getBoundingClientRect().top < window.innerHeight - 40 : true;
+    const content = $('#content');
+    const footerVisible = content ? content.getBoundingClientRect().bottom < window.innerHeight - 40 : true;
     const anchor = topAnchor();
     const state = {
       type: 'scroll',
@@ -779,8 +788,6 @@
       }
       return;
     }
-    const next = event.target.closest('footer.next:not(.end)');
-    if (next && window.getSelection().isCollapsed) post({ type: 'next' });
   });
 
   document.addEventListener('mouseover', (event) => {
@@ -824,6 +831,7 @@
     /// A new document. `transition` is 'none', 'up' (next) or 'down' (previous).
     show(d) {
       const page = $('#page');
+      document.documentElement.classList.remove('pulling', 'pull-armed');
       const go = () => {
         render(d);
         restore(d.scroll);
@@ -861,18 +869,25 @@
     },
 
     scrollToHeading(id) { scrollToHeading(id, true); },
-    setPull(progress, atStart = false) {
-      const target = atStart ? document.getElementById('prev-pull') : $('footer.next:not(.end)');
-      if (!target) return;
-      const fill = $('.ring .fill', target);
-      if (fill) fill.setAttribute('stroke-dashoffset', String(69.12 * (1 - Math.min(1, progress))));
-      target.classList.toggle('ready', progress >= 1);
-      if (atStart) {
-        // The page eases down to make room for the cue, which fades in.
-        target.style.opacity = String(Math.min(1, progress * 2.5));
-        $('#page').style.translate = progress > 0 ? `0 ${Math.round(Math.min(1, progress) * 34)}px` : '';
-      }
+    /// A pull past an edge, in points of finger travel: the page stretches
+    /// away from the edge with growing resistance, and the cue it reveals
+    /// fills its ring toward `threshold`. 0 springs the page back.
+    setPull(points, threshold, atStart) {
+      const root = document.documentElement;
+      const page = $('#page');
+      const cue = document.getElementById(atStart ? 'prev-pull' : 'next-pull');
+      const p = Math.max(0, points);
+      const offset = p ? 130 * p / (p + 150) : 0;
+      root.classList.toggle('pulling', p > 0);
+      page.style.translate = p ? `0 ${(atStart ? offset : -offset).toFixed(1)}px` : '';
+      if (!cue) return;
+      const fill = $('.ring .fill', cue);
+      if (fill) fill.setAttribute('stroke-dashoffset', String(69.12 * (1 - Math.min(1, p / threshold))));
+      cue.style.opacity = p ? String(Math.min(1, Math.max(0, (offset - 8) / 28))) : '';
+      cue.classList.toggle('ready', p >= threshold);
     },
+    /// While a pull may start, WebKit's own bounce stays out of the way.
+    armPull(armed) { document.documentElement.classList.toggle('pull-armed', armed); },
     fold(id, folded) { setFolded($(`#content .sec[data-sec="${CSS.escape(id)}"]`), folded, false); },
     foldAll(folded) {
       const sections = $$('#content .sec');

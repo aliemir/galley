@@ -32,12 +32,17 @@ page alone; each step right reveals the next column to the left.
 
 ## Continuous reading
 
-Footer "Next: *title*". At the bottom, a fresh downward pull (not momentum from
-skimming) fills a ring; release past the threshold slides the next document up
-in place. Leaving a document after a real look marks it read. Order: folder
-order, or the unread queue. The same pull upward at the top goes back to the
-previous document (folder order) and lands at its end, so reading continues
-upward through it; a cue under the top bar names it and fills as you pull.
+Nothing at the end of a page advertises the next one until you reach for it.
+At the bottom, a *fresh* pull (not momentum from skimming) stretches the page
+up with growing resistance and reveals "↓ Next · title" in the gap; its ring
+fills with the same pull that moves the page, the trackpad ticks when it is
+full, and letting go then slides the next document in. Letting go short
+springs back and the cue fades at once; turning back into the text drops it
+immediately. The same pull past the top goes back to the previous document
+(folder order) and lands at its end. While a pull is armed, WebKit's own
+bounce is switched off (`overscroll-behavior`) so only one stretch shows;
+ordinary scrolling keeps the native bounce. Leaving a document after a real
+look marks it read. Order: folder order, or the unread queue.
 
 ## Change tracking
 

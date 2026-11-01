@@ -26,6 +26,11 @@ otherwise have to re-derive. Not worth one: typo fixes and formatting.
 
 ## 2026-11-01
 
+- Pull-to-next/previous rebuilt from the user's screen recording: the page
+  draws its own stretch, so the ring, the page movement and the cue are one
+  value; the bottom "Next" block is gone and appears only while pulling;
+  cues no longer linger after a pull is abandoned; haptic tick at the
+  threshold
 - Trackpad gestures lock to one axis: a sideways swipe no longer nudges the
   page, and a slanted scroll no longer turns into a swipe
 - Pull past the top goes back to the previous document, landing at its end
