@@ -193,7 +193,7 @@ final class GestureMonitor {
 
     /// -1…1, with rubber-banding where there is no further level to go to.
     private func swipeProgress() -> Double {
-        let raw = Double(fingerX / swipeDistance)
+        let raw = AxisLock.swipeProgress(fingerX: fingerX, distance: swipeDistance)
         if raw > 0, model.nextToReveal == nil { return 0 }
         if raw < 0, model.nextToHide == nil { return 0 }
         return min(1, max(-1, raw))
@@ -324,6 +324,17 @@ nonisolated struct AxisLock {
 
     private(set) var x: CGFloat = 0
     private(set) var y: CGFloat = 0
+
+    /// Finger travel that moves no column: small and accidental swipes leave
+    /// the panels, and the text beside them, alone.
+    static let swipeDeadZone: CGFloat = 28
+
+    /// -1…1 of a column's reveal for `fingerX` points of sideways travel,
+    /// counted from the end of the dead zone.
+    static func swipeProgress(fingerX: CGFloat, distance: CGFloat) -> Double {
+        let past = max(0, abs(fingerX) - swipeDeadZone)
+        return Double((fingerX < 0 ? -past : past) / distance)
+    }
 
     /// Adds one event's deltas; returns the axis once it is decided.
     mutating func add(x dx: CGFloat, y dy: CGFloat) -> Axis? {
