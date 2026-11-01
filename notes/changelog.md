@@ -26,6 +26,9 @@ otherwise have to re-derive. Not worth one: typo fixes and formatting.
 
 ## 2026-11-01
 
+- Palette results carry their workspace's icon (with more than one
+  workspace) instead of its name in the path; the list is sized to its rows'
+  measured height, so no empty band under the last result
 - Palette: "#" switches to sections and leaves the field (the icon shows it;
   Backspace in an empty field goes back); rows are identified by their
   result only, which fixes a stale, clipped row when results changed kind

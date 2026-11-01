@@ -49,6 +49,8 @@ struct QuickOpenView: View {
     @State private var selection = 0
     @State private var textHits: [Result] = []
     @State private var isSearchingText = false
+    /// The rows' measured height, which sizes the list to fit them.
+    @State private var listHeight: CGFloat = 0
     @FocusState private var isFocused: Bool
 
     private enum Result: Identifiable {
@@ -154,7 +156,8 @@ struct QuickOpenView: View {
         isSearchingText = false
     }
 
-    /// An estimate of the list's height, so the palette fits its results.
+    /// An estimate of the list's height, for the moment before the rows
+    /// have been measured.
     private func height(of results: [Result]) -> CGFloat {
         let rows = results.reduce(CGFloat(0)) { total, result in
             switch result {
@@ -220,7 +223,9 @@ struct QuickOpenView: View {
                 Rectangle().fill(palette.rule).frame(height: 1)
                 ScrollViewReader { proxy in
                     ScrollView {
-                        LazyVStack(spacing: 2) {
+                        // Not lazy: at most a few dozen rows, and their real
+                        // height is what sizes the list.
+                        VStack(spacing: 2) {
                             ForEach(Array(results.enumerated()), id: \.element.id) { index, result in
                                 if !searchesText, result.isText, index > 0, !results[index - 1].isText {
                                     Text("IN THE TEXT")
@@ -244,9 +249,10 @@ struct QuickOpenView: View {
                             }
                         }
                         .padding(6)
+                        .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { listHeight = $0 }
                     }
                     // A ScrollView takes all the height it is offered; size it to its rows.
-                    .frame(height: height(of: results))
+                    .frame(height: min(420, listHeight > 0 ? listHeight : height(of: results)))
                     .onChange(of: selection) { _, index in
                         if results.indices.contains(index) { proxy.scrollTo(results[index].id) }
                     }
@@ -295,11 +301,12 @@ struct QuickOpenView: View {
             switch result {
             case let .file(workspace, file):
                 StatusDot(status: workspace.status(of: file)).frame(width: 8)
+                workspaceIcon(workspace)
                 VStack(alignment: .leading, spacing: 2) {
                     Text(model.settings.displayName(for: file))
                         .font(.system(size: 13.5, weight: .medium))
                         .foregroundStyle(palette.ink)
-                    Text(model.workspaces.count > 1 ? "\(workspace.name)/\(file.relativePath)" : file.relativePath)
+                    Text(location(of: file, in: workspace))
                         .font(.system(size: 11))
                         .foregroundStyle(palette.ink3)
                         .lineLimit(1)
@@ -310,25 +317,29 @@ struct QuickOpenView: View {
                     .font(.system(size: 11))
                     .foregroundStyle(palette.ink3)
             case let .text(workspace, file, hit):
-                VStack(alignment: .leading, spacing: 3) {
-                    HStack(spacing: 6) {
-                        Text(model.settings.displayName(for: file))
-                            .font(.system(size: 13.5, weight: .medium))
-                            .foregroundStyle(palette.ink)
-                            .lineLimit(1)
-                        Text(model.workspaces.count > 1 ? "\(workspace.name)/\(file.relativePath)" : file.relativePath)
-                            .font(.system(size: 11))
-                            .foregroundStyle(palette.ink3)
-                            .lineLimit(1)
-                            .truncationMode(.middle)
+                // The icon beside the file name, not halfway down its lines.
+                HStack(alignment: .top, spacing: 10) {
+                    workspaceIcon(workspace)
+                    VStack(alignment: .leading, spacing: 3) {
+                        HStack(spacing: 6) {
+                            Text(model.settings.displayName(for: file))
+                                .font(.system(size: 13.5, weight: .medium))
+                                .foregroundStyle(palette.ink)
+                                .lineLimit(1)
+                            Text(location(of: file, in: workspace))
+                                .font(.system(size: 11))
+                                .foregroundStyle(palette.ink3)
+                                .lineLimit(1)
+                                .truncationMode(.middle)
+                        }
+                        ForEach(Array(hit.snippets.enumerated()), id: \.offset) { _, snippet in
+                            snippetText(snippet)
+                                .font(.system(size: 12))
+                                .lineLimit(1)
+                        }
                     }
-                    ForEach(Array(hit.snippets.enumerated()), id: \.offset) { _, snippet in
-                        snippetText(snippet)
-                            .font(.system(size: 12))
-                            .lineLimit(1)
-                    }
+                    Spacer(minLength: 0)
                 }
-                Spacer(minLength: 0)
             case let .heading(item):
                 Text(item.title)
                     .font(.system(size: 13.5, weight: item.level <= 2 ? .medium : .regular))
@@ -347,6 +358,21 @@ struct QuickOpenView: View {
                 .fill(isSelected ? palette.selection : .clear)
         )
         .contentShape(Rectangle())
+    }
+
+    /// Which workspace a result is in, when there is more than one: its
+    /// icon, which also tells apart two workspaces with the same name.
+    @ViewBuilder
+    private func workspaceIcon(_ workspace: Workspace) -> some View {
+        if model.workspaces.count > 1 {
+            WorkspaceIcon(workspace: workspace, size: 18)
+                .help(workspace.name)
+        }
+    }
+
+    /// The file's path in its workspace; opened files show where they live.
+    private func location(of file: DocumentFile, in workspace: Workspace) -> String {
+        workspace.isOpenedFiles ? (file.relativePath as NSString).abbreviatingWithTildeInPath : file.relativePath
     }
 
     private func move(_ delta: Int, count: Int) {
