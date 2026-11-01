@@ -18,7 +18,7 @@ final class DebugAutomation {
         "snapshot", "probe", "reload", "reset", "palette", "palette.close", "highlight", "next", "previous", "fold", "unfold", "change", "find.close", "resize.small", "resize.large",
         "scroll.top", "scroll.bottom", "dark", "light", "system",
         "appearance", "appearance.close", "settings", "settings.close", "settings.reading", "settings.appearance",
-        "js", "swipe.right", "swipe.left", "swipe.hold", "swipe.release", "swipe.wobble", "pull.hold", "pull.back", "pull.release",
+        "js", "swipe.right", "swipe.left", "swipe.hold", "swipe.release", "swipe.wobble", "pull.hold", "pull.half", "pull.back", "pull.backhalf", "pull.release",
     ] + (1...4).map { "level.\($0)" }
         + Theme.all.map { "theme.\($0.id)" }
         + (0..<30).map { "open.\($0)" }
@@ -134,6 +134,8 @@ final class DebugAutomation {
             switch argument {
             case "hold": Task { await gesture(dx: 0, dy: 170, release: false) }
             case "back": Task { await gesture(dx: 0, dy: -170, release: false) }
+            case "half": Task { await gesture(dx: 0, dy: 80, release: false) }
+            case "backhalf": Task { await gesture(dx: 0, dy: -80, release: false) }
             default: postScroll(phase: .ended, dx: 0, dy: 0)
             }
         default: break
