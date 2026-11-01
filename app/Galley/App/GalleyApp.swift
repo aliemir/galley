@@ -48,6 +48,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         if let model { model.open(urls) } else { pendingURLs += urls }
     }
 
+    func applicationDidFinishLaunching(_ notification: Notification) {
+        AppIcon.apply(ReaderSettings.shared.appIcon)
+    }
+
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool { true }
 
     func applicationWillTerminate(_ notification: Notification) {

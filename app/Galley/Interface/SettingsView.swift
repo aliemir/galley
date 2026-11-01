@@ -17,6 +17,9 @@ struct SettingsView: View {
             ShortcutSettings()
                 .tabItem { Label("Shortcuts", systemImage: "command") }
                 .tag("shortcuts")
+            AppIconSettings()
+                .tabItem { Label("App Icon", systemImage: "app.badge.checkmark") }
+                .tag("icon")
         }
         .frame(width: SettingsView.width)
     }
@@ -346,5 +349,52 @@ private struct ColumnOrderList: View {
                 if index < settings.columnOrder.count - 1 { model.moveColumns(from: IndexSet(integer: index), to: index + 2) }
             }
         }
+    }
+}
+
+/// Galley's icon in other colours, for the Dock.
+private struct AppIconSettings: View {
+    @Environment(AppModel.self) private var model
+
+    var body: some View {
+        VStack(spacing: 14) {
+            LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 10), count: 5), spacing: 18) {
+                ForEach(AppIcon.variants, id: \.id) { variant in
+                    let isChosen = model.settings.appIcon == variant.id
+                    Button { model.settings.appIcon = variant.id } label: {
+                        VStack(spacing: 6) {
+                            Group {
+                                if let image = AppIcon.image(variant.id) {
+                                    Image(nsImage: image).resizable().interpolation(.high)
+                                } else {
+                                    Color.clear
+                                }
+                            }
+                            .frame(width: 76, height: 76)
+                            .padding(6)
+                            .background(
+                                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                                    .fill(isChosen ? Color.accentColor.opacity(0.16) : .clear)
+                            )
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                                    .strokeBorder(isChosen ? Color.accentColor : .clear, lineWidth: 2)
+                            )
+                            Text(variant.name)
+                                .font(.system(size: 11.5, weight: isChosen ? .semibold : .regular))
+                                .foregroundStyle(isChosen ? .primary : .secondary)
+                        }
+                        .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("\(variant.name) icon")
+                    .accessibilityAddTraits(isChosen ? .isSelected : [])
+                }
+            }
+            Text("Shown in the Dock while Galley is open. Finder keeps the standard icon.")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        }
+        .padding(24)
     }
 }

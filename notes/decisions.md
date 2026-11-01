@@ -228,3 +228,24 @@ change and a change read as a highlight.
 **Rejected:** gold for feedback with a yellower change colour — any two warm
 yellows stay too close to tell apart at a glance.
 
+## 2026-11-01 — Settings as panes; shortcuts and icons are the reader's
+
+**Chosen:** Settings is five toolbar panes (General, Reading, Themes,
+Shortcuts, App Icon), after Bear's, instead of two crowded tabs. Themes are
+a gallery of cards that show each theme rather than name it; the well-known
+palettes (Solarized, Rosé Pine, Catppuccin, GitHub, Gruvbox, Nord, Dracula,
+Tokyo Night) are mapped onto the reader's roles, so changes stay amber-ish
+and the reader's marks purple-ish in every one.
+
+**Shortcuts:** every menu action and the tab keys read from one registry
+(`App/Shortcuts.swift`), so a change shows in menus and tooltips at once.
+Taking a key another action had moves it (and says so) rather than refusing;
+macOS's and editing's own keys and bare keys are refused. Rejected: leaving
+it to System Settings → Keyboard → App Shortcuts, which few find and which
+cannot reach keys handled outside the menus (⌃Tab).
+
+**App icon:** variants are recolours drawn by the same script as the icon,
+so the set regenerates when the real icon replaces the placeholder. The
+choice sets the Dock icon while Galley runs; a sandboxed app cannot change
+the icon Finder shows (Bear behaves the same).
+

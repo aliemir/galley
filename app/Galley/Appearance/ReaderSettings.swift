@@ -135,6 +135,13 @@ final class ReaderSettings {
     var workspacesAsIcons: Bool { didSet { save(workspacesAsIcons, "workspacesAsIcons") } }
     /// Column widths the reader dragged, by column; absent means the default.
     var columnWidths: [String: Double] { didSet { save(columnWidths, "columnWidths") } }
+    /// The Dock icon's palette (`AppIcon.variants`).
+    var appIcon: String {
+        didSet {
+            save(appIcon, "appIcon")
+            AppIcon.apply(appIcon)
+        }
+    }
 
     static let fontSizes: ClosedRange<Double> = 13...28
 
@@ -167,6 +174,7 @@ final class ReaderSettings {
         // The rail by default: workspaces are switched between, not read.
         workspacesAsIcons = d.object(forKey: "workspacesAsIcons") as? Bool ?? true
         columnWidths = d.dictionary(forKey: "columnWidths") as? [String: Double] ?? [:]
+        appIcon = d.string(forKey: "appIcon") ?? AppIcon.standard
     }
 
     private func save(_ value: Any, _ key: String) {

@@ -26,6 +26,10 @@ otherwise have to re-derive. Not worth one: typo fixes and formatting.
 
 ## 2026-11-01
 
+- App Icon pane: the icon in ten palettes (Paper, Snow, Sepia, Lavender,
+  Mint, Solarized, Graphite, Midnight, Rosé Pine, Nord), drawn by
+  `tools/make-icon.swift --variants`; the pick is the Dock icon while Galley
+  runs (Finder keeps the standard one — the sandbox cannot change it)
 - Every shortcut is the reader's own: Settings → Shortcuts lists all 40 by
   menu, with a filter; click one and press new keys (Esc cancels, Delete
   removes it). A shortcut taken from another action is moved and said so;
