@@ -81,7 +81,9 @@ enum ReaderEvent {
     case fold(id: String, folded: Bool)
     case folds([String])
     case copy(String)
-    case highlight(text: String, prefix: String, suffix: String, replaces: [String])
+    /// `id` is the page's own when it opens a note on the new highlight.
+    case highlight(text: String, prefix: String, suffix: String, replaces: [String], id: String?)
+    case note(id: String, text: String)
     case unhighlight(String)
     case orphans([String])
 }
@@ -161,6 +163,12 @@ final class ReaderController: NSObject {
     func endFind() { run("Reader.endFind()") }
     func setHighlights(_ highlights: [Highlight]) { call("setHighlights", highlights) }
     func scrollToHighlight(_ id: String) { run("Reader.scrollToHighlight(\(Self.json(id)))") }
+    func editNote(_ id: String) { run("Reader.editNote(\(Self.json(id)))") }
+
+    /// Highlights the selection and opens its note; false without a selection.
+    func noteSelection() async -> Bool? {
+        try? await webView.callAsyncJavaScript("return Reader.noteSelection()", contentWorld: .page) as? Bool
+    }
 
     /// The current selection as a highlight anchor, if there is one.
     func selectionAnchor() async -> (text: String, prefix: String, suffix: String, replaces: [String])? {
@@ -256,9 +264,12 @@ final class ReaderController: NSObject {
                     text: text,
                     prefix: (message["prefix"] as? String) ?? "",
                     suffix: (message["suffix"] as? String) ?? "",
-                    replaces: (message["replaces"] as? [String]) ?? []
+                    replaces: (message["replaces"] as? [String]) ?? [],
+                    id: message["id"] as? String
                 ))
             }
+        case "note":
+            if let id = message["id"] as? String { onEvent(.note(id: id, text: (message["text"] as? String) ?? "")) }
         case "unhighlight":
             if let id = message["id"] as? String { onEvent(.unhighlight(id)) }
         case "orphans":

@@ -68,19 +68,10 @@ lights up.
 6. ✅ Find in page, Go to File / Go to Section, printing
 7. ✅ Personal highlights (text + context anchors, orphans)
 8. ✅ Section folding (page and outline share one fold state)
+9. ✅ Feedback: notes on highlights, Copy Feedback for an agent, Clear Feedback
 
 ## Next
 
-- **Margin notes + "Copy as feedback"** (proposed 2026-11-01, recommended
-  next) — a short note on any highlight, shown in the margin; ⌘⇧C copies a
-  paste-ready block for an agent (path, quoted passage, note) for a document
-  or a workspace. Notes anchor like highlights, so they follow rewrites, and
-  an orphaned note reads as "addressed". **Clear feedback** (per document
-  and per workspace) removes all notes and highlights in one go once the
-  agent has worked through them — the reader asked for it with the feature,
-  so it ships with it, not later. This is the half of the galley-proof
-  idea that is missing (marked up *and sent back*), and the data the agent
-  CLI will later read.
 - **Full-text search across a workspace** — ⌘K finds names and headings
   only; a folder of fifty agent reports needs "where did it say X".
 - **Tabs** — deferred on purpose: one window, per-workspace state first. Next

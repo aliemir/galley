@@ -568,7 +568,7 @@
   // rewritten around it; when the text is gone it becomes an orphan.
 
   const CONTEXT = 48;
-  const skipForText = (node) => node.parentElement && node.parentElement.closest('button, .katex-mathml, svg, .copy');
+  const skipForText = (node) => node.parentElement && node.parentElement.closest('button, .katex-mathml, svg, .copy, .hl-note');
 
   function readingNodes(root) {
     const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
@@ -608,6 +608,9 @@
     if (!content || !selection.rangeCount || selection.isCollapsed) return null;
     const range = selection.getRangeAt(0);
     if (!content.contains(range.commonAncestorContainer)) return null;
+    // Text chosen inside a note is the reader's own words, not the document's.
+    const ancestor = range.commonAncestorContainer;
+    if ((ancestor.nodeType === Node.ELEMENT_NODE ? ancestor : ancestor.parentElement).closest('.hl-note')) return null;
     const full = readingText(content);
     const start = readingOffset(content, range.startContainer, range.startOffset);
     const end = readingOffset(content, range.endContainer, range.endOffset);
@@ -630,6 +633,13 @@
       from = Math.min(from, first);
       to = Math.max(to, readingOffset(content, last, 0) + last.textContent.length);
     }
+    // A drag that stops a letter short, or starts one in, still means the
+    // word: highlights cover whole words, as in Books.
+    const word = /[\p{L}\p{N}'’-]/u;
+    while (from > 0 && word.test(full[from - 1]) && word.test(full[from])) from--;
+    while (to < full.length && word.test(full[to]) && word.test(full[to - 1])) to++;
+    while (from < to && /\s/.test(full[from])) from++;
+    while (to > from && /\s/.test(full[to - 1])) to--;
     const text = full.slice(from, to);
     if (!text.trim()) return null;
     return { text, prefix: full.slice(Math.max(0, from - CONTEXT), from), suffix: full.slice(to, to + CONTEXT), replaces };
@@ -659,6 +669,7 @@
   }
 
   function clearHighlights() {
+    for (const note of $$('#content .hl-note')) note.remove();
     for (const mark of $$('#content mark.hl')) {
       const parent = mark.parentNode;
       while (mark.firstChild) parent.insertBefore(mark.firstChild, mark);
@@ -695,7 +706,128 @@
     found.push(...placed);
     const marks = wrapRanges(content, found.map((f) => f.range), 'mark', 'hl', skipForText);
     for (const mark of marks) mark.dataset.id = found[Number(mark.dataset.range)].id;
+    renderNotes(found.map((f) => f.id));
     post({ type: 'orphans', ids: orphans });
+  }
+
+  // — Notes ————————————————————————————————————————————————————————
+  //
+  // A note is the reader's word on a highlight: a small card under the
+  // block the highlight ends in (inside it, for a list item or a cell), so
+  // it reads in place at any width. Cards are not document text.
+
+  let pendingNote = null;
+
+  function noteBlock(mark) {
+    const inner = mark.closest('li, td, th');
+    if (inner) return { el: inner, inside: true };
+    const block = mark.closest('p, h1, h2, h3, h4, h5, h6, blockquote, pre, dd, dt, figure, .callout, table');
+    return block ? { el: block, inside: false } : null;
+  }
+
+  function renderNotes(placedIds) {
+    const byId = new Map(highlights.map((h) => [h.id, h]));
+    // Cards stack under a block in the order their highlights appear.
+    const lastOf = new Map();
+    for (const id of placedIds) {
+      const h = byId.get(id);
+      if (!h || (!h.note && pendingNote !== id)) continue;
+      const marks = $$(`#content mark.hl[data-id="${CSS.escape(id)}"]`);
+      const place = marks.length ? noteBlock(marks[marks.length - 1]) : null;
+      if (!place) continue;
+      const card = noteCard(h);
+      const after = lastOf.get(place.el);
+      if (after) after.after(card);
+      else if (place.inside) place.el.appendChild(card);
+      else place.el.after(card);
+      lastOf.set(place.el, card);
+    }
+    // Wait for the app to have the highlight: a render in between keeps it pending.
+    const card = pendingNote && $(`#content .hl-note[data-id="${CSS.escape(pendingNote)}"]`);
+    if (card) { pendingNote = null; editCard(card); }
+  }
+
+  function noteCard(h) {
+    const card = document.createElement('aside');
+    card.className = 'hl-note';
+    card.dataset.id = h.id;
+    card.setAttribute('aria-label', 'Note');
+    showCardText(card, h.note || '');
+    return card;
+  }
+
+  function showCardText(card, text) {
+    card.classList.remove('editing');
+    card.innerHTML = '';
+    const body = document.createElement('div');
+    body.className = 'hl-note-text';
+    body.textContent = text;
+    const remove = document.createElement('button');
+    remove.type = 'button';
+    remove.className = 'hl-note-remove';
+    remove.title = 'Delete note (the highlight stays)';
+    remove.textContent = '×';
+    remove.addEventListener('mousedown', (e) => e.preventDefault());
+    remove.addEventListener('click', (e) => { e.stopPropagation(); post({ type: 'note', id: card.dataset.id, text: '' }); });
+    card.append(body, remove);
+  }
+
+  function editCard(card) {
+    if (card.classList.contains('editing')) { card.querySelector('textarea')?.focus(); return; }
+    const h = highlights.find((x) => x.id === card.dataset.id);
+    const original = h?.note || '';
+    card.classList.add('editing');
+    card.innerHTML = '';
+    const field = document.createElement('textarea');
+    field.value = original;
+    field.placeholder = 'What should change here?';
+    field.rows = 1;
+    const hint = document.createElement('div');
+    hint.className = 'hl-note-hint';
+    hint.textContent = '⌘↩ to save · Esc to cancel';
+    card.append(field, hint);
+    const fit = () => { field.style.height = 'auto'; field.style.height = `${field.scrollHeight}px`; };
+    let done = false;
+    const finish = (save) => {
+      if (done) return;
+      done = true;
+      const text = field.value.trim();
+      if (save && text !== original.trim()) {
+        post({ type: 'note', id: card.dataset.id, text });
+      } else if (!original) {
+        card.remove(); // a new note left empty: nothing to keep
+      } else {
+        showCardText(card, original);
+      }
+    };
+    field.addEventListener('input', fit);
+    field.addEventListener('keydown', (e) => {
+      e.stopPropagation();
+      if (e.key === 'Escape') { e.preventDefault(); finish(false); }
+      if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); finish(true); }
+    });
+    field.addEventListener('blur', () => finish(true));
+    requestAnimationFrame(() => { fit(); field.focus(); field.setSelectionRange(field.value.length, field.value.length); });
+  }
+
+  function editNote(id) {
+    const card = $(`#content .hl-note[data-id="${CSS.escape(id)}"]`);
+    if (card) { card.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); editCard(card); return; }
+    // No card yet: render one in edit mode.
+    pendingNote = id;
+    applyHighlights();
+    $(`#content .hl-note[data-id="${CSS.escape(id)}"]`)?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+  }
+
+  /// Highlights the selection and opens a note on it.
+  function noteSelection() {
+    const anchor = selectionAnchor();
+    if (!anchor) return false;
+    const id = crypto.randomUUID();
+    pendingNote = id;
+    post({ type: 'highlight', ...anchor, id });
+    window.getSelection().removeAllRanges();
+    return true;
   }
 
   function scrollToHighlight(id) {
@@ -708,17 +840,22 @@
     for (const m of group) { m.classList.remove('flash-hl'); void m.offsetWidth; m.classList.add('flash-hl'); }
   }
 
-  // The pill that appears over a selection (or over a highlight, to remove it).
+  // The pill over a selection (highlight it, or note it) or over a
+  // highlight (note it, or remove it).
   let pill = null;
   function hidePill() { pill?.remove(); pill = null; }
-  function showPill(rect, label, onClick) {
+  function showPill(rect, actions) {
     hidePill();
-    pill = document.createElement('button');
-    pill.type = 'button';
+    pill = document.createElement('div');
     pill.className = 'pill';
-    pill.textContent = label;
     pill.addEventListener('mousedown', (e) => e.preventDefault());
-    pill.addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); onClick(); hidePill(); });
+    for (const action of actions) {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.textContent = action.label;
+      button.addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); hidePill(); action.run(); });
+      pill.appendChild(button);
+    }
     document.body.appendChild(pill);
     const width = pill.offsetWidth;
     const top = rect.top + window.scrollY - pill.offsetHeight - 8;
@@ -730,18 +867,28 @@
   document.addEventListener('mouseup', (event) => {
     if (event.target.closest('.pill')) return;
     setTimeout(() => {
+      if (event.target.closest('.hl-note')) {
+        const card = event.target.closest('.hl-note');
+        if (window.getSelection().isCollapsed && !event.target.closest('button')) editCard(card);
+        return;
+      }
       const anchor = selectionAnchor();
       if (anchor) {
         const rect = window.getSelection().getRangeAt(0).getBoundingClientRect();
-        showPill(rect, 'Highlight', () => {
-          post({ type: 'highlight', ...anchor });
-          window.getSelection().removeAllRanges();
-        });
+        showPill(rect, [
+          { label: 'Highlight', run: () => { post({ type: 'highlight', ...anchor }); window.getSelection().removeAllRanges(); } },
+          { label: 'Add Note', run: () => noteSelection() },
+        ]);
         return;
       }
       const mark = event.target.closest('mark.hl');
       if (mark && window.getSelection().isCollapsed) {
-        showPill(mark.getBoundingClientRect(), 'Remove Highlight', () => post({ type: 'unhighlight', id: mark.dataset.id }));
+        const id = mark.dataset.id;
+        const hasNote = highlights.some((h) => h.id === id && h.note);
+        showPill(mark.getBoundingClientRect(), [
+          { label: hasNote ? 'Edit Note' : 'Add Note', run: () => editNote(id) },
+          { label: 'Remove', run: () => post({ type: 'unhighlight', id }) },
+        ]);
         return;
       }
       hidePill();
@@ -925,6 +1072,8 @@
     find(query, direction) { return find(query, direction); },
     setHighlights(list) { highlights = list || []; applyHighlights(); },
     scrollToHighlight(id) { scrollToHighlight(id); },
+    editNote(id) { editNote(id); },
+    noteSelection() { return noteSelection(); },
     /// For the menu command: the selection as a highlight anchor, or null.
     selectionAnchor() { const a = selectionAnchor(); hidePill(); return a; },
     endFind() { clearFind(); },

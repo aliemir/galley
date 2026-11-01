@@ -10,6 +10,8 @@ nonisolated struct Highlight: Codable, Hashable, Identifiable, Sendable {
     var prefix: String
     var suffix: String
     var created = Date()
+    /// What the reader wants done about the passage.
+    var note: String?
 }
 
 nonisolated struct FileRecord: Codable, Hashable, Sendable {

@@ -332,3 +332,30 @@ struct TypeSelectTests {
         #expect(select.type("c", at: start.addingTimeInterval(2)) == "c")
     }
 }
+
+struct FeedbackTests {
+    @Test func formatsQuotesAndNotesPerFile() {
+        let text = Feedback.format([
+            .init(path: "/w/plans/auth.md", items: [
+                .init(text: "Tokens expire\nafter 15 minutes.", note: "Make it 10."),
+                .init(text: "Dual-write first.", note: nil),
+            ]),
+            .init(path: "/w/empty.md", items: []),
+        ])
+        #expect(text.contains("## /w/plans/auth.md"))
+        #expect(text.contains("1. Marked:\n   > Tokens expire\n   > after 15 minutes.\n\n   Make it 10."))
+        #expect(text.contains("2. Marked:\n   > Dual-write first."))
+        #expect(!text.contains("empty.md"))
+        #expect(text.contains("this file"))
+    }
+
+    @Test func nothingToSayIsEmpty() {
+        #expect(Feedback.format([.init(path: "/w/a.md", items: [])]).isEmpty)
+    }
+
+    @Test func presenceIgnoresMarkdownSyntax() {
+        let source = "We move **sign-in** from the [legacy](x) session\ncookies to tokens."
+        #expect(Feedback.isStillPresent("sign-in from the legacy session cookies", in: source))
+        #expect(!Feedback.isStillPresent("password hashes", in: source))
+    }
+}

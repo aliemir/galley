@@ -26,6 +26,10 @@ otherwise have to re-derive. Not worth one: typo fixes and formatting.
 
 ## 2026-11-01
 
+- Feedback: a note on any highlight ("Add Note" on the selection pill, ⌃⌘N,
+  or on a highlight), shown as a card under its passage and in Contents;
+  Copy Feedback (⇧⌘C, or for the workspace) for pasting to an agent; Clear
+  Feedback for a document or workspace. Highlights snap to whole words
 - Pinned files reorder by dragging, and any file dragged onto the Pinned section (or the Files header) is pinned there
 - Default swipe order is Files → Contents → Workspaces; installs still on the old default move to it once
 - Files can be pinned (context menu, ⌥⌘P): a Pinned section heads the Files column

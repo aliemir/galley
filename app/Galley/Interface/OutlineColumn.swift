@@ -57,6 +57,29 @@ struct OutlineColumn: View {
 private struct OutlineList: View {
     let document: OpenDocument
     @Environment(AppModel.self) private var model
+    @Environment(\.palette) private var palette
+
+    /// Copy or clear the feedback, for this document or the workspace.
+    private var feedbackMenu: some View {
+        Menu {
+            Button("Copy Feedback (⇧⌘C)") { model.copyFeedback() }
+            Button("Copy Feedback for Workspace") { model.copyWorkspaceFeedback() }
+            Divider()
+            Button("Clear Feedback…") { model.clearFeedback() }
+            Button("Clear All Feedback in Workspace…") { model.clearWorkspaceFeedback() }
+        } label: {
+            Image(systemName: "ellipsis")
+                .font(.system(size: 11, weight: .medium))
+                .foregroundStyle(palette.ink3)
+                .frame(width: 24, height: 18)
+                .contentShape(Rectangle())
+        }
+        .menuStyle(.button)
+        .buttonStyle(.plain)
+        .menuIndicator(.hidden)
+        .fixedSize()
+        .help("Copy or clear feedback")
+    }
 
     var body: some View {
         let items = document.rendered.outline
@@ -77,9 +100,14 @@ private struct OutlineList: View {
                         .id(entry.item.id)
                     }
                     if !document.highlights.isEmpty {
-                        SectionLabel(title: "Highlights", count: document.highlights.count)
-                            .padding(.horizontal, -8)
-                            .padding(.top, items.isEmpty ? -8 : 10)
+                        HStack(spacing: 0) {
+                            SectionLabel(title: "Feedback", count: document.highlights.count)
+                            feedbackMenu
+                                .padding(.top, 10)
+                                .padding(.trailing, 4)
+                        }
+                        .padding(.horizontal, -8)
+                        .padding(.top, items.isEmpty ? -8 : 10)
                         ForEach(document.highlights) { highlight in
                             HighlightRow(highlight: highlight, isOrphan: document.orphans.contains(highlight.id))
                         }
@@ -210,8 +238,15 @@ private struct HighlightRow: View {
                     .foregroundStyle(isOrphan ? palette.ink3 : palette.ink2)
                     .lineLimit(3)
                     .strikethrough(isOrphan, color: palette.ink3.opacity(0.6))
+                if let note = highlight.note {
+                    Label(note, systemImage: "text.bubble")
+                        .font(.system(size: 11.5))
+                        .foregroundStyle(isOrphan ? palette.ink3 : palette.ink)
+                        .lineLimit(4)
+                        .labelStyle(NoteLabelStyle())
+                }
                 if isOrphan {
-                    Text("No longer in the text")
+                    Text(highlight.note == nil ? "No longer in the text" : "Passage gone — likely addressed")
                         .font(.system(size: 10.5))
                         .foregroundStyle(palette.ink3)
                 }
@@ -242,7 +277,20 @@ private struct HighlightRow: View {
                 NSPasteboard.general.clearContents()
                 NSPasteboard.general.setString(highlight.text, forType: .string)
             }
+            if !isOrphan {
+                Button(highlight.note == nil ? "Add Note" : "Edit Note") { model.editNote(highlight.id) }
+            }
             Button("Remove Highlight", role: .destructive) { model.removeHighlight(highlight.id) }
+        }
+    }
+}
+
+/// A note in the Contents column: a small speech mark, then the words.
+private struct NoteLabelStyle: LabelStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        HStack(alignment: .firstTextBaseline, spacing: 5) {
+            configuration.icon.font(.system(size: 9.5)).foregroundStyle(.secondary)
+            configuration.title
         }
     }
 }

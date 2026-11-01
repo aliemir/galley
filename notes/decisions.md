@@ -151,3 +151,22 @@ forced every column before it in the order to show too).
 
 Older libraries stored a 1-based level; it is read as a depth into the
 default order the first time, then the set is stored instead.
+
+## 2026-11-01 — Notes sit under their passage, not in the margin
+
+**Chosen:** a note is a small card under the block its highlight ends in
+(inside it, for a list item or a table cell), tinted like the highlight and
+set in the interface face, so it reads as the reader's words. **Copy
+Feedback** (⇧⌘C, or for the whole workspace) writes Markdown for an agent —
+absolute path, each quoted passage, the note under it — leaving out
+passages no longer in the text, since the agent has dealt with them.
+**Clear Feedback** removes highlights and notes for a document or a
+workspace, after asking.
+
+**Rejected:** margin notes beside the text. At the reading measure the
+margin is about 140 pt in a normal window and nothing at narrow widths;
+cards would collide or vanish exactly where they are needed.
+
+Highlights now snap to whole words and drop surrounding spaces, so a drag
+that stops a letter short still marks the word.
+

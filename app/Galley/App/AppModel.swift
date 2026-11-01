@@ -927,8 +927,15 @@ final class AppModel {
         case .copy(let text):
             NSPasteboard.general.clearContents()
             NSPasteboard.general.setString(text, forType: .string)
-        case let .highlight(text, prefix, suffix, replaces):
-            addHighlight(Highlight(text: text, prefix: prefix, suffix: suffix), replacing: replaces)
+        case let .highlight(text, prefix, suffix, replaces, id):
+            var highlight = Highlight(text: text, prefix: prefix, suffix: suffix)
+            if let id { highlight.id = id }
+            // Notes on the passages it grew over carry over to it.
+            let notes = current?.highlights.filter { replaces.contains($0.id) }.compactMap(\.note) ?? []
+            if !notes.isEmpty { highlight.note = notes.joined(separator: "\n\n") }
+            addHighlight(highlight, replacing: replaces)
+        case let .note(id, text):
+            setNote(text, for: id)
         case .unhighlight(let id):
             removeHighlight(id)
         case .orphans(let ids):
@@ -999,13 +1006,123 @@ final class AppModel {
         reader.setHighlights(current.highlights)
     }
 
-    /// The open document's highlights as Markdown quotes, for pasting.
-    func copyHighlights() {
-        guard let current, !current.highlights.isEmpty else { NSSound.beep(); return }
-        let quotes = current.highlights.map { "> " + $0.text.replacingOccurrences(of: "\n", with: "\n> ") }
-        let text = "Highlights from \(current.file.relativePath):\n\n" + quotes.joined(separator: "\n\n")
+    func setNote(_ text: String, for id: String) {
+        guard let index = current?.highlights.firstIndex(where: { $0.id == id }) else { return }
+        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        current?.highlights[index].note = trimmed.isEmpty ? nil : trimmed
+        saveHighlights()
+    }
+
+    /// ⌃⌘N: highlights the selection and opens a note on it.
+    func noteSelection() {
+        Task {
+            if await reader.noteSelection() != true { NSSound.beep() }
+        }
+    }
+
+    /// Opens the note editor on a highlight in the page.
+    func editNote(_ id: String) {
+        reader.editNote(id)
+    }
+
+    // MARK: Feedback
+
+    /// Whether the open document, or any file in the selected workspace,
+    /// has highlights or notes.
+    var hasFeedback: Bool { !(current?.highlights.isEmpty ?? true) }
+
+    var workspaceHasFeedback: Bool {
+        guard let workspace = selectedWorkspace else { return false }
+        return workspace.record?.files.values.contains { !($0.highlights ?? []).isEmpty } ?? false
+    }
+
+    /// The open document's feedback, for pasting to an agent. Passages no
+    /// longer in the text are left out: the agent has dealt with them.
+    func copyFeedback() {
+        guard let current, let workspace = currentWorkspace else { NSSound.beep(); return }
+        let items = current.highlights
+            .filter { !current.orphans.contains($0.id) }
+            .map { Feedback.Item(text: $0.text, note: $0.note) }
+        copy(Feedback.format([Feedback.File(path: workspace.root.appendingPathComponent(current.file.id).path, items: items)]))
+    }
+
+    /// Every file's feedback in the selected workspace, in reading order.
+    func copyWorkspaceFeedback() {
+        guard let workspace = selectedWorkspace, let record = workspace.record else { NSSound.beep(); return }
+        let files: [Feedback.File] = workspace.tree.readingOrder.compactMap { file in
+            guard let highlights = record.files[file.id]?.highlights, !highlights.isEmpty else { return nil }
+            let source = WorkspaceScanner.read(file.url) ?? ""
+            let items = highlights
+                .filter { Feedback.isStillPresent($0.text, in: source) }
+                .map { Feedback.Item(text: $0.text, note: $0.note) }
+            return Feedback.File(path: file.url.path, items: items)
+        }
+        copy(Feedback.format(files))
+    }
+
+    private func copy(_ text: String) {
+        guard !text.isEmpty else { NSSound.beep(); return }
         NSPasteboard.general.clearContents()
         NSPasteboard.general.setString(text, forType: .string)
+    }
+
+    /// Removes the open document's highlights and notes, after asking.
+    func clearFeedback() {
+        guard let current, !current.highlights.isEmpty else { return }
+        let notes = current.highlights.filter { $0.note != nil }.count
+        confirm(
+            title: "Clear feedback on “\(settings.displayName(for: current.file))”?",
+            detail: Self.feedbackSummary(highlights: current.highlights.count, notes: notes)
+        ) { [weak self] in
+            self?.current?.highlights = []
+            self?.current?.orphans = []
+            self?.saveHighlights()
+        }
+    }
+
+    /// Removes every highlight and note in the selected workspace, after asking.
+    func clearWorkspaceFeedback() {
+        guard let workspace = selectedWorkspace, let record = workspace.record else { return }
+        let all = record.files.values.flatMap { $0.highlights ?? [] }
+        guard !all.isEmpty else { return }
+        let files = record.files.values.filter { !($0.highlights ?? []).isEmpty }.count
+        confirm(
+            title: "Clear all feedback in \(workspace.name)?",
+            detail: Self.feedbackSummary(highlights: all.count, notes: all.filter { $0.note != nil }.count) + " in \(files == 1 ? "1 file" : "\(files) files")"
+        ) { [weak self] in
+            guard let self else { return }
+            self.library.updateWorkspace(workspace.id) { record in
+                for key in record.files.keys { record.files[key]?.highlights = nil }
+            }
+            workspace.touch()
+            if self.current?.workspaceID == workspace.id {
+                self.current?.highlights = []
+                self.current?.orphans = []
+                self.reader.setHighlights([])
+            }
+        }
+    }
+
+    static func feedbackSummary(highlights: Int, notes: Int) -> String {
+        let marks = highlights == 1 ? "1 highlight" : "\(highlights) highlights"
+        guard notes > 0 else { return marks.prefix(1).uppercased() + marks.dropFirst() }
+        return (marks.prefix(1).uppercased() + marks.dropFirst()) + (notes == 1 ? ", 1 with a note" : ", \(notes) with notes")
+    }
+
+    private func confirm(title: String, detail: String, action: @escaping () -> Void) {
+        let alert = NSAlert()
+        alert.messageText = title
+        alert.informativeText = detail + ". This cannot be undone."
+        alert.addButton(withTitle: "Clear")
+        alert.addButton(withTitle: "Cancel")
+        alert.buttons.first?.hasDestructiveAction = true
+        guard let window = NSApp.keyWindow ?? NSApp.mainWindow else {
+            if alert.runModal() == .alertFirstButtonReturn { action() }
+            return
+        }
+        alert.beginSheetModal(for: window) { response in
+            if response == .alertFirstButtonReturn { action() }
+        }
     }
 
     // MARK: Links

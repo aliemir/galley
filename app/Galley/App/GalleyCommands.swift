@@ -117,8 +117,19 @@ struct GalleyCommands: Commands {
             Button("Highlight Selection") { model.highlightSelection() }
                 .keyboardShortcut("h", modifiers: [.command, .control])
                 .disabled(model.current == nil)
-            Button("Copy Highlights as Quotes") { model.copyHighlights() }
-                .disabled(model.current?.highlights.isEmpty ?? true)
+            Button("Add Note to Selection") { model.noteSelection() }
+                .keyboardShortcut("n", modifiers: [.command, .control])
+                .disabled(model.current == nil)
+            Divider()
+            Button("Copy Feedback") { model.copyFeedback() }
+                .keyboardShortcut("c", modifiers: [.command, .shift])
+                .disabled(!model.hasFeedback)
+            Button("Copy Feedback for Workspace") { model.copyWorkspaceFeedback() }
+                .disabled(!model.workspaceHasFeedback)
+            Button("Clear Feedback…") { model.clearFeedback() }
+                .disabled(!model.hasFeedback)
+            Button("Clear All Feedback in Workspace…") { model.clearWorkspaceFeedback() }
+                .disabled(!model.workspaceHasFeedback)
             Divider()
             Button("Fold All Sections") { model.foldAll(true) }
                 .keyboardShortcut(.leftArrow, modifiers: [.command, .option])
