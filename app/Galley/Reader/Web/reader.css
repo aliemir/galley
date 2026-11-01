@@ -114,7 +114,7 @@ a.wikilink { text-decoration-style: dotted; }
 strong, b { font-weight: 680; }
 em, i { font-style: italic; }
 del, s { color: var(--ink-2); text-decoration-thickness: 1px; }
-mark { background: var(--mark); color: inherit; border-radius: 2px; padding: 0 .08em; box-decoration-break: clone; -webkit-box-decoration-break: clone; }
+mark { background: var(--mark); color: inherit; border-radius: 2px; padding: 0 .08em; }
 sup, sub { line-height: 0; }
 abbr[title] { text-decoration: underline dotted; }
 kbd {
@@ -217,7 +217,7 @@ details:not(.callout) > summary { cursor: pointer; font-weight: 600; }
 code, kbd, samp { font-family: var(--font-mono); }
 :not(pre) > code {
   font-size: .845em; padding: .12em .34em; border-radius: 4px;
-  background: var(--code-bg); overflow-wrap: anywhere; box-decoration-break: clone; -webkit-box-decoration-break: clone;
+  background: var(--code-bg); overflow-wrap: anywhere;
 }
 h1 code, h2 code, h3 code { font-size: .82em; }
 pre {
@@ -347,7 +347,7 @@ button.fold:hover { background: color-mix(in srgb, var(--ink) 7%, transparent); 
 .chg-added { background: var(--change-wash); border-radius: 3px; box-shadow: 0 0 0 .32em var(--change-wash); }
 li.chg-added, li > .chg-added { box-shadow: 0 0 0 .2em var(--change-wash); }
 tr.chg-added > td { background: var(--change-wash); }
-ins.g-ins { text-decoration: none; background: var(--insert); border-radius: 2px; box-decoration-break: clone; -webkit-box-decoration-break: clone; }
+ins.g-ins { text-decoration: none; background: var(--insert); border-radius: 2px; }
 #gutter { position: absolute; left: 0; top: 0; width: 0; height: 0; pointer-events: none; }
 #gutter .bar {
   position: absolute; left: calc(var(--gutter) - 17px); width: 3px; border-radius: 2px;
@@ -363,9 +363,12 @@ ins.g-ins { text-decoration: none; background: var(--insert); border-radius: 2px
 /* — Highlights ———————————————————————————————————————————————— */
 
 mark.hl {
+/* No inline element in running text may use box-decoration-break: clone —
+   WebKit then drops text-wrap: pretty for the whole paragraph, so adding a
+   highlight or a change mark would re-wrap (and re-hyphenate) it. */
   color: inherit; border-radius: 3px; padding: .02em 0;
   background: linear-gradient(to bottom, transparent 8%, var(--mark) 8%, var(--mark) 94%, transparent 94%);
-  box-decoration-break: clone; -webkit-box-decoration-break: clone; cursor: pointer;
+  cursor: pointer;
 }
 mark.hl.flash-hl { animation: flash-hl 1.2s ease; }
 @keyframes flash-hl { 0%, 35% { box-shadow: 0 0 0 3px var(--mark); } 100% { box-shadow: 0 0 0 0 transparent; } }
