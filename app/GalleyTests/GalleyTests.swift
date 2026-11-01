@@ -366,3 +366,52 @@ struct FeedbackTests {
         #expect(!Feedback.isStillPresent("password hashes", in: source))
     }
 }
+
+struct TextSearchTests {
+    let documents: [TextSearch.Document] = [
+        .init(key: "a", title: "API rate limits", text: "# API rate limits\n\nLimits are per **token**, not per IP.\n\n| Tier | Burst |\n| Free | 20 |", modified: Date(timeIntervalSince1970: 100)),
+        .init(key: "b", title: "Auth migration plan", text: "We move sign-in to short-lived tokens.\nThe rate of refresh matters.\nCafé policy stays.", modified: Date(timeIntervalSince1970: 200)),
+        .init(key: "c", title: "Standup", text: "Nothing about it here.", modified: Date(timeIntervalSince1970: 300)),
+    ]
+
+    @Test func everyWordMustAppear() {
+        #expect(TextSearch.search("token rate", in: documents).map(\.key).sorted() == ["a", "b"])
+        #expect(TextSearch.search("token standup", in: documents).isEmpty)
+    }
+
+    @Test func titleMatchesRankFirst() {
+        #expect(TextSearch.search("rate", in: documents).first?.key == "a")
+    }
+
+    @Test func caseAndAccentsDoNotMatter() {
+        #expect(TextSearch.search("CAFE", in: documents).map(\.key) == ["b"])
+    }
+
+    @Test func snippetsReadAsTextWithMatchesMarked() {
+        let hit = TextSearch.search("token", in: documents).first { $0.key == "a" }
+        let line = hit?.snippets.first
+        #expect(line?.plain == "Limits are per token, not per IP.")
+        #expect(line?.parts.contains(.init(text: "token", isMatch: true)) == true)
+    }
+
+    @Test func findTermIsThePhraseOrTheLongestWord() {
+        #expect(TextSearch.search("short-lived tokens", in: documents).first?.findTerm == "short-lived tokens")
+        #expect(TextSearch.search("refresh tokens", in: documents).first?.findTerm == "refresh")
+    }
+
+    @Test func cleaningDropsMarkdown() {
+        #expect(TextSearch.clean("- [x] Read [the plan](plan.md) `now`") == "Read the plan now")
+        #expect(TextSearch.clean("| Free | 20 |") == "Free · 20")
+    }
+}
+
+struct TextSearchWordTests {
+    @Test func wordsMatchAtTheirStartOnly() {
+        let docs: [TextSearch.Document] = [
+            .init(key: "a", title: "A", text: "A separate consent screen, generated daily.", modified: .now),
+            .init(key: "b", title: "B", text: "Rate-limit the refresh; celebrateIfFresh stays.", modified: .now),
+        ]
+        #expect(TextSearch.search("rate", in: docs).map(\.key) == ["b"])
+        #expect(TextSearch.search("fresh", in: docs).map(\.key) == ["b"]) // the camelCase hump counts
+    }
+}

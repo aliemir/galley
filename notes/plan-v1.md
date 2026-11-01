@@ -69,11 +69,10 @@ lights up.
 7. ✅ Personal highlights (text + context anchors, orphans)
 8. ✅ Section folding (page and outline share one fold state)
 9. ✅ Feedback: notes on highlights, Copy Feedback for an agent, Clear Feedback
+10. ✅ Full-text search (⇧⌘F, and under names in ⌘K; Tab switches)
 
 ## Next
 
-- **Full-text search across a workspace** — ⌘K finds names and headings
-  only; a folder of fifty agent reports needs "where did it say X".
 - **Tabs** — deferred on purpose: one window, per-workspace state first. Next
   step is real tabs inside the page column (preview tab reused on single
   click, pinned on double click), not native window tabs.

@@ -8,10 +8,20 @@ struct GalleyCommands: Commands {
         CommandGroup(replacing: .newItem) {
             Button("Open Folder…") { model.openFolderPanel() }
                 .keyboardShortcut("o")
-            Button("Go to File…") { model.isQuickOpenVisible.toggle() }
+            Button("Go to File…") {
+                model.quickOpenSearchesText = false
+                model.isQuickOpenVisible.toggle()
+            }
                 .keyboardShortcut("k")
                 .disabled(model.workspaces.isEmpty)
+            Button("Search All Files…") {
+                model.quickOpenSearchesText = true
+                model.isQuickOpenVisible = true
+            }
+            .keyboardShortcut("f", modifiers: [.command, .shift])
+            .disabled(model.workspaces.isEmpty)
             Button("Go to Section…") {
+                model.quickOpenSearchesText = false
                 model.isQuickOpenVisible = true
                 model.quickOpenSeed = "#"
             }

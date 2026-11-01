@@ -65,6 +65,10 @@ final class AppModel {
     var swipeProgress: Double = 0
 
     var isQuickOpenVisible = false
+    /// ⇧⌘F opens the palette searching file text only.
+    var quickOpenSearchesText = false
+    /// File text for the palette's search, kept between searches.
+    @ObservationIgnored let textIndex = TextIndex()
     /// Text the palette opens with: "#" jumps straight to sections.
     var quickOpenSeed = ""
     var isFindVisible = false
@@ -1237,6 +1241,27 @@ final class AppModel {
     }
 
     // MARK: Find
+
+    /// A search result chosen in the palette: open the file and light up
+    /// `term` in it with find, so ⌘G steps through the rest.
+    func openSearchResult(_ file: DocumentFile, in workspace: Workspace, term: String) {
+        findQuery = term
+        isFindVisible = true
+        if current?.file.id == file.id, current?.workspaceID == workspace.id {
+            Task { await runFind(direction: 0) }
+        } else {
+            open(file, in: workspace)
+        }
+    }
+
+    /// Every file in every workspace, for the text index.
+    var textIndexEntries: [TextIndex.Entry] {
+        workspaces.flatMap { workspace in
+            workspace.files.map { file in
+                TextIndex.Entry(key: workspace.id.uuidString + "/" + file.id, title: settings.displayName(for: file), url: file.url, modified: file.modified)
+            }
+        }
+    }
 
     func showFind() {
         if !isFindVisible { isFindVisible = true }

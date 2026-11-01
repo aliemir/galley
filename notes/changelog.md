@@ -26,6 +26,12 @@ otherwise have to re-derive. Not worth one: typo fixes and formatting.
 
 ## 2026-11-01
 
+- Full-text search: ⇧⌘F searches every file's text (all words, at word
+  starts, case and accents ignored) with snippets; ⌘K shows text matches
+  under the name matches; Tab switches; choosing one opens the file with
+  the match found
+- The palette, panel button and drop highlight now follow the theme (they
+  were always light)
 - Feedback indicators are purple (badges, dots, copy buttons); rail dots
   grow into counts on hover; workspace badges no longer clip; swipe dead
   zone 40 pt
