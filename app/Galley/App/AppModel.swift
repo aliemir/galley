@@ -563,15 +563,16 @@ final class AppModel {
         return workspaces.first { $0.id == current.workspaceID }
     }
 
-    /// Opens a file in any workspace, switching to it first.
-    func open(_ file: DocumentFile, in workspace: Workspace) {
+    /// Opens a file in any workspace, switching to it first; with `heading`,
+    /// at that section.
+    func open(_ file: DocumentFile, in workspace: Workspace, heading: String? = nil) {
         if selectedWorkspaceID != workspace.id {
             leaveCurrent()
             current = nil
             selectedWorkspaceID = workspace.id
             library.update { $0.selectedWorkspace = workspace.id }
         }
-        open(file, transition: "none")
+        open(file, transition: "none", heading: heading)
     }
 
     /// Opens `file`; with `heading`, at that section instead of the saved place.
@@ -1566,24 +1567,73 @@ final class AppModel {
             : current.file.url.deletingLastPathComponent().appendingPathComponent(path)
         let standardized = target.standardizedFileURL
         let fragment = url.fragment.map { $0.removingPercentEncoding ?? $0 }
-        if WorkspaceScanner.isMarkdown(standardized), workspace.contains(standardized) {
-            let relative = String(standardized.path.dropFirst(workspace.root.standardizedFileURL.path.count + 1))
-            if let file = workspace.file(relative) {
-                // ⌘-click, as in a browser: a tab of its own.
-                if NSEvent.modifierFlags.contains(.command) {
-                    openInNewTab(file, in: workspace, heading: fragment)
-                } else {
-                    open(file, transition: "none", heading: fragment)
-                }
+        let newTab = NSEvent.modifierFlags.contains(.command)
+        guard FileManager.default.fileExists(atPath: standardized.path) else { NSSound.beep(); return }
+        if WorkspaceScanner.isMarkdown(standardized) {
+            openLinkedMarkdown(standardized, heading: fragment, newTab: newTab)
+            return
+        }
+        // Other files by what they are: a link in an agent's Markdown must
+        // never start an app or a script with one click.
+        switch LinkTarget.of(standardized) {
+        case .document:
+            NSWorkspace.shared.open(standardized)
+        case .folder:
+            NSWorkspace.shared.activateFileViewerSelecting([standardized])
+        case .runnable:
+            NSWorkspace.shared.activateFileViewerSelecting([standardized])
+            inform("“\(standardized.lastPathComponent)” can run on its own", "Galley opens documents from links, never apps or scripts, so it is shown in Finder instead.")
+        case .unknown:
+            askToOpen(standardized)
+        }
+    }
+
+    /// A Markdown file a link points at: in its workspace — this one or
+    /// another — or, outside every workspace, as an opened file.
+    private func openLinkedMarkdown(_ url: URL, heading: String?, newTab: Bool) {
+        let go = { (file: DocumentFile, workspace: Workspace) in
+            if newTab {
+                self.openInNewTab(file, in: workspace, heading: heading)
+            } else if workspace.id == self.selectedWorkspaceID {
+                self.open(file, transition: "none", heading: heading)
+            } else {
+                self.open(file, in: workspace, heading: heading)
+            }
+        }
+        // The current workspace first, then any other that has it.
+        let candidates = [currentWorkspace].compactMap { $0 } + workspaces.filter { $0.id != currentWorkspace?.id }
+        for workspace in candidates where workspace.contains(url) {
+            let id = workspace.isOpenedFiles ? url.path : String(url.path.dropFirst(workspace.root.standardizedFileURL.path.count + 1))
+            if let file = workspace.file(id) {
+                go(file, workspace)
                 return
             }
         }
-        // Other local files are shown, never launched: a link in an agent's
-        // Markdown must not be able to run an app or a script with one click.
-        if FileManager.default.fileExists(atPath: standardized.path) {
-            NSWorkspace.shared.activateFileViewerSelecting([standardized])
+        let group = openedFiles ?? makeOpenedFiles()
+        guard let file = group.addDocument(url) else { NSSound.beep(); return }
+        go(file, group)
+    }
+
+    /// A file Galley cannot place: open it, or show it in Finder.
+    private func askToOpen(_ url: URL) {
+        let alert = NSAlert()
+        alert.messageText = "Open “\(url.lastPathComponent)”?"
+        let app = NSWorkspace.shared.urlForApplication(toOpen: url).map { FileManager.default.displayName(atPath: $0.path) }
+        alert.informativeText = app.map { "It will open in \($0)." } ?? "macOS will choose the app to open it."
+        alert.addButton(withTitle: "Open")
+        alert.addButton(withTitle: "Show in Finder")
+        alert.addButton(withTitle: "Cancel")
+        let respond = { (response: NSApplication.ModalResponse) in
+            switch response {
+            case .alertFirstButtonReturn: NSWorkspace.shared.open(url)
+            case .alertSecondButtonReturn: NSWorkspace.shared.activateFileViewerSelecting([url])
+            default: break
+            }
+        }
+        if let window = reader.webView.window {
+            alert.beginSheetModal(for: window, completionHandler: respond)
         } else {
-            NSSound.beep()
+            respond(alert.runModal())
         }
     }
 

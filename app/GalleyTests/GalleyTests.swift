@@ -587,3 +587,32 @@ struct FeedbackSectionTests {
         #expect(text.contains("1. Marked in Rollout:\n   > Dual-write first."))
     }
 }
+
+struct LinkTargetTests {
+    @Test func documentsOpenRunnablesDoNot() throws {
+        let folder = FileManager.default.temporaryDirectory.appendingPathComponent("galley-links-\(UUID().uuidString)")
+        try FileManager.default.createDirectory(at: folder.appendingPathComponent("Tool.app/Contents"), withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: folder) }
+        func file(_ name: String, executable: Bool = false) throws -> URL {
+            let url = folder.appendingPathComponent(name)
+            try Data("x".utf8).write(to: url)
+            if executable { try FileManager.default.setAttributes([.posixPermissions: 0o755], ofItemAtPath: url.path) }
+            return url
+        }
+        #expect(LinkTarget.of(try file("shot.png")) == .document)
+        #expect(LinkTarget.of(try file("spec.pdf")) == .document)
+        #expect(LinkTarget.of(try file("notes.txt")) == .document)
+        #expect(LinkTarget.of(try file("config.json")) == .document)
+        // A document stays one with the execute bit set.
+        #expect(LinkTarget.of(try file("photo.jpg", executable: true)) == .document)
+        #expect(LinkTarget.of(try file("deploy.sh")) == .runnable)
+        #expect(LinkTarget.of(try file("run.command")) == .runnable)
+        #expect(LinkTarget.of(try file("tool.py")) == .runnable)
+        #expect(LinkTarget.of(try file("install.pkg")) == .runnable)
+        #expect(LinkTarget.of(try file("helper", executable: true)) == .runnable)
+        #expect(LinkTarget.of(folder.appendingPathComponent("Tool.app")) == .runnable)
+        #expect(LinkTarget.of(try file("page.html")) == .unknown)
+        #expect(LinkTarget.of(try file("data.qzx")) == .unknown)
+        #expect(LinkTarget.of(folder) == .folder)
+    }
+}
