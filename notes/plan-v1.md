@@ -75,7 +75,10 @@ lights up.
   next) — a short note on any highlight, shown in the margin; ⌘⇧C copies a
   paste-ready block for an agent (path, quoted passage, note) for a document
   or a workspace. Notes anchor like highlights, so they follow rewrites, and
-  an orphaned note reads as "addressed". This is the half of the galley-proof
+  an orphaned note reads as "addressed". **Clear feedback** (per document
+  and per workspace) removes all notes and highlights in one go once the
+  agent has worked through them — the reader asked for it with the feature,
+  so it ships with it, not later. This is the half of the galley-proof
   idea that is missing (marked up *and sent back*), and the data the agent
   CLI will later read.
 - **Full-text search across a workspace** — ⌘K finds names and headings
