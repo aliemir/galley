@@ -105,7 +105,6 @@ final class GestureMonitor {
                 case .horizontal?:
                     axis = .horizontal
                     held = []
-                    model.beginPanelMotion()
                 case .vertical?:
                     axis = .vertical
                     if pullArmed { updatePull(towardEnd: -lock.y + event.scrollingDeltaY) }
@@ -208,14 +207,8 @@ final class GestureMonitor {
         } else if !cancelled, progress < -0.32, let previous = PanelLevel(rawValue: level - 1) {
             model.setLevel(previous)
         } else {
-            let model = model
-            model.beginPanelMotion()
-            withAnimation(.galleyPanel, completionCriteria: .logicallyComplete) { model.swipeProgress = 0 } completion: {
-                model.endPanelMotion()
-            }
+            withAnimation(.galleyPanel) { model.swipeProgress = 0 }
         }
-        // The swipe's own motion; the settling animation above holds its own.
-        model.endPanelMotion()
         // `axis` stays horizontal until the next gesture, so its momentum is swallowed.
     }
 

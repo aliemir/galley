@@ -115,3 +115,15 @@ Debug builds carry `app/Galley-Debug.entitlements` (read `/`, write
 `tools/galley-debug.swift`. They exist so development and the store-media
 script can open fixture folders without the open panel and snapshot the
 window without Screen Recording permission. Release builds have neither.
+
+## 2026-11-01 — Panels resize the page live; the text re-wraps as they move
+
+**Chosen:** while columns slide in or out, the page simply gets narrower or
+wider on every frame and the text re-wraps with it (the original behaviour).
+
+**Rejected:** holding the text column at a fixed width for the duration of
+the motion and re-wrapping once at the end, anchored to the line being
+read. It was built (`3629be0`) and reverted the same day: the frozen column
+overflowed narrow windows and showed a horizontal scrollbar, and the single
+re-wrap at the end read as a content shift. The user preferred the live
+re-wrap, scrollbar movement included.

@@ -26,9 +26,8 @@ otherwise have to re-derive. Not worth one: typo fixes and formatting.
 
 ## 2026-11-01
 
-- Panel swipes no longer make the page and scrollbar jump: the text holds
-  its width while columns move and re-wraps once at the end, anchored to
-  the line being read; window resizing keeps the reading spot too
+- Reverted the frozen-width panel motion (horizontal scrollbar, content
+  shifts); panels resize the page live again — see `decisions.md`
 - Pull to next/previous now needs 220 pt of pull (was 150 — felt too short)
 - Pull-to-next/previous rebuilt from the user's screen recording: the page
   draws its own stretch, so the ring, the page movement and the cue are one
