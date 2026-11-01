@@ -640,11 +640,52 @@ final class AppModel {
             self.level = newLevel
             self.swipeProgress = 0
         }
-        if animated { withAnimation(.galleyPanel) { apply() } } else { apply() }
+        if animated {
+            beginPanelMotion()
+            withAnimation(.galleyPanel, completionCriteria: .logicallyComplete) { apply() } completion: {
+                self.endPanelMotion()
+            }
+        } else {
+            apply()
+        }
         if newLevel != .page { lastPanelLevel = newLevel }
         library.update {
             $0.level = newLevel.rawValue
             $0.lastPanelLevel = self.lastPanelLevel.rawValue
+        }
+    }
+
+    // MARK: Panel motion
+
+    @ObservationIgnored private var panelMotions = 0
+    @ObservationIgnored private var panelMotionWatchdog: Task<Void, Never>?
+
+    /// The page holds its text width while columns move (see
+    /// `Reader.freezeLayout`); motions nest, and the last one to end
+    /// re-wraps the text once.
+    func beginPanelMotion() {
+        panelMotions += 1
+        if panelMotions == 1 { reader.freezeLayout(true) }
+        // Never leave the text frozen if an animation's completion is lost.
+        panelMotionWatchdog?.cancel()
+        panelMotionWatchdog = Task { [weak self] in
+            while true {
+                try? await Task.sleep(for: .seconds(1.5))
+                guard !Task.isCancelled, let self else { return }
+                if self.swipeProgress == 0 { break }
+            }
+            guard let self, self.panelMotions > 0 else { return }
+            self.panelMotions = 0
+            self.reader.freezeLayout(false)
+        }
+    }
+
+    func endPanelMotion() {
+        guard panelMotions > 0 else { return }
+        panelMotions -= 1
+        if panelMotions == 0 {
+            panelMotionWatchdog?.cancel()
+            reader.freezeLayout(false)
         }
     }
 

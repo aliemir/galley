@@ -444,12 +444,28 @@
     return current;
   }
 
+  /// What the reader is looking at, kept current from scrolling, so a change
+  /// of width (panels, window resizing) can put the same text back in place.
+  let readingSpot = null;
+  let layoutFrozen = false;
+
+  function restoreSpot(spot) {
+    if (spot.atTop) window.scrollTo(0, 0);
+    else if (spot.atBottom) window.scrollTo(0, document.documentElement.scrollHeight);
+    else restore(spot.anchor);
+  }
+
+  // WebKit keeps the pixel offset when the width changes; the text above
+  // re-wraps to a different height, so the reading spot would drift.
+  window.addEventListener('resize', () => { if (!layoutFrozen && readingSpot) restoreSpot(readingSpot); });
+
   function report(force = false) {
     if (!doc) return;
     const max = document.documentElement.scrollHeight - window.innerHeight;
     const content = $('#content');
     const footerVisible = content ? content.getBoundingClientRect().bottom < window.innerHeight - 40 : true;
     const anchor = topAnchor();
+    if (!layoutFrozen) readingSpot = { anchor, atTop: window.scrollY <= 1, atBottom: max > 0 && window.scrollY >= max - 2 };
     const state = {
       type: 'scroll',
       doc: doc.id,
@@ -885,6 +901,25 @@
       if (fill) fill.setAttribute('stroke-dashoffset', String(69.12 * (1 - Math.min(1, p / threshold))));
       cue.style.opacity = p ? String(Math.min(1, Math.max(0, (offset - 8) / 28))) : '';
       cue.classList.toggle('ready', p >= threshold);
+    },
+    /// While panels slide, the text keeps its width — re-wrapping on every
+    /// frame made it (and the scrollbar) jump — then re-wraps once, at the
+    /// spot the reader was at.
+    freezeLayout(on) {
+      const page = $('#page');
+      const root = document.documentElement;
+      if (on === layoutFrozen) return;
+      layoutFrozen = on;
+      if (on) {
+        page.style.width = getComputedStyle(page).width;
+        page.style.maxWidth = 'none';
+        root.classList.add('layout-frozen');
+      } else {
+        page.style.width = '';
+        page.style.maxWidth = '';
+        root.classList.remove('layout-frozen');
+        if (readingSpot) restoreSpot(readingSpot);
+      }
     },
     /// While a pull may start, WebKit's own bounce stays out of the way.
     armPull(armed) { document.documentElement.classList.toggle('pull-armed', armed); },

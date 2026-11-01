@@ -398,6 +398,8 @@ footer.doc-end.end .title { font: 12px/1.4 var(--font-ui); color: var(--ink-3); 
 /* — Pulling past an edge for the next / previous document ——————————— */
 
 :root.pull-armed { overscroll-behavior-y: none; }
+/* A frozen page wider than the window slides past its edge, not into a scrollbar. */
+:root.layout-frozen { overflow-x: hidden; }
 .pull-cue {
   position: fixed; left: 0; right: 0; z-index: 5;
   display: flex; align-items: center; justify-content: center; gap: 8px;

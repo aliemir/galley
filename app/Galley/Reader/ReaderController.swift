@@ -151,6 +151,8 @@ final class ReaderController: NSObject {
     func setPull(_ points: Double, threshold: Double, atStart: Bool) {
         run("Reader.setPull(\(points), \(threshold), \(atStart))")
     }
+    /// Holds the text's width while panels move; releasing re-wraps once.
+    func freezeLayout(_ frozen: Bool) { run("Reader.freezeLayout(\(frozen))") }
     /// Keeps WebKit's own bounce out of the way while a pull may start.
     func armPull(_ armed: Bool) { run("Reader.armPull(\(armed))") }
     func fold(_ id: String, folded: Bool) { run("Reader.fold(\(Self.json(id)), \(folded))") }
