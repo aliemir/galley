@@ -26,6 +26,9 @@ otherwise have to re-derive. Not worth one: typo fixes and formatting.
 
 ## 2026-11-01
 
+- Palette sections: Backspace in an empty field now leaves them (the Mac's
+  Backspace sends U+7F, which the `.delete` handler never saw), and Tab goes
+  back to names rather than on to text
 - The palette's "Tab: text" hint is a ⇥ keycap followed by where Tab goes
 - ⌘K is names only again; text matches show there only when no file name
   matches, labelled "No file names match — in the text" (before, they always

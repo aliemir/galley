@@ -197,7 +197,7 @@ swift tools/galley-debug.swift level.3 theme.sepia open.1 snapshot
 #             columns.reset|filesfirst|nocontents toggle.<column>
 #             divider.narrow|wide (drives the Workspaces edge-drag steps)
 #             tab.new|newnext|next|close|others|move|state (state logs the
-#             tabs and workspaces) key.ctrltab|ctrlshifttab|cmdw|cmdt|cmdreturn
+#             tabs and workspaces) key.ctrltab|ctrlshifttab|cmdw|cmdt|cmdreturn|backspace|tab
 #             menus (logs every menu shortcut) opened.remove
 # open a single file as Finder would (outside a workspace → Opened Files):
 open -a app/…/Debug/Galley.app /path/to/file.md

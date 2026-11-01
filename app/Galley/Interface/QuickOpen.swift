@@ -198,16 +198,21 @@ struct QuickOpenView: View {
                     .onKeyPress(.upArrow) { move(-1, count: results.count); return .handled }
                     .onKeyPress(.escape) { close(); return .handled }
                     .onKeyPress(.tab) {
-                        // Tab switches between names and text.
-                        if sectionMode { sectionMode = false; model.quickOpenSearchesText = true } else {
+                        // Tab switches between names and text; from sections
+                        // (a corner of the name search) it goes back to names.
+                        if sectionMode { sectionMode = false } else {
                             model.quickOpenSearchesText.toggle()
                         }
                         selection = 0
                         return .handled
                     }
-                    .onKeyPress(.delete) {
-                        guard sectionMode, query.isEmpty else { return .ignored }
+                    .onKeyPress(phases: .down) { press in
+                        // Backspace in an empty field leaves sections. Matched by
+                        // its characters: the Mac's Backspace sends DEL (U+7F),
+                        // which `KeyEquivalent.delete` (U+8) never matched.
+                        guard sectionMode, query.isEmpty, ["\u{7F}", "\u{8}"].contains(press.characters) else { return .ignored }
                         sectionMode = false
+                        selection = 0
                         return .handled
                     }
                 if isSearchingText {
@@ -220,13 +225,13 @@ struct QuickOpenView: View {
                         .frame(minWidth: 18, minHeight: 16)
                         .background(RoundedRectangle(cornerRadius: 4, style: .continuous).fill(palette.ink.opacity(0.06)))
                         .overlay(RoundedRectangle(cornerRadius: 4, style: .continuous).strokeBorder(palette.rule))
-                    Text(searchesText ? "Names" : "Text")
+                    Text(searchesText || sectionMode ? "Names" : "Text")
                         .font(.system(size: 10.5, weight: .medium))
                 }
                 .foregroundStyle(palette.ink3)
-                .help(searchesText ? "Tab: search file names" : "Tab: search the text of every file")
+                .help(searchesText || sectionMode ? "Tab: search file names" : "Tab: search the text of every file")
                 .accessibilityElement(children: .ignore)
-                .accessibilityLabel(searchesText ? "Tab searches file names" : "Tab searches the text")
+                .accessibilityLabel(searchesText || sectionMode ? "Tab searches file names" : "Tab searches the text")
             }
             .padding(.horizontal, 16)
             .frame(height: 52)
