@@ -210,6 +210,11 @@ tools/capture-guide.sh
 swift tools/window-bounds.swift Galley     # id layer x,y,w,h title
 screencapture -x -o -l <id> shot.png
 
+# the galley command (the app binary in command mode); GALLEY_LIBRARY=<dir>
+# points a debug build at a throwaway library instead of the reader's
+app/…/Debug/Galley.app/Contents/MacOS/Galley --cli help
+app/…/Debug/Galley.app/Contents/MacOS/Galley --cli feedback app/Fixtures/Showcase
+
 # regenerate the placeholder app icon
 swift tools/make-icon.swift app/Galley/Assets.xcassets/AppIcon.appiconset
 

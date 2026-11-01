@@ -129,6 +129,11 @@ struct GalleyCommands: Commands {
             Divider()
         }
 
+        CommandGroup(after: .appSettings) {
+            Button("Install Command Line Tool…") { model.installCommandLineTool() }
+            Button("Install Agent Skill") { model.installAgentSkill() }
+        }
+
         CommandGroup(replacing: .help) {
             Button("Galley Guide") { model.openGuide() }
         }

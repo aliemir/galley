@@ -515,3 +515,41 @@ struct HTMLSanitizerTests {
         #expect(rendered.hiddenComments == 2)
     }
 }
+
+struct FeedbackClearingTests {
+    private func state(root: String) -> LibraryState {
+        var workspace = WorkspaceRecord(id: UUID(), bookmark: nil, path: root, addedAt: Date())
+        workspace.files["plans/a.md"] = FileRecord(highlights: [Highlight(text: "alpha", prefix: "", suffix: "")])
+        workspace.files["plans/b.md"] = FileRecord(highlights: [Highlight(text: "beta", prefix: "", suffix: ""), Highlight(text: "gamma", prefix: "", suffix: "")])
+        workspace.files["notes.md"] = FileRecord(highlights: [Highlight(text: "delta", prefix: "", suffix: "")])
+        var library = LibraryState()
+        library.workspaces = [workspace]
+        return library
+    }
+
+    @Test func clearsAFileOrEverythingUnderAFolder() {
+        var library = state(root: "/work")
+        #expect(FeedbackClearing.apply(to: &library, paths: ["/work/plans/a.md"], addressedOnly: false) == .init(highlights: 1, files: 1))
+        #expect(FeedbackClearing.apply(to: &library, paths: ["/work/plans"], addressedOnly: false) == .init(highlights: 2, files: 1))
+        #expect(library.workspaces[0].files["notes.md"]?.highlights?.count == 1)
+        // "/work/pl" is not a folder the files are under.
+        #expect(FeedbackClearing.apply(to: &library, paths: ["/work/no"], addressedOnly: false) == .init())
+    }
+
+    @Test func addressedOnlyKeepsPassagesStillInTheText() throws {
+        let folder = FileManager.default.temporaryDirectory.appendingPathComponent("galley-clear-\(UUID().uuidString)")
+        try FileManager.default.createDirectory(at: folder.appendingPathComponent("plans"), withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: folder) }
+        try "Beta is still here.".write(to: folder.appendingPathComponent("plans/b.md"), atomically: true, encoding: .utf8)
+        var library = state(root: folder.path)
+        let result = FeedbackClearing.apply(to: &library, paths: [folder.appendingPathComponent("plans/b.md").path], addressedOnly: true)
+        #expect(result == .init(highlights: 1, files: 1))
+        #expect(library.workspaces[0].files["plans/b.md"]?.highlights?.map(\.text) == ["beta"])
+    }
+
+    @Test func runsAsACommandOnlyWhenCalledGalley() {
+        #expect(CLI.arguments(["/usr/local/bin/galley", "feedback"]) == ["feedback"])
+        #expect(CLI.arguments(["/Applications/Galley.app/Contents/MacOS/Galley", "--cli", "help"]) == ["help"])
+        #expect(CLI.arguments(["/Applications/Galley.app/Contents/MacOS/Galley"]) == nil)
+    }
+}

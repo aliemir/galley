@@ -1426,6 +1426,96 @@ final class AppModel {
         }
     }
 
+    /// `galley feedback clear`, sent by the command while Galley runs.
+    @ObservationIgnored private var clearRequests: NSObjectProtocol?
+
+    func listenForFeedbackRequests() {
+        guard clearRequests == nil else { return }
+        clearRequests = DistributedNotificationCenter.default().addObserver(forName: FeedbackRequest.request, object: nil, queue: .main) { [weak self] note in
+            let info = note.userInfo ?? [:]
+            let paths = info["paths"] as? [String] ?? []
+            let addressedOnly = info["addressedOnly"] as? Bool ?? false
+            let id = note.object as? String
+            MainActor.assumeIsolated {
+                let result = self?.clearFeedback(under: paths, addressedOnly: addressedOnly) ?? .init()
+                DistributedNotificationCenter.default().postNotificationName(
+                    FeedbackRequest.reply, object: id,
+                    userInfo: ["highlights": result.highlights, "files": result.files], deliverImmediately: true
+                )
+            }
+        }
+    }
+
+    // MARK: Command line
+
+    /// Galley → Install Command Line Tool…: `galley` in /usr/local/bin, with
+    /// the administrator password when that folder needs it, as VS Code
+    /// installs `code`.
+    func installCommandLineTool() {
+        let link = URL(fileURLWithPath: "/usr/local/bin/galley")
+        let executable = CLI.executableURL.path
+        switch CLI.link(at: link) {
+        case .done:
+            inform("The galley command is installed", "Try `galley feedback` in a folder you read in Galley, or `galley help`.")
+        case .occupied:
+            inform("/usr/local/bin/galley is something else", "Remove it, then choose Install Command Line Tool again.")
+        case .denied:
+            let quoted = { (path: String) in "'" + path.replacingOccurrences(of: "'", with: "'\\''") + "'" }
+            let command = "mkdir -p /usr/local/bin && ln -sfn \(quoted(executable)) \(quoted(link.path))"
+            let script = "do shell script \"\(command.replacingOccurrences(of: "\\", with: "\\\\").replacingOccurrences(of: "\"", with: "\\\""))\" with administrator privileges"
+            var error: NSDictionary?
+            NSAppleScript(source: script)?.executeAndReturnError(&error)
+            if let error, (error[NSAppleScript.errorNumber] as? Int) != -128 {
+                inform("The galley command could not be installed", (error[NSAppleScript.errorMessage] as? String) ?? "Run `galley install ~/.local/bin` from Terminal instead.")
+            } else if error == nil {
+                inform("The galley command is installed", "Try `galley feedback` in a folder you read in Galley, or `galley help`.")
+            }
+        }
+    }
+
+    /// Galley → Install Agent Skill: the skill that teaches agents to read
+    /// and clear feedback, for every project (`~/.claude/skills/galley`).
+    func installAgentSkill() {
+        do {
+            let file = try AgentSkill.install(into: AgentSkill.globalFolder)
+            inform("The Galley skill is installed", "Agents that read \((file.deletingLastPathComponent().deletingLastPathComponent().path as NSString).abbreviatingWithTildeInPath) can now read your feedback with `galley feedback`. For one project only, run `galley skill install --project` in it.")
+        } catch {
+            inform("The skill could not be installed", error.localizedDescription)
+        }
+    }
+
+    private func inform(_ title: String, _ detail: String) {
+        let alert = NSAlert()
+        alert.messageText = title
+        alert.informativeText = detail
+        if let window = NSApp.keyWindow ?? reader.webView.window {
+            alert.beginSheetModal(for: window)
+        } else {
+            alert.runModal()
+        }
+    }
+
+    /// Clears feedback by path, in the library and on the open page.
+    func clearFeedback(under paths: [String], addressedOnly: Bool) -> FeedbackClearing.Result {
+        guard !paths.isEmpty else { return .init() }
+        var result = FeedbackClearing.Result()
+        library.update { state in
+            result = FeedbackClearing.apply(to: &state, paths: paths, addressedOnly: addressedOnly)
+        }
+        guard result.highlights > 0 else { return result }
+        library.flush()
+        for workspace in workspaces { workspace.touch() }
+        if let current, let workspace = currentWorkspace {
+            let kept = workspace.record?.files[current.file.id]?.highlights ?? []
+            if kept.map(\.id) != current.highlights.map(\.id) {
+                self.current?.highlights = kept
+                self.current?.orphans = current.orphans.filter { id in kept.contains { $0.id == id } }
+                reader.setHighlights(kept)
+            }
+        }
+        return result
+    }
+
     static func feedbackSummary(highlights: Int, notes: Int) -> String {
         let marks = highlights == 1 ? "1 highlight" : "\(highlights) highlights"
         guard notes > 0 else { return marks.prefix(1).uppercased() + marks.dropFirst() }

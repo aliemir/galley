@@ -26,6 +26,15 @@ otherwise have to re-derive. Not worth one: typo fixes and formatting.
 
 ## 2026-11-01
 
+- The `galley` command (`App/CLI.swift`): Galley's own binary, run as a
+  command when called `galley` (or with `--cli`). `galley [path]` opens,
+  `galley feedback [path] [--json]` prints the feedback on a file or folder,
+  `galley feedback clear path … [--addressed]` clears it (a running Galley is
+  asked to, by distributed notification, so the page updates; otherwise the
+  library file is changed), `galley install [folder]` links it onto the PATH,
+  `galley skill install [--global | --project | --dir]` writes the agent
+  skill. Galley menu: Install Command Line Tool… (admin prompt for
+  /usr/local/bin, like VS Code's `code`) and Install Agent Skill
 - Raw HTML in Markdown is cleaned (`HTMLSanitizer`): GitHub's harmless tags
   stay, scripts/styles/frames/forms/SVG go with their content, and only safe
   attributes survive — no `style`, `class`, `id` or `on…`, so a file cannot

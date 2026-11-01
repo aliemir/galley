@@ -276,3 +276,20 @@ the icon Finder shows (Bear behaves the same).
 guide's content and typography on the Paper theme — with GitHub and Download
 buttons added. One look across app, guide and site.
 
+## 2026-11-01 — The agent loop: one binary, and the app holds the pen
+
+**Chosen:** `galley` is the app's own binary, run as a command when called
+by that name (the symlink `galley install` makes) — no second target, and the
+command shares the app's library and feedback code. It reads `library.json`
+directly. Clearing writes, and the app keeps the whole library in memory and
+saves it whole, so while Galley runs the command asks it to clear (a
+distributed notification with the paths, answered with the counts) rather
+than racing it; only when Galley is closed does the command edit the file.
+
+Clearing is by path — a file, or every file under a folder — with
+`--addressed` for passages no longer in the text. Clearing one highlight was
+left out on purpose: an agent finishes a file, not a quote.
+
+The skill tells agents to read with `galley feedback`, act on every item,
+and clear only files they finished (`--addressed` when something is left).
+

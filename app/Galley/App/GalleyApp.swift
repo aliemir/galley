@@ -1,6 +1,17 @@
 import SwiftUI
 
+/// One binary, two ways in: Galley, or the `galley` command (see `CLI`),
+/// which does its work and exits before any window exists.
 @main
+enum Entry {
+    static func main() {
+        if let arguments = CLI.arguments(CommandLine.arguments) {
+            exit(CLI.run(arguments))
+        }
+        GalleyApp.main()
+    }
+}
+
 struct GalleyApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
     @State private var model = AppModel()
@@ -11,6 +22,7 @@ struct GalleyApp: App {
                 .environment(model)
                 .onAppear {
                     appDelegate.model = model
+                    model.listenForFeedbackRequests()
                     #if DEBUG
                     appDelegate.automation = DebugAutomation(model: model)
                     #endif

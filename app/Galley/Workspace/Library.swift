@@ -125,21 +125,9 @@ final class Library {
     private var saveTask: Task<Void, Never>?
 
     init() {
-        let base = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
-        var directory = base.appendingPathComponent("Galley", isDirectory: true)
-        #if DEBUG
-        // `-GalleyLibrary <dir>`: a throwaway library for scripted captures,
-        // so they never touch the reader's own highlights and read state.
-        if let path = UserDefaults.standard.string(forKey: "GalleyLibrary") {
-            directory = URL(fileURLWithPath: path, isDirectory: true)
-        }
-        #endif
+        let directory = LibraryLocation.directory
         self.directory = directory
-        #if DEBUG
-        if UserDefaults.standard.string(forKey: "GalleyLibrary") == nil { SandboxMigration.library(into: directory) }
-        #else
-        SandboxMigration.library(into: directory)
-        #endif
+        if !LibraryLocation.isThrowaway { SandboxMigration.library(into: directory) }
         try? FileManager.default.createDirectory(at: directory.appendingPathComponent("Snapshots"), withIntermediateDirectories: true)
         let file = directory.appendingPathComponent("library.json")
         if let data = try? Data(contentsOf: file) {
@@ -208,7 +196,84 @@ final class Library {
     }
 }
 
-private extension JSONEncoder {
+/// Where the library lives, for the app and for the `galley` command.
+nonisolated enum LibraryLocation {
+    static var directory: URL {
+        #if DEBUG
+        // A throwaway library for scripted captures and tests: `-GalleyLibrary
+        // <dir>` for the app, GALLEY_LIBRARY for the command.
+        if let path = UserDefaults.standard.string(forKey: "GalleyLibrary") ?? ProcessInfo.processInfo.environment["GALLEY_LIBRARY"] {
+            return URL(fileURLWithPath: path, isDirectory: true)
+        }
+        #endif
+        return FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
+            .appendingPathComponent("Galley", isDirectory: true)
+    }
+
+    static var isThrowaway: Bool {
+        #if DEBUG
+        UserDefaults.standard.string(forKey: "GalleyLibrary") != nil || ProcessInfo.processInfo.environment["GALLEY_LIBRARY"] != nil
+        #else
+        false
+        #endif
+    }
+
+    /// The library as the app last saved it (it saves within a second of
+    /// any change), for reading from outside the app.
+    static func read(from directory: URL = directory) throws -> LibraryState {
+        let data = try Data(contentsOf: directory.appendingPathComponent("library.json"))
+        return try JSONDecoder.library.decode(LibraryState.self, from: data)
+    }
+
+    /// For the `galley` command while the app is not running — when it is,
+    /// it holds the library and is asked to make the change instead.
+    static func write(_ state: LibraryState, to directory: URL = directory) throws {
+        try JSONEncoder.library.encode(state).write(to: directory.appendingPathComponent("library.json"), options: .atomic)
+    }
+}
+
+/// Clearing feedback by path, the same way in the app and in the command:
+/// every file at or under one of `paths` loses its highlights and notes —
+/// or, with `addressedOnly`, only those whose passage is no longer in it.
+nonisolated enum FeedbackClearing {
+    struct Result: Equatable { var highlights = 0, files = 0 }
+
+    /// A file's absolute path from its workspace record.
+    static func path(of id: String, in workspace: WorkspaceRecord) -> String {
+        workspace.kind == "files" ? id : URL(fileURLWithPath: workspace.path).appendingPathComponent(id).standardizedFileURL.path
+    }
+
+    static func matches(_ path: String, _ targets: [String]) -> Bool {
+        targets.contains { target in
+            path == target || path.hasPrefix(target.hasSuffix("/") ? target : target + "/")
+        }
+    }
+
+    @discardableResult
+    static func apply(to state: inout LibraryState, paths: [String], addressedOnly: Bool) -> Result {
+        var result = Result()
+        for index in state.workspaces.indices {
+            let workspace = state.workspaces[index]
+            for (id, record) in workspace.files {
+                guard let highlights = record.highlights, !highlights.isEmpty else { continue }
+                let path = path(of: id, in: workspace)
+                guard matches(path, paths) else { continue }
+                var kept: [Highlight] = []
+                if addressedOnly {
+                    let source = WorkspaceScanner.read(URL(fileURLWithPath: path)) ?? ""
+                    kept = highlights.filter { Feedback.isStillPresent($0.text, in: source) }
+                }
+                guard kept.count < highlights.count else { continue }
+                result.highlights += highlights.count - kept.count
+                result.files += 1
+                state.workspaces[index].files[id]?.highlights = kept.isEmpty ? nil : kept
+            }
+        }
+        return result
+    }
+}
+
+extension JSONEncoder {
     nonisolated static var library: JSONEncoder {
         let encoder = JSONEncoder()
         encoder.dateEncodingStrategy = .iso8601
@@ -217,7 +282,7 @@ private extension JSONEncoder {
     }
 }
 
-private extension JSONDecoder {
+extension JSONDecoder {
     nonisolated static var library: JSONDecoder {
         let decoder = JSONDecoder()
         decoder.dateDecodingStrategy = .iso8601
