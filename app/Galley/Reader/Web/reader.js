@@ -886,6 +886,9 @@
       cue.style.opacity = p ? String(Math.min(1, Math.max(0, (offset - 8) / 28))) : '';
       cue.classList.toggle('ready', p >= threshold);
     },
+    /// While panels slide, the page's length changes on every frame and the
+    /// overlay scrollbar would keep popping up and moving: hide it.
+    setPanelsMoving(moving) { document.documentElement.classList.toggle('panels-moving', moving); },
     /// While a pull may start, WebKit's own bounce stays out of the way.
     armPull(armed) { document.documentElement.classList.toggle('pull-armed', armed); },
     fold(id, folded) { setFolded($(`#content .sec[data-sec="${CSS.escape(id)}"]`), folded, false); },

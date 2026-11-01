@@ -127,3 +127,7 @@ read. It was built (`3629be0`) and reverted the same day: the frozen column
 overflowed narrow windows and showed a horizontal scrollbar, and the single
 re-wrap at the end read as a content shift. The user preferred the live
 re-wrap, scrollbar movement included.
+
+What actually bothered the user was only the scrollbar popping up and moving
+while the page's length changed under the slide, so the page now hides its
+scrollbar (`scrollbar-width: none`) for the duration of the motion.

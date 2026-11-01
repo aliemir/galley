@@ -151,6 +151,8 @@ final class ReaderController: NSObject {
     func setPull(_ points: Double, threshold: Double, atStart: Bool) {
         run("Reader.setPull(\(points), \(threshold), \(atStart))")
     }
+    /// Hides the page's scrollbar while panels slide.
+    func setPanelsMoving(_ moving: Bool) { run("Reader.setPanelsMoving(\(moving))") }
     /// Keeps WebKit's own bounce out of the way while a pull may start.
     func armPull(_ armed: Bool) { run("Reader.armPull(\(armed))") }
     func fold(_ id: String, folded: Bool) { run("Reader.fold(\(Self.json(id)), \(folded))") }

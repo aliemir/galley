@@ -26,6 +26,7 @@ otherwise have to re-derive. Not worth one: typo fixes and formatting.
 
 ## 2026-11-01
 
+- The page hides its scrollbar while panels slide; nothing else about the slide changes
 - Reverted the frozen-width panel motion (horizontal scrollbar, content
   shifts); panels resize the page live again — see `decisions.md`
 - Pull to next/previous now needs 220 pt of pull (was 150 — felt too short)
