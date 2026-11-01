@@ -258,7 +258,7 @@ private struct FeedbackButton<Icon: View, Items: View>: View {
         }
         .background(
             RoundedRectangle(cornerRadius: 7, style: .continuous)
-                .fill(palette.mark.opacity(isHovered ? 0.55 : 0.32))
+                .fill(palette.feedbackWash.opacity(isHovered ? 1.6 : 1))
         )
         .onHover { isHovered = $0 }
     }

@@ -152,12 +152,13 @@ struct Palette {
     var sidebar: Color { Color(css: theme.sidebar) }
     var change: Color { Color(css: theme.change) }
     var unread: Color { Color(css: theme.unread) }
-    /// The highlighter: washed, as on the page, and at full strength for
-    /// the small marks that stand for feedback.
+    /// The highlighter, washed, as on the page.
     var mark: Color { Color(css: theme.mark) }
-    var feedback: Color {
-        Color(css: theme.mark.replacingOccurrences(of: #",\s*[\d.]+\)\s*$"#, with: ")", options: .regularExpression))
-    }
+    /// Feedback in the chrome (dots, counts, the copy buttons): a purple of
+    /// its own, apart from new (blue) and changed (orange) on every theme.
+    /// The page keeps the highlighter's yellow.
+    var feedback: Color { theme.isDark ? Color(red: 0.72, green: 0.60, blue: 0.95) : Color(red: 0.50, green: 0.33, blue: 0.78) }
+    var feedbackWash: Color { feedback.opacity(theme.isDark ? 0.2 : 0.13) }
     /// Row selection: the ink at low opacity reads as a pencil shade on any paper.
     var selection: Color { ink.opacity(theme.isDark ? 0.12 : 0.075) }
     var hover: Color { ink.opacity(theme.isDark ? 0.06 : 0.04) }

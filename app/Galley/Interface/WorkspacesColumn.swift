@@ -156,11 +156,10 @@ private struct RailTile: View {
     @Environment(\.palette) private var palette
     @State private var isHovered = false
 
-    private func railDot(_ color: Color) -> some View {
-        Circle()
-            .fill(color)
-            .frame(width: 8, height: 8)
-            .overlay(Circle().stroke(palette.sidebar, lineWidth: 1.5))
+    private func railBadge(_ count: Int, _ kind: CountBadge.Kind) -> some View {
+        GrowingBadge(count: count, kind: kind, expanded: isHovered, dotSize: 8)
+            // On the sidebar, so a washed count still reads over the icon.
+            .background(Capsule().fill(palette.sidebar).padding(-1.5))
     }
 
     var body: some View {
@@ -172,16 +171,17 @@ private struct RailTile: View {
             )
             // Reading at the top (blue for new, orange for changed only),
             // feedback at the foot; the tooltip has the counts.
+            // Dots at rest; on hover they become their counts.
             .overlay(alignment: .topTrailing) {
                 if workspace.unreadCount > 0 {
-                    railDot(workspace.newCount > 0 ? palette.unread : palette.change)
-                        .offset(x: 1, y: -1)
+                    railBadge(workspace.unreadCount, workspace.newCount > 0 ? .new : .changed)
+                        .offset(x: isHovered ? 6 : 1, y: -1)
                 }
             }
             .overlay(alignment: .bottomTrailing) {
                 if workspace.feedbackCount > 0 {
-                    railDot(palette.feedback)
-                        .offset(x: 1, y: 1)
+                    railBadge(workspace.feedbackCount, .feedback)
+                        .offset(x: isHovered ? 6 : 1, y: 1)
                 }
             }
             .contentShape(Rectangle())

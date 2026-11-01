@@ -409,7 +409,7 @@ struct CountBadge: View {
         switch kind {
         case .new: palette.unread
         case .changed: palette.change
-        case .feedback: palette.ink
+        case .feedback: palette.feedback
         }
     }
 
@@ -417,7 +417,7 @@ struct CountBadge: View {
         switch kind {
         case .new: palette.unread.opacity(0.12)
         case .changed: palette.change.opacity(0.13)
-        case .feedback: palette.mark
+        case .feedback: palette.feedbackWash
         }
     }
 
@@ -441,6 +441,9 @@ struct WorkspaceBadges: View {
             if workspace.changedCount > 0 { CountBadge(count: workspace.changedCount, kind: .changed) }
             if workspace.feedbackCount > 0 { CountBadge(count: workspace.feedbackCount, kind: .feedback) }
         }
+        // Counts keep their size; the name beside them truncates instead.
+        .fixedSize()
+        .layoutPriority(1)
     }
 }
 

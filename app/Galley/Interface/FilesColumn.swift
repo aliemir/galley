@@ -542,30 +542,52 @@ private struct PinDropZone: ViewModifier {
     }
 }
 
-/// Feedback on a file: a highlighter dot that grows, on hover, into the
-/// count — the change dot's quieter sibling at the other end of the row.
+/// Feedback on a file: a purple dot that grows, on hover, into the count —
+/// the change dot's quieter sibling at the other end of the row.
 struct FeedbackMark: View {
     let count: Int
     let expanded: Bool
+
+    var body: some View {
+        GrowingBadge(count: count, kind: .feedback, expanded: expanded, icon: "text.bubble.fill")
+            .help(count == 1 ? "1 highlight or note" : "\(count) highlights and notes")
+            .accessibilityLabel(count == 1 ? "1 highlight or note" : "\(count) highlights and notes")
+    }
+}
+
+/// A dot that becomes its count: small while at rest, readable on hover.
+struct GrowingBadge: View {
+    let count: Int
+    let kind: CountBadge.Kind
+    let expanded: Bool
+    var icon: String?
+    var dotSize: CGFloat = 6
     @Environment(\.palette) private var palette
+
+    private var color: Color {
+        switch kind {
+        case .new: palette.unread
+        case .changed: palette.change
+        case .feedback: palette.feedback
+        }
+    }
 
     var body: some View {
         HStack(spacing: 3) {
-            Image(systemName: "text.bubble.fill")
-                .font(.system(size: 8.5))
+            if let icon {
+                Image(systemName: icon).font(.system(size: 8.5))
+            }
             Text("\(count)")
                 .font(.system(size: 10.5, weight: .semibold).monospacedDigit())
         }
-        .foregroundStyle(palette.ink.opacity(0.8))
+        .foregroundStyle(color)
         .padding(.horizontal, 5.5)
         .padding(.vertical, 1.5)
         .opacity(expanded ? 1 : 0)
         .fixedSize()
-        .frame(width: expanded ? nil : 6, height: expanded ? nil : 6)
-        .background(Capsule().fill(expanded ? palette.mark : palette.feedback))
+        .frame(width: expanded ? nil : dotSize, height: expanded ? nil : dotSize)
+        .background(Capsule().fill(expanded ? color.opacity(palette.theme.isDark ? 0.24 : 0.15) : color))
         .clipShape(Capsule())
         .animation(.snappy(duration: 0.2), value: expanded)
-        .help(count == 1 ? "1 highlight or note" : "\(count) highlights and notes")
-        .accessibilityLabel(count == 1 ? "1 highlight or note" : "\(count) highlights and notes")
     }
 }

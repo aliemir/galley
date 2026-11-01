@@ -26,6 +26,9 @@ otherwise have to re-derive. Not worth one: typo fixes and formatting.
 
 ## 2026-11-01
 
+- Feedback indicators are purple (badges, dots, copy buttons); rail dots
+  grow into counts on hover; workspace badges no longer clip; swipe dead
+  zone 40 pt
 - Small sideways swipes (under 28 pt) no longer move panels
 - Badges show new, changed and feedback separately with counts (workspace
   rows, rail dots, Files header); files get a feedback dot that grows into
