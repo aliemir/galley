@@ -30,7 +30,11 @@ struct FilesColumn: View {
         let count = workspace.files.count
         let files = count == 1 ? "1 file" : "\(count) files"
         let unread = workspace.unreadCount
-        return unread > 0 ? "\(files) · \(unread) to read" : files
+        let feedback = workspace.feedbackCount
+        var parts = [files]
+        if unread > 0 { parts.append("\(unread) to read") }
+        if feedback > 0 { parts.append("\(feedback) feedback") }
+        return parts.joined(separator: " · ")
     }
 
     private func menu(_ workspace: Workspace) -> some View {
@@ -285,6 +289,9 @@ private struct FolderRow: View {
             if isCollapsed, unread > 0 {
                 Circle().fill(palette.unread).frame(width: 6, height: 6)
             }
+            if isCollapsed, folder.readingOrder.contains(where: { workspace.feedbackCount($0.id) > 0 }) {
+                Circle().fill(palette.feedback).frame(width: 6, height: 6)
+            }
             Text("\(folder.fileCount)")
                 .font(.system(size: 10.5).monospacedDigit())
                 .foregroundStyle(palette.ink3)
@@ -351,6 +358,10 @@ struct FileRow: View {
                 }
             }
             Spacer(minLength: 0)
+            let feedback = workspace.feedbackCount(file.id)
+            if feedback > 0 {
+                FeedbackMark(count: feedback, expanded: isHovered)
+            }
             if marksPin, workspace.isPinned(file.id) {
                 Image(systemName: "pin.fill")
                     .font(.system(size: 8.5))
@@ -528,5 +539,33 @@ private struct PinDropZone: ViewModifier {
             } isTargeted: { targeted in
                 withAnimation(.easeOut(duration: 0.12)) { isTargeted = targeted }
             }
+    }
+}
+
+/// Feedback on a file: a highlighter dot that grows, on hover, into the
+/// count — the change dot's quieter sibling at the other end of the row.
+struct FeedbackMark: View {
+    let count: Int
+    let expanded: Bool
+    @Environment(\.palette) private var palette
+
+    var body: some View {
+        HStack(spacing: 3) {
+            Image(systemName: "text.bubble.fill")
+                .font(.system(size: 8.5))
+            Text("\(count)")
+                .font(.system(size: 10.5, weight: .semibold).monospacedDigit())
+        }
+        .foregroundStyle(palette.ink.opacity(0.8))
+        .padding(.horizontal, 5.5)
+        .padding(.vertical, 1.5)
+        .opacity(expanded ? 1 : 0)
+        .fixedSize()
+        .frame(width: expanded ? nil : 6, height: expanded ? nil : 6)
+        .background(Capsule().fill(expanded ? palette.mark : palette.feedback))
+        .clipShape(Capsule())
+        .animation(.snappy(duration: 0.2), value: expanded)
+        .help(count == 1 ? "1 highlight or note" : "\(count) highlights and notes")
+        .accessibilityLabel(count == 1 ? "1 highlight or note" : "\(count) highlights and notes")
     }
 }

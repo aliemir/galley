@@ -152,6 +152,12 @@ struct Palette {
     var sidebar: Color { Color(css: theme.sidebar) }
     var change: Color { Color(css: theme.change) }
     var unread: Color { Color(css: theme.unread) }
+    /// The highlighter: washed, as on the page, and at full strength for
+    /// the small marks that stand for feedback.
+    var mark: Color { Color(css: theme.mark) }
+    var feedback: Color {
+        Color(css: theme.mark.replacingOccurrences(of: #",\s*[\d.]+\)\s*$"#, with: ")", options: .regularExpression))
+    }
     /// Row selection: the ink at low opacity reads as a pencil shade on any paper.
     var selection: Color { ink.opacity(theme.isDark ? 0.12 : 0.075) }
     var hover: Color { ink.opacity(theme.isDark ? 0.06 : 0.04) }

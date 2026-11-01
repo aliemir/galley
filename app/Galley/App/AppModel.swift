@@ -1003,6 +1003,7 @@ final class AppModel {
         library.updateWorkspace(workspace.id) { record in
             record.files[current.file.id, default: FileRecord()].highlights = current.highlights.isEmpty ? nil : current.highlights
         }
+        workspace.touch() // the file list's feedback marks
         reader.setHighlights(current.highlights)
     }
 

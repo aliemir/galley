@@ -65,6 +65,19 @@ final class Workspace: Identifiable {
     func touch() { revision += 1 }
 
     var unreadCount: Int { statuses.values.filter { $0 != .read }.count }
+    /// Never read.
+    var newCount: Int { statuses.values.filter { $0 == .unread }.count }
+    /// Changed since read.
+    var changedCount: Int { statuses.values.filter { $0 == .changed }.count }
+
+    /// Highlights (with or without a note) on one file, or the whole workspace.
+    func feedbackCount(_ relativePath: String) -> Int {
+        record?.files[relativePath]?.highlights?.count ?? 0
+    }
+
+    var feedbackCount: Int {
+        record?.files.values.reduce(0) { $0 + ($1.highlights?.count ?? 0) } ?? 0
+    }
 
     /// Unread and changed files, newest first — the "Changed" feed.
     var feed: [DocumentFile] {

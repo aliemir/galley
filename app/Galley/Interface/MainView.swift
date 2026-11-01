@@ -386,3 +386,71 @@ struct SectionLabel: View {
         .padding(.bottom, 4)
     }
 }
+
+/// A count in a small capsule, tinted for what it counts.
+struct CountBadge: View {
+    enum Kind { case new, changed, feedback }
+
+    let count: Int
+    let kind: Kind
+    @Environment(\.palette) private var palette
+
+    var body: some View {
+        Text("\(count)")
+            .font(.system(size: 10.5, weight: .semibold).monospacedDigit())
+            .foregroundStyle(foreground)
+            .padding(.horizontal, 5.5)
+            .padding(.vertical, 1.5)
+            .background(Capsule().fill(background))
+            .help(help)
+    }
+
+    private var foreground: Color {
+        switch kind {
+        case .new: palette.unread
+        case .changed: palette.change
+        case .feedback: palette.ink
+        }
+    }
+
+    private var background: Color {
+        switch kind {
+        case .new: palette.unread.opacity(0.12)
+        case .changed: palette.change.opacity(0.13)
+        case .feedback: palette.mark
+        }
+    }
+
+    private var help: String {
+        switch kind {
+        case .new: count == 1 ? "1 file not read yet" : "\(count) files not read yet"
+        case .changed: count == 1 ? "1 file changed since read" : "\(count) files changed since read"
+        case .feedback: count == 1 ? "1 highlight or note" : "\(count) highlights and notes"
+        }
+    }
+}
+
+/// Everything a workspace has waiting: new, changed, feedback — each only
+/// when there is some.
+struct WorkspaceBadges: View {
+    let workspace: Workspace
+
+    var body: some View {
+        HStack(spacing: 3) {
+            if workspace.newCount > 0 { CountBadge(count: workspace.newCount, kind: .new) }
+            if workspace.changedCount > 0 { CountBadge(count: workspace.changedCount, kind: .changed) }
+            if workspace.feedbackCount > 0 { CountBadge(count: workspace.feedbackCount, kind: .feedback) }
+        }
+    }
+}
+
+extension Workspace {
+    /// "2 new, 1 changed, 4 feedback" for tooltips and VoiceOver.
+    var badgeSummary: String {
+        var parts: [String] = []
+        if newCount > 0 { parts.append("\(newCount) new") }
+        if changedCount > 0 { parts.append("\(changedCount) changed") }
+        if feedbackCount > 0 { parts.append("\(feedbackCount) feedback") }
+        return parts.joined(separator: ", ")
+    }
+}

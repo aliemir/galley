@@ -72,14 +72,7 @@ private struct WorkspaceRow: View {
                 .lineLimit(1)
                 .truncationMode(.middle)
             Spacer(minLength: 4)
-            if workspace.unreadCount > 0 {
-                Text("\(workspace.unreadCount)")
-                    .font(.system(size: 10.5, weight: .semibold).monospacedDigit())
-                    .foregroundStyle(palette.unread)
-                    .padding(.horizontal, 6)
-                    .padding(.vertical, 1.5)
-                    .background(Capsule().fill(palette.unread.opacity(0.12)))
-            }
+            WorkspaceBadges(workspace: workspace)
         }
         .padding(.horizontal, 7)
         .frame(height: 32)
@@ -163,6 +156,13 @@ private struct RailTile: View {
     @Environment(\.palette) private var palette
     @State private var isHovered = false
 
+    private func railDot(_ color: Color) -> some View {
+        Circle()
+            .fill(color)
+            .frame(width: 8, height: 8)
+            .overlay(Circle().stroke(palette.sidebar, lineWidth: 1.5))
+    }
+
     var body: some View {
         WorkspaceIcon(workspace: workspace, size: 34, isSelected: isSelected)
             .padding(3)
@@ -170,25 +170,30 @@ private struct RailTile: View {
                 RoundedRectangle(cornerRadius: 12, style: .continuous)
                     .strokeBorder(isSelected ? workspace.color.opacity(0.7) : (isHovered ? palette.rule : .clear), lineWidth: 1.5)
             )
+            // Reading at the top (blue for new, orange for changed only),
+            // feedback at the foot; the tooltip has the counts.
             .overlay(alignment: .topTrailing) {
                 if workspace.unreadCount > 0 {
-                    Circle()
-                        .fill(palette.unread)
-                        .frame(width: 8, height: 8)
-                        .overlay(Circle().stroke(palette.sidebar, lineWidth: 1.5))
+                    railDot(workspace.newCount > 0 ? palette.unread : palette.change)
                         .offset(x: 1, y: -1)
+                }
+            }
+            .overlay(alignment: .bottomTrailing) {
+                if workspace.feedbackCount > 0 {
+                    railDot(palette.feedback)
+                        .offset(x: 1, y: 1)
                 }
             }
             .contentShape(Rectangle())
             .onTapGesture { model.selectWorkspace(workspace.id) }
             .onHover { isHovered = $0 }
             .reorderable(workspace, edge: .top)
-            .help(workspace.unreadCount > 0 ? "\(workspace.name) — \(workspace.unreadCount) unread" : workspace.name)
+            .help(workspace.badgeSummary.isEmpty ? workspace.name : "\(workspace.name) — \(workspace.badgeSummary)")
             .contextMenu { WorkspaceMenu(workspace: workspace) }
             .identityEditor(for: workspace, arrowEdge: .trailing)
             .accessibilityElement()
             .accessibilityLabel(workspace.name)
-            .accessibilityValue(workspace.unreadCount > 0 ? "\(workspace.unreadCount) unread" : "")
+            .accessibilityValue(workspace.badgeSummary)
             .accessibilityAddTraits(isSelected ? [.isSelected, .isButton] : .isButton)
             .accessibilityAction { model.selectWorkspace(workspace.id) }
     }
