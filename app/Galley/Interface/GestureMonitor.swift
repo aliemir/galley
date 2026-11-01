@@ -1,5 +1,8 @@
 import AppKit
 import SwiftUI
+#if DEBUG
+import WebKit
+#endif
 
 /// Trackpad gestures for the whole window, read from raw scroll events:
 ///
@@ -35,6 +38,9 @@ final class GestureMonitor {
     init(window: NSWindow, model: AppModel) {
         self.window = window
         self.model = model
+        #if DEBUG
+        Self.current = self
+        #endif
         monitor = NSEvent.addLocalMonitorForEvents(matching: .scrollWheel) { [weak self] event in
             MainActor.assumeIsolated { self?.handle(event) ?? event }
         }
@@ -46,7 +52,7 @@ final class GestureMonitor {
     }
 
     private func handle(_ event: NSEvent) -> NSEvent? {
-        guard event.window === window else { return event }
+        guard event.window === window || isInjecting else { return event }
 
         // Mouse wheels have no phases: count notches past the end instead.
         if event.phase.isEmpty, event.momentumPhase.isEmpty {
@@ -108,6 +114,25 @@ final class GestureMonitor {
         }
         return event
     }
+
+    #if DEBUG
+    static weak var current: GestureMonitor?
+    private var isInjecting = false
+
+    /// Feeds a synthesized scroll event through the real handler as if it
+    /// came from this window over the page (`DebugAutomation`'s gestures —
+    /// an app cannot attach its own window to an event it builds).
+    func inject(_ event: NSEvent) {
+        isInjecting = true
+        defer { isInjecting = false }
+        if let passed = handle(event), passed.phase.contains(.changed) || passed.phase.contains(.began) {
+            // The page would have scrolled: do it, so a pull meets a real end.
+            model.reader.webView.evaluateJavaScript("window.scrollBy(0, \(-passed.scrollingDeltaY))")
+        }
+    }
+    #else
+    private let isInjecting = false
+    #endif
 
     // MARK: Swipe
 
@@ -182,6 +207,7 @@ final class GestureMonitor {
     }
 
     private func isOverPage(_ event: NSEvent) -> Bool {
+        if isInjecting { return true }
         let webView = model.reader.webView
         guard webView.window === window else { return false }
         let point = webView.convert(event.locationInWindow, from: nil)

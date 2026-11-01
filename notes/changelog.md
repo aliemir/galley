@@ -26,6 +26,12 @@ otherwise have to re-derive. Not worth one: typo fixes and formatting.
 
 ## 2026-11-01
 
+- Real-screen pass (Screen Recording granted): captured the window, the
+  Appearance popover and both Settings tabs. Fixed the popover overflowing
+  its edge and misaligned rows, the Settings window's empty third, and a
+  swipe bug where a revealing column stayed hidden until release
+- Debug automation can now open the popover and Settings and inject phased
+  trackpad swipes and pulls; `tools/window-bounds.swift` finds window ids
 - Second review pass (independent read of the whole app): 15 defects fixed —
   overlapping highlights, find offsets, exact-position restore, baseline
   scans, wikilink crashes, `$$` edge cases, safe link handling, sandboxed

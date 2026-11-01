@@ -187,6 +187,13 @@ swift tools/galley-debug.swift level.3 theme.sepia open.1 snapshot
 #   → /private/tmp/galley-debug/snapshot.png (chrome + page, no permissions)
 #   commands: level.N theme.<id> open.N next fold unfold scroll.N highlight
 #             palette dark light resize.small|large reset probe snapshot
+#             appearance[.close] settings[.reading|.appearance|.close]
+#             swipe.right|left|hold|release pull.hold|release (trackpad
+#             gestures fed through the real GestureMonitor)
+# real on-screen captures (needs Screen Recording for the terminal) —
+# popovers and Settings are their own windows, so capture by window id:
+swift tools/window-bounds.swift Galley     # id layer x,y,w,h title
+screencapture -x -o -l <id> shot.png
 
 # regenerate the placeholder app icon
 swift tools/make-icon.swift app/Galley/Assets.xcassets/AppIcon.appiconset

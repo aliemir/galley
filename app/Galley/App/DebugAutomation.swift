@@ -17,6 +17,8 @@ final class DebugAutomation {
     static let commands = [
         "snapshot", "probe", "reload", "reset", "palette", "palette.close", "highlight", "next", "previous", "fold", "unfold", "change", "find.close", "resize.small", "resize.large",
         "scroll.top", "scroll.bottom", "dark", "light", "system",
+        "appearance", "appearance.close", "settings", "settings.close", "settings.reading", "settings.appearance",
+        "swipe.right", "swipe.left", "swipe.hold", "swipe.release", "pull.hold", "pull.release",
     ] + (1...4).map { "level.\($0)" }
         + Theme.all.map { "theme.\($0.id)" }
         + (0..<30).map { "open.\($0)" }
@@ -64,6 +66,18 @@ final class DebugAutomation {
                 MainActor.assumeIsolated { self.model.highlightSelection() }
             }
         case "palette": model.isQuickOpenVisible = argument != "close"
+        case "appearance": model.isAppearanceVisible = argument != "close"
+        case "settings":
+            if argument == "reading" || argument == "appearance" {
+                UserDefaults.standard.set(argument, forKey: "settingsTab")
+            }
+            if argument == "close" {
+                NSApp.windows.first { $0.identifier?.rawValue.contains("Settings") == true }?.close()
+            } else if let menu = NSApp.mainMenu?.items.first?.submenu,
+                      let index = menu.items.firstIndex(where: { $0.keyEquivalent == "," }) {
+                // The SwiftUI Settings scene opens only through its menu item.
+                menu.performActionForItem(at: index)
+            }
         case "reset":
             for workspace in model.workspaces { model.removeWorkspace(workspace.id) }
         case "reload": model.reader.webView.load(URLRequest(url: URL(string: "galley://app/reader.html")!))
@@ -98,8 +112,60 @@ final class DebugAutomation {
             let size = argument == "small" ? NSSize(width: 900, height: 640) : NSSize(width: 1440, height: 900)
             window.setFrame(NSRect(origin: window.frame.origin, size: size), display: true, animate: false)
         case "find": model.hideFind()
+        case "swipe":
+            // Trackpad fingers: positive x is rightward, which reveals.
+            switch argument {
+            case "right": Task { await gesture(dx: 120, dy: 0, release: true) }
+            case "left": Task { await gesture(dx: -120, dy: 0, release: true) }
+            case "hold": Task { await gesture(dx: 100, dy: 0, release: false) }
+            default: postScroll(phase: .ended, dx: 0, dy: 0)
+            }
+        case "pull":
+            // Classic scrolling: fingers moving down scroll toward the end.
+            if argument == "hold" { Task { await gesture(dx: 0, dy: 170, release: false) } } else { postScroll(phase: .ended, dx: 0, dy: 0) }
         default: break
         }
+    }
+
+    /// A two-finger trackpad gesture as AppKit would deliver it: phased,
+    /// precise scroll events over the page. `dx`/`dy` are finger travel
+    /// (right and down positive). Built events report classic scrolling
+    /// (`isDirectionInvertedFromDevice` false), where the scroll delta runs
+    /// against the fingers, so the deltas are negated.
+    private func gesture(dx: Double, dy: Double, release: Bool) async {
+        let steps = 12
+        postScroll(phase: .began, dx: 0, dy: 0)
+        for _ in 0..<steps {
+            try? await Task.sleep(for: .milliseconds(12))
+            postScroll(phase: .changed, dx: -dx / Double(steps), dy: -dy / Double(steps))
+        }
+        if release {
+            try? await Task.sleep(for: .milliseconds(12))
+            postScroll(phase: .ended, dx: 0, dy: 0)
+        }
+    }
+
+    private enum ScrollPhase: Int64 { case began = 1, changed = 2, ended = 4 }
+
+    private func postScroll(phase: ScrollPhase, dx: Double, dy: Double) {
+        guard let window = mainWindow, let screen = window.screen else { return }
+        let webView = model.reader.webView
+        let local = webView.convert(NSPoint(x: webView.bounds.midX, y: webView.bounds.midY), to: nil)
+        let global = window.convertPoint(toScreen: local)
+        guard let event = CGEvent(scrollWheelEvent2Source: nil, units: .pixel, wheelCount: 2,
+                                  wheel1: Int32(dy), wheel2: Int32(dx), wheel3: 0) else { return }
+        event.location = CGPoint(x: global.x, y: screen.frame.maxY - global.y)
+        event.setIntegerValueField(.scrollWheelEventIsContinuous, value: 1)
+        event.setIntegerValueField(.scrollWheelEventScrollPhase, value: phase.rawValue)
+        event.setDoubleValueField(.scrollWheelEventPointDeltaAxis1, value: dy)
+        event.setDoubleValueField(.scrollWheelEventPointDeltaAxis2, value: dx)
+        event.setDoubleValueField(.scrollWheelEventFixedPtDeltaAxis1, value: dy)
+        event.setDoubleValueField(.scrollWheelEventFixedPtDeltaAxis2, value: dx)
+        event.setIntegerValueField(.mouseEventWindowUnderMousePointer, value: Int64(window.windowNumber))
+        event.setIntegerValueField(.mouseEventWindowUnderMousePointerThatCanHandleThisEvent, value: Int64(window.windowNumber))
+        guard let ns = NSEvent(cgEvent: event) else { return }
+        debugLog("[swipe] phase=\(ns.phase.rawValue) dx=\(ns.scrollingDeltaX) dy=\(ns.scrollingDeltaY) inverted=\(ns.isDirectionInvertedFromDevice)")
+        GestureMonitor.current?.inject(ns)
     }
 
     private var mainWindow: NSWindow? {
