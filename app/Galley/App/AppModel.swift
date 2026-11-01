@@ -32,6 +32,13 @@ enum PanelColumn: String, CaseIterable, Identifiable {
     /// Where the columns sit, left to right, whatever the reveal order.
     static let arrangement: [PanelColumn] = [.workspaces, .files, .outline]
 
+    /// The swipe order until the reader sets one: the file list first.
+    static let defaultOrder: [PanelColumn] = [.files, .outline, .workspaces]
+
+    /// The fixed levels before columns had an order: what a stored level
+    /// number counted through.
+    static let legacyOrder: [PanelColumn] = [.outline, .files, .workspaces]
+
     var title: String {
         switch self {
         case .outline: "Contents"
@@ -103,7 +110,7 @@ final class AppModel {
     init() {
         let state = library.state
         // Older libraries kept a depth into the default order as a 1-based level.
-        let byLevel = { (level: Int) in Set(PanelColumn.allCases.prefix(max(0, level - 1))) }
+        let byLevel = { (level: Int) in Set(PanelColumn.legacyOrder.prefix(max(0, level - 1))) }
         visibleColumns = state.visibleColumns.map { Set($0.compactMap(PanelColumn.init(rawValue:))) } ?? byLevel(state.level)
         lastVisibleColumns = state.lastVisibleColumns.map { Set($0.compactMap(PanelColumn.init(rawValue:))) } ?? byLevel(state.lastPanelLevel)
         for record in state.workspaces {

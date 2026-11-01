@@ -152,10 +152,17 @@ final class ReaderSettings {
         nameStyle = NameStyle(rawValue: d.string(forKey: "nameStyle") ?? "") ?? .pretty
         continueOrder = ContinueOrder(rawValue: d.string(forKey: "continueOrder") ?? "") ?? .folder
         pullToContinue = d.object(forKey: "pullToContinue") as? Bool ?? true
-        let order = (d.stringArray(forKey: "columnOrder") ?? []).compactMap(PanelColumn.init(rawValue:))
+        var order = (d.stringArray(forKey: "columnOrder") ?? []).compactMap(PanelColumn.init(rawValue:))
+        // The first default led with Contents; an order still equal to it
+        // was never chosen, so it moves to the new default once.
+        if order == PanelColumn.legacyOrder, !d.bool(forKey: "columnOrderMigrated") {
+            order = PanelColumn.defaultOrder
+            d.set(order.map(\.rawValue), forKey: "columnOrder")
+        }
+        d.set(true, forKey: "columnOrderMigrated")
         // Unknown or missing columns join at the end, so a new one is never lost.
         var seen = Set<PanelColumn>()
-        columnOrder = (order + PanelColumn.allCases).filter { seen.insert($0).inserted }
+        columnOrder = (order + PanelColumn.defaultOrder).filter { seen.insert($0).inserted }
         swipeSkips = Set((d.stringArray(forKey: "hiddenColumns") ?? []).compactMap(PanelColumn.init(rawValue:)))
         workspacesAsIcons = d.object(forKey: "workspacesAsIcons") as? Bool ?? false
         columnWidths = d.dictionary(forKey: "columnWidths") as? [String: Double] ?? [:]

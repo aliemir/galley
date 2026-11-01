@@ -29,7 +29,8 @@ each shows or hides on its own (⌘1 / ⌘2 / ⌘3, the View menu; ⌘\ for all)
 - Two-finger horizontal swipe, **interactive** — the column follows the
   fingers and snaps on release (fingers right = reveal, left = hide). Which
   column comes next is the reader's order (Settings → Reading → Columns,
-  drag to reorder; a column switched off there is passed over).
+  drag to reorder; a column switched off there is passed over). The default
+  order is Files, Contents, Workspaces.
 - `⌘]` / `⌘[` do what a swipe does.
 - Column widths are the reader's: drag a divider, double-click it for the
   default. Workspaces can be a rail of icons (⌥⌘4).
