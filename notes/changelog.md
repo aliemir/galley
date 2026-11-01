@@ -26,6 +26,10 @@ otherwise have to re-derive. Not worth one: typo fixes and formatting.
 
 ## 2026-11-01
 
+- Highlights snap to whole words without crossing into the next block: a
+  drag to the end of the front matter no longer took the heading's first
+  word with it (which put the note under the heading); a note on the front
+  matter sits under the whole block, not inside its grid
 - Contents and Files lists end with 32 pt of space, so the last row can be
   scrolled clear of the window's bottom edge; the workspace list gets a little
 - Tidied names are title case: "Auth Migration Plan", with short words

@@ -602,6 +602,21 @@
     return total;
   }
 
+  const BLOCK = 'p, li, h1, h2, h3, h4, h5, h6, td, th, pre, blockquote, dt, dd, figcaption, summary, caption';
+
+  /// Reading-text offsets where one block ends and the next begins.
+  function blockBreaks(root) {
+    const breaks = new Set();
+    let total = 0, previous = null;
+    for (const node of readingNodes(root)) {
+      const block = node.parentElement.closest(BLOCK);
+      if (total > 0 && block !== previous) breaks.add(total);
+      previous = block;
+      total += node.data.length;
+    }
+    return breaks;
+  }
+
   function selectionAnchor() {
     const content = $('#content');
     const selection = window.getSelection();
@@ -634,10 +649,14 @@
       to = Math.max(to, readingOffset(content, last, 0) + last.textContent.length);
     }
     // A drag that stops a letter short, or starts one in, still means the
-    // word: highlights cover whole words, as in Books.
+    // word: highlights cover whole words, as in Books. Never across blocks:
+    // the reading text runs one block into the next with nothing between,
+    // so a drag that ends at the very start of the next heading would
+    // otherwise take its first word along.
+    const breaks = blockBreaks(content);
     const word = /[\p{L}\p{N}'’-]/u;
-    while (from > 0 && word.test(full[from - 1]) && word.test(full[from])) from--;
-    while (to < full.length && word.test(full[to]) && word.test(full[to - 1])) to++;
+    while (from > 0 && !breaks.has(from) && word.test(full[from - 1]) && word.test(full[from])) from--;
+    while (to < full.length && !breaks.has(to) && word.test(full[to]) && word.test(full[to - 1])) to++;
     while (from < to && /\s/.test(full[from])) from++;
     while (to > from && /\s/.test(full[to - 1])) to--;
     const text = full.slice(from, to);
@@ -719,6 +738,10 @@
   let pendingNote = null;
 
   function noteBlock(mark) {
+    // The front matter is a grid of names and values: the card goes under
+    // the whole of it, not into the grid as one more cell.
+    const front = mark.closest('dl.front-matter');
+    if (front) return { el: front, inside: false };
     const inner = mark.closest('li, td, th');
     if (inner) return { el: inner, inside: true };
     const block = mark.closest('p, h1, h2, h3, h4, h5, h6, blockquote, pre, dd, dt, figure, .callout, table');
