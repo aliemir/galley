@@ -11,6 +11,10 @@ nonisolated struct ScrollAnchor: Codable, Hashable, Sendable {
     var unit: Int
     var offset: Double
     var heading: String?
+
+    /// The end of the document — where the previous document opens when the
+    /// reader pulls back into it.
+    static let end = ScrollAnchor(unit: -2, offset: 0)
 }
 
 struct PagePayload: Encodable {
@@ -43,6 +47,7 @@ struct PagePayload: Encodable {
     var highlights: [Highlight]
     var scroll: ScrollAnchor?
     var next: Next?
+    var previous: Next?
     var endLabel: String?
     var transition: String
 }
@@ -141,7 +146,8 @@ final class ReaderController: NSObject {
     }
 
     func scrollToHeading(_ id: String) { run("Reader.scrollToHeading(\(Self.json(id)))") }
-    func setPull(_ progress: Double) { run("Reader.setPull(\(progress))") }
+    /// Fills the pull ring at the page's `end` (next document) or `start` (previous).
+    func setPull(_ progress: Double, atStart: Bool = false) { run("Reader.setPull(\(progress), \(atStart))") }
     func fold(_ id: String, folded: Bool) { run("Reader.fold(\(Self.json(id)), \(folded))") }
     func foldAll(_ folded: Bool) { run("Reader.foldAll(\(folded))") }
     func scrollPage(_ direction: Int) { run("Reader.scrollPage(\(direction))") }

@@ -73,6 +73,7 @@ final class AppModel {
     @ObservationIgnored private var lastPanelLevel: PanelLevel = .files
     @ObservationIgnored private var pendingRestore: String?
     @ObservationIgnored private var readerAtBottom = false
+    @ObservationIgnored private var readerAtTop = true
 
     var selectedWorkspace: Workspace? {
         workspaces.first { $0.id == selectedWorkspaceID }
@@ -357,7 +358,9 @@ final class AppModel {
     }
 
     /// Opens `file`; with `heading`, at that section instead of the saved place.
-    func open(_ file: DocumentFile, transition: String = "none", heading: String? = nil) {
+    /// `landingAtEnd` opens the file scrolled to its end — pulling back into
+    /// the previous document continues upward through it.
+    func open(_ file: DocumentFile, transition: String = "none", heading: String? = nil, landingAtEnd: Bool = false) {
         guard let workspace = selectedWorkspace ?? workspaces.first(where: { $0.file(file.id) != nil }) else { return }
         if current?.file.id == file.id, current?.workspaceID == workspace.id {
             if let heading { reader.scrollToHeading(heading) }
@@ -365,13 +368,13 @@ final class AppModel {
         }
         guard let source = WorkspaceScanner.read(file.url) else { return }
         leaveCurrent()
-        load(file, in: workspace, source: source, transition: transition, heading: heading)
+        load(file, in: workspace, source: source, transition: transition, heading: heading, landingAtEnd: landingAtEnd)
         library.updateWorkspace(workspace.id) { $0.selectedFile = file.id }
     }
 
     /// Renders `source` and shows it. A nil transition means the same file
     /// changed on disk: the page updates in place, keeping the reader's spot.
-    private func load(_ file: DocumentFile, in workspace: Workspace, source: String, transition: String?, heading: String? = nil) {
+    private func load(_ file: DocumentFile, in workspace: Workspace, source: String, transition: String?, heading: String? = nil, landingAtEnd: Bool = false) {
         let renderer = MarkdownRenderer(baseURL: file.url.deletingLastPathComponent())
         let rendered = renderer.render(source)
         let record = workspace.record?.files[file.id]
@@ -392,6 +395,8 @@ final class AppModel {
             anchor = current?.anchor
         } else if let heading {
             anchor = ScrollAnchor(unit: -1, offset: 0, heading: heading)
+        } else if landingAtEnd {
+            anchor = .end
         } else if status == .changed, let first = changes.units.keys.min() {
             // Coming back to a changed file: start at the first change.
             anchor = ScrollAnchor(unit: max(0, first), offset: 0)
@@ -416,6 +421,7 @@ final class AppModel {
         if !isUpdate {
             currentHeading = nil
             readerAtBottom = false
+            readerAtTop = false
         }
         if isFindVisible, !isUpdate { findResult = (0, -1) }
         refreshPage(transition: transition, keepPosition: isUpdate)
@@ -485,6 +491,10 @@ final class AppModel {
             nextPayload = .init(title: settings.displayName(for: next), label: "Next", why: why)
         }
 
+        let previous = previousFile(before: document.file, in: workspace).map {
+            PagePayload.Next(title: settings.displayName(for: $0), label: "Previous", why: nil)
+        }
+
         return PagePayload(
             id: document.id,
             html: document.rendered.html,
@@ -500,6 +510,7 @@ final class AppModel {
             highlights: document.highlights,
             scroll: document.anchor,
             next: nextPayload,
+            previous: previous,
             endLabel: workspace.files.count > 1 ? "End of \(workspace.name)" : nil,
             transition: transition
         )
@@ -565,10 +576,10 @@ final class AppModel {
         open(next, transition: "up")
     }
 
-    func goToPrevious() {
+    func goToPrevious(landingAtEnd: Bool = false) {
         guard let current, let workspace = currentWorkspace,
               let previous = previousFile(before: current.file, in: workspace) else { NSSound.beep(); return }
-        open(previous, transition: "down")
+        open(previous, transition: "down", landingAtEnd: landingAtEnd)
     }
 
     func goToNextUnread() {
@@ -660,6 +671,7 @@ final class AppModel {
             current?.anchor = report.anchor
             if report.reachedEnd { current?.reachedEnd = true }
             readerAtBottom = report.atBottom
+            readerAtTop = report.atTop
             if currentHeading != report.anchor.heading { currentHeading = report.anchor.heading }
         case .link(let href):
             followLink(href)
@@ -682,6 +694,7 @@ final class AppModel {
     }
 
     var isReaderAtBottom: Bool { readerAtBottom }
+    var isReaderAtTop: Bool { readerAtTop }
 
     /// Moves keyboard focus into the page, so arrows and Space scroll it.
     func focusPage() {

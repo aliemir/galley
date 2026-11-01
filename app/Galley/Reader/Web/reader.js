@@ -70,11 +70,32 @@
       `<span class="title">${esc(d.next.title)}</span>${why}</footer>`;
   }
 
+  /// The pull-back cue: fixed under the top bar, outside #page so the page
+  /// can slide away from it while the reader pulls.
+  function renderPreviousCue(d) {
+    let cue = document.getElementById('prev-pull');
+    if (!cue) {
+      cue = document.createElement('div');
+      cue.id = 'prev-pull';
+      cue.setAttribute('aria-hidden', 'true');
+      document.body.appendChild(cue);
+    }
+    cue.className = '';
+    cue.style.opacity = '';
+    if (!d.previous) { cue.innerHTML = ''; return; }
+    cue.innerHTML = `<svg class="ring" viewBox="0 0 26 26"><circle class="track" cx="13" cy="13" r="11"/>` +
+      `<circle class="fill" cx="13" cy="13" r="11" stroke-dasharray="69.12" stroke-dashoffset="69.12"/>` +
+      `<path class="arrow" d="M13 17.5V9.3M9.6 12.7 13 9.3l3.4 3.4"/></svg>` +
+      `<span class="label">${esc(d.previous.label || 'Previous')}</span><span class="title">${esc(d.previous.title)}</span>`;
+  }
+
   function render(d) {
     generation += 1;
     doc = d;
     const page = $('#page');
     page.innerHTML = headerHTML(d) + `<div id="content">${d.html}</div>` + footerHTML(d) + '<div id="gutter"></div>';
+    renderPreviousCue(d);
+    page.style.translate = '';
     if (d.header && d.header.title) {
       // A derived title would repeat a leading H1 in the document itself.
       const first = $('#content > .sec:first-child > h1:first-child, #content > h1:first-child');
@@ -448,6 +469,7 @@
 
   function restore(anchor) {
     if (!anchor) { window.scrollTo(0, 0); return; }
+    if (anchor.unit === -2) { window.scrollTo(0, document.documentElement.scrollHeight); return; }
     let el = anchor.unit >= 0 ? $(`#content [data-b="${anchor.unit}"]`) : null;
     if (!el && anchor.heading) { scrollToHeading(anchor.heading, false); return; }
     if (!el) { window.scrollTo(0, 0); return; }
@@ -839,12 +861,17 @@
     },
 
     scrollToHeading(id) { scrollToHeading(id, true); },
-    setPull(progress) {
-      const footer = $('footer.next:not(.end)');
-      if (!footer) return;
-      const fill = $('.ring .fill', footer);
+    setPull(progress, atStart = false) {
+      const target = atStart ? document.getElementById('prev-pull') : $('footer.next:not(.end)');
+      if (!target) return;
+      const fill = $('.ring .fill', target);
       if (fill) fill.setAttribute('stroke-dashoffset', String(69.12 * (1 - Math.min(1, progress))));
-      footer.classList.toggle('ready', progress >= 1);
+      target.classList.toggle('ready', progress >= 1);
+      if (atStart) {
+        // The page eases down to make room for the cue, which fades in.
+        target.style.opacity = String(Math.min(1, progress * 2.5));
+        $('#page').style.translate = progress > 0 ? `0 ${Math.round(Math.min(1, progress) * 34)}px` : '';
+      }
     },
     fold(id, folded) { setFolded($(`#content .sec[data-sec="${CSS.escape(id)}"]`), folded, false); },
     foldAll(folded) {

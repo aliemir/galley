@@ -57,7 +57,7 @@ body {
   max-width: var(--measure);
   margin: 0 auto;
   padding: calc(var(--top) + 6px) var(--gutter) 0;
-  transition: opacity .16s ease, transform .16s ease;
+  transition: opacity .16s ease, transform .16s ease, translate .12s ease-out;
 }
 #page.leaving-up { opacity: 0; transform: translateY(-28px); }
 #page.leaving-down { opacity: 0; transform: translateY(28px); }
@@ -363,11 +363,11 @@ ins.g-ins { text-decoration: none; background: var(--insert); border-radius: 2px
 @keyframes flash { 0%, 30% { background-color: var(--insert); } 100% { background-color: transparent; } }
 
 /* — Highlights ———————————————————————————————————————————————— */
-
-mark.hl {
 /* No inline element in running text may use box-decoration-break: clone —
    WebKit then drops text-wrap: pretty for the whole paragraph, so adding a
    highlight or a change mark would re-wrap (and re-hyphenate) it. */
+
+mark.hl {
   color: inherit; border-radius: 3px; padding: .02em 0;
   background: linear-gradient(to bottom, transparent 8%, var(--mark) 8%, var(--mark) 94%, transparent 94%);
   cursor: pointer;
@@ -398,12 +398,24 @@ footer.next {
   cursor: pointer; -webkit-user-select: none;
 }
 footer.next .ring { display: block; width: 26px; height: 26px; margin: 0 auto .8em; transition: transform .25s ease; }
-footer.next .ring circle { fill: none; stroke-width: 2; }
-footer.next .ring .track { stroke: var(--rule); }
-footer.next .ring .fill { stroke: var(--accent); stroke-linecap: round; transform: rotate(-90deg); transform-origin: 50% 50%; transition: stroke-dashoffset .08s linear; }
-footer.next .ring .arrow { fill: none; stroke: var(--ink-3); stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+.ring circle { fill: none; stroke-width: 2; }
+.ring .track { stroke: var(--rule); }
+.ring .fill { stroke: var(--accent); stroke-linecap: round; transform: rotate(-90deg); transform-origin: 50% 50%; transition: stroke-dashoffset .08s linear; }
+.ring .arrow { fill: none; stroke: var(--ink-3); stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
 footer.next.ready .ring { transform: translateY(-3px); }
-footer.next.ready .ring .arrow { stroke: var(--accent); }
+.ready .ring .arrow { stroke: var(--accent); }
+
+#prev-pull {
+  position: fixed; left: 0; right: 0; top: calc(var(--top) - 10px); z-index: 5;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  padding: 0 var(--gutter); opacity: 0; pointer-events: none;
+  font-family: var(--font-ui); color: var(--ink-3); transition: opacity .12s linear;
+}
+#prev-pull:empty { display: none; }
+#prev-pull .ring { width: 20px; height: 20px; flex: none; transition: transform .25s ease; }
+#prev-pull.ready .ring { transform: translateY(3px); }
+#prev-pull .label { font: 600 10px/1 var(--font-ui); letter-spacing: .1em; text-transform: uppercase; }
+#prev-pull .title { font: italic 13px/1.2 var(--font-body); color: var(--ink-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 40ch; }
 footer.next .label { display: block; font: 600 10.5px/1.5 var(--font-ui); letter-spacing: .1em; text-transform: uppercase; }
 footer.next .title { display: block; margin-top: .35em; font: italic 1.12em/1.35 var(--font-body); color: var(--ink-2); text-wrap: balance; }
 footer.next .why { display: block; margin-top: .5em; font-size: 11px; color: var(--ink-3); }
@@ -425,7 +437,7 @@ footer.next.end .title { font-style: normal; font-family: var(--font-ui); font-s
   }
   html { font-size: 11pt; background: #fff; }
   #page { max-width: none; padding: 0; }
-  #gutter, button.fold, pre > button.copy, button.pill, footer.next { display: none !important; }
+  #gutter, button.fold, pre > button.copy, button.pill, footer.next, #prev-pull { display: none !important; }
   .sec.folded > .sec-body { display: block; }
   .sec.folded > :is(h1, h2, h3, h4, h5, h6)::after { content: none; }
   a { color: inherit; text-decoration-color: #999; }

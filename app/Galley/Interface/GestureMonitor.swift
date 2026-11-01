@@ -8,10 +8,10 @@ import WebKit
 ///
 /// - **Horizontal two-finger swipe** — moves along the panel axis, and the
 ///   column follows the fingers. Fingers right reveal, fingers left hide.
-/// - **Pull past the end** — a *fresh* downward scroll that starts when the
-///   page is already at its end fills the ring in the footer; releasing it
-///   full opens the next document. Momentum and a scroll that merely arrives
-///   at the end never count, so skimming cannot flip the page.
+/// - **Pull past an edge** — a *fresh* scroll that starts when the page is
+///   already at its end (or top) and keeps going fills a ring; releasing it
+///   full opens the next (or previous) document. Momentum and a scroll that
+///   merely arrives at an edge never count, so skimming cannot flip the page.
 @MainActor
 final class GestureMonitor {
     private weak var window: NSWindow?
@@ -23,16 +23,22 @@ final class GestureMonitor {
     private var lock = AxisLock()
     /// Events held back while the direction is still unclear.
     private var held: [NSEvent] = []
-    private var pullArmed = false
+    private enum PullEdge { case end, start }
+    /// Edges this gesture may pull past, set when it begins at one.
+    private var pullEdges: Set<PullEdge> = []
+    /// The edge being pulled, once the gesture has moved toward one.
+    private var pullEdge: PullEdge?
+    private var pullArmed: Bool { !pullEdges.isEmpty }
     private var pull: CGFloat = 0
     private var wheelPull: CGFloat = 0
+    private var wheelEdge: PullEdge?
     /// After a pull opens the next page, its momentum must not scroll it.
     private var swallowMomentum = false
     private var wheelReset: Task<Void, Never>?
 
     /// Points of finger travel for a full column reveal.
     private let swipeDistance: CGFloat = 200
-    /// Points of extra pull to continue to the next document.
+    /// Points of extra pull to continue to the next or previous document.
     private let pullDistance: CGFloat = 150
 
     init(window: NSWindow, model: AppModel) {
@@ -73,7 +79,12 @@ final class GestureMonitor {
             lock = AxisLock()
             held = []
             pull = 0
-            pullArmed = model.settings.pullToContinue && model.isReaderAtBottom && isOverPage(event) && hasNext
+            pullEdges = []
+            pullEdge = nil
+            if model.settings.pullToContinue, isOverPage(event) {
+                if model.isReaderAtBottom, hasNext { pullEdges.insert(.end) }
+                if model.isReaderAtTop, hasPrevious { pullEdges.insert(.start) }
+            }
         }
 
         if event.phase.contains(.changed) || event.phase.contains(.began) {
@@ -115,12 +126,11 @@ final class GestureMonitor {
             deliverHeld()
             if pullArmed {
                 let ready = pull >= pullDistance && !cancelled
-                pullArmed = false
-                pull = 0
-                model.reader.setPull(0)
-                if ready {
+                let edge = pullEdge
+                resetPull()
+                if ready, let edge {
                     swallowMomentum = true
-                    model.goToNext()
+                    if edge == .end { model.goToNext() } else { model.goToPrevious(landingAtEnd: true) }
                 }
             }
         }
@@ -194,45 +204,67 @@ final class GestureMonitor {
         return model.nextFile(after: current.file, in: workspace) != nil
     }
 
-    private func updatePull(towardEnd delta: CGFloat) {
-        pull += delta
-        if pull < -4 {
-            // Scrolled back up: this gesture is reading, not turning the page.
-            pullArmed = false
-            pull = 0
-            model.reader.setPull(0)
-            return
-        }
-        model.reader.setPull(Double(max(0, pull) / pullDistance))
+    private var hasPrevious: Bool {
+        guard let current = model.current, let workspace = model.currentWorkspace else { return false }
+        return model.previousFile(before: current.file, in: workspace) != nil
     }
 
+    /// `delta` is scroll toward the end of the page (negative: toward the top).
+    private func updatePull(towardEnd delta: CGFloat) {
+        if pullEdge == nil, delta != 0 {
+            // A short page can be at both edges: the first movement picks one.
+            pullEdge = delta > 0 ? (pullEdges.contains(.end) ? .end : nil) : (pullEdges.contains(.start) ? .start : nil)
+            if pullEdge == nil { resetPull(); return }
+        }
+        guard let edge = pullEdge else { return }
+        pull += edge == .end ? delta : -delta
+        if pull < -4 {
+            // Turned back: this gesture is reading, not turning the page.
+            resetPull()
+            return
+        }
+        model.reader.setPull(Double(max(0, pull) / pullDistance), atStart: edge == .start)
+    }
+
+    private func resetPull() {
+        if let pullEdge { model.reader.setPull(0, atStart: pullEdge == .start) }
+        pullEdges = []
+        pullEdge = nil
+        pull = 0
+    }
+
+    /// Mouse wheels: notches past the end (or top) count toward the pull.
     private func handleWheel(_ event: NSEvent) -> NSEvent? {
-        guard model.settings.pullToContinue, isOverPage(event), hasNext, model.isReaderAtBottom else {
-            wheelPull = 0
-            return event
-        }
         let towardEnd = -event.scrollingDeltaY
-        guard towardEnd > 0 else {
-            wheelPull = 0
-            model.reader.setPull(0)
+        let edge: PullEdge? = towardEnd > 0
+            ? (model.isReaderAtBottom && hasNext ? .end : nil)
+            : (towardEnd < 0 && model.isReaderAtTop && hasPrevious ? .start : nil)
+        guard model.settings.pullToContinue, isOverPage(event), let edge else {
+            clearWheelPull()
             return event
         }
-        wheelPull += towardEnd * (event.hasPreciseScrollingDeltas ? 1 : 10)
+        if wheelEdge != edge { clearWheelPull() }
+        wheelEdge = edge
+        wheelPull += abs(towardEnd) * (event.hasPreciseScrollingDeltas ? 1 : 10)
         let threshold = pullDistance * 1.6
-        model.reader.setPull(Double(wheelPull / threshold))
+        model.reader.setPull(Double(wheelPull / threshold), atStart: edge == .start)
         if wheelPull >= threshold {
-            wheelPull = 0
-            model.reader.setPull(0)
-            model.goToNext()
+            clearWheelPull()
+            if edge == .end { model.goToNext() } else { model.goToPrevious(landingAtEnd: true) }
         }
         wheelReset?.cancel()
         wheelReset = Task { [weak self] in
             try? await Task.sleep(for: .milliseconds(700))
-            guard !Task.isCancelled, let self else { return }
-            self.wheelPull = 0
-            self.model.reader.setPull(0)
+            guard !Task.isCancelled else { return }
+            self?.clearWheelPull()
         }
         return event
+    }
+
+    private func clearWheelPull() {
+        if let wheelEdge { model.reader.setPull(0, atStart: wheelEdge == .start) }
+        wheelEdge = nil
+        wheelPull = 0
     }
 
     private func isOverPage(_ event: NSEvent) -> Bool {

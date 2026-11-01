@@ -35,7 +35,9 @@ page alone; each step right reveals the next column to the left.
 Footer "Next: *title*". At the bottom, a fresh downward pull (not momentum from
 skimming) fills a ring; release past the threshold slides the next document up
 in place. Leaving a document after a real look marks it read. Order: folder
-order, or the unread queue.
+order, or the unread queue. The same pull upward at the top goes back to the
+previous document (folder order) and lands at its end, so reading continues
+upward through it; a cue under the top bar names it and fills as you pull.
 
 ## Change tracking
 
