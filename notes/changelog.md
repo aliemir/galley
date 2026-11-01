@@ -24,6 +24,12 @@ otherwise have to re-derive. Not worth one: typo fixes and formatting.
 
 <!-- newest entries go directly below this line -->
 
+## 2026-11-02
+
+- The minimum is macOS 15 Sequoia (was 26): nothing needed 26; it builds for
+  15 unchanged. The website says so
+
+
 ## 2026-11-01
 
 - The website (`website/`, not deployed yet): a landing page that reads like

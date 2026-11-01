@@ -461,6 +461,8 @@ footer.doc-end.end .title { font: 12px/1.4 var(--font-ui); color: var(--ink-3); 
 
 :root.pull-armed { overscroll-behavior-y: none; }
 :root.panels-moving { scrollbar-width: none; }
+/* macOS 15.0 and 15.1 (WebKit before scrollbar-width): the older way. */
+:root.panels-moving ::-webkit-scrollbar { width: 0; height: 0; }
 .pull-cue {
   position: fixed; left: 0; right: 0; z-index: 5;
   display: flex; align-items: center; justify-content: center; gap: 8px;

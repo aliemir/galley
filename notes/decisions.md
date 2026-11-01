@@ -4,7 +4,7 @@ What was chosen and why, with the options turned down. Newest first.
 
 ## 2026-10-31 — Native macOS only
 
-**Chosen:** a single macOS target (SwiftUI + AppKit), macOS 26.0 minimum,
+**Chosen:** a single macOS target (SwiftUI + AppKit), macOS 26.0 minimum (lowered to 15.0 on 2026-11-02, see below),
 built with the macOS SDK. The repo started from the iOS app template; the
 Xcode project, preflight, release skill and store-media docs were retargeted.
 
@@ -304,4 +304,17 @@ same layout the reader's own skills and this repo's already use.
 
 **Rejected:** `.claude/skills` alone (Claude Code only), or a copy per agent
 (copies drift when the skill is updated).
+
+## 2026-11-02 — macOS 15 Sequoia is the minimum
+
+**Chosen:** `MACOSX_DEPLOYMENT_TARGET = 15.0` (was 26.0). Nothing in the app
+needs macOS 26: it builds for 15 with no change. One version further back,
+macOS 14 would need fallbacks for `WindowDragGesture`, `pointerStyle` and
+`allowsWindowActivationEvents` (the title band and the column-resize
+cursor) — not worth it until someone asks. Apple numbers by year since 2025,
+so 15 is the version right before 26.
+
+**What differs on 15:** WebKit there has no `text-wrap: pretty`, so
+paragraphs break a little more plainly; nothing else is known. Test the
+first release on macOS 15 (a virtual machine is enough) before shipping.
 
