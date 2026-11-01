@@ -256,3 +256,29 @@ struct ReviewRegressionTests {
         #expect(state.level == 3)
     }
 }
+
+struct AxisLockTests {
+    private func decide(_ steps: [(CGFloat, CGFloat)]) -> AxisLock.Axis? {
+        var lock = AxisLock()
+        var axis: AxisLock.Axis?
+        for (x, y) in steps where axis == nil { axis = lock.add(x: x, y: y) }
+        return axis
+    }
+
+    @Test func waitsForEnoughTravel() {
+        #expect(decide([(3, 1), (2, 1)]) == nil)
+    }
+
+    @Test func sidewaysSwipeWithAWobbleIsHorizontal() {
+        // Mostly rightward, with a vertical-looking sample in the middle.
+        #expect(decide([(3, 1), (1, 3), (4, 1), (4, 0)]) == .horizontal)
+    }
+
+    @Test func slantedScrollStaysVertical() {
+        #expect(decide([(2, -4), (3, -4), (2, -5)]) == .vertical)
+    }
+
+    @Test func diagonalGoesToTheScroll() {
+        #expect(decide([(5, 5), (5, 5)]) == .vertical)
+    }
+}

@@ -29,6 +29,8 @@
 }
 
 html {
+  /* Sideways gestures are panel swipes: the page never rubber-bands sideways. */
+  overscroll-behavior-x: none;
   background: var(--paper);
   color: var(--ink);
   font-size: var(--size);

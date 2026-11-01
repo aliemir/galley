@@ -14,15 +14,15 @@ import WebKit
 ///   at the end never count, so skimming cannot flip the page.
 @MainActor
 final class GestureMonitor {
-    private enum Axis { case horizontal, vertical }
-
     private weak var window: NSWindow?
     private let model: AppModel
     private var monitor: Any?
 
-    private var axis: Axis?
+    private var axis: AxisLock.Axis?
     private var fingerX: CGFloat = 0
-    private var travel: CGFloat = 0
+    private var lock = AxisLock()
+    /// Events held back while the direction is still unclear.
+    private var held: [NSEvent] = []
     private var pullArmed = false
     private var pull: CGFloat = 0
     private var wheelPull: CGFloat = 0
@@ -70,7 +70,8 @@ final class GestureMonitor {
         if event.phase.contains(.began) {
             axis = nil
             fingerX = 0
-            travel = 0
+            lock = AxisLock()
+            held = []
             pull = 0
             pullArmed = model.settings.pullToContinue && model.isReaderAtBottom && isOverPage(event) && hasNext
         }
@@ -78,20 +79,29 @@ final class GestureMonitor {
         if event.phase.contains(.changed) || event.phase.contains(.began) {
             let dx = event.isDirectionInvertedFromDevice ? event.scrollingDeltaX : -event.scrollingDeltaX
             fingerX += dx
-            travel += abs(event.scrollingDeltaX) + abs(event.scrollingDeltaY)
-            if axis == nil, travel > 8 {
-                axis = abs(fingerX) > abs(event.scrollingDeltaY) * 1.3 && abs(event.scrollingDeltaX) > abs(event.scrollingDeltaY)
-                    ? .horizontal : .vertical
+            if axis == nil {
+                // Nothing reaches the page until the gesture has picked an
+                // axis, so a sideways swipe never nudges the text vertically.
+                switch lock.add(x: event.scrollingDeltaX, y: event.scrollingDeltaY) {
+                case nil:
+                    held.append(event)
+                    return nil
+                case .horizontal?:
+                    axis = .horizontal
+                    held = []
+                case .vertical?:
+                    axis = .vertical
+                    if pullArmed { updatePull(towardEnd: -lock.y + event.scrollingDeltaY) }
+                    deliverHeld()
+                }
             }
             switch axis {
             case .horizontal:
                 model.swipeProgress = swipeProgress()
                 return nil
-            case .vertical:
+            case .vertical, nil:
                 if pullArmed { updatePull(towardEnd: -event.scrollingDeltaY) }
                 return event
-            case nil:
-                return abs(event.scrollingDeltaX) > abs(event.scrollingDeltaY) ? nil : event
             }
         }
 
@@ -101,6 +111,8 @@ final class GestureMonitor {
                 finishSwipe(cancelled: cancelled)
                 return nil
             }
+            // Too short to pick an axis: it was a small scroll after all.
+            deliverHeld()
             if pullArmed {
                 let ready = pull >= pullDistance && !cancelled
                 pullArmed = false
@@ -133,6 +145,23 @@ final class GestureMonitor {
     #else
     private let isInjecting = false
     #endif
+
+    /// Hands held-back events to the page untouched, ahead of the current
+    /// one, so a vertical scroll loses no distance to the axis decision.
+    private func deliverHeld() {
+        let events = held
+        held = []
+        guard !events.isEmpty else { return }
+        #if DEBUG
+        if isInjecting {
+            let y = events.reduce(0) { $0 + $1.scrollingDeltaY }
+            model.reader.webView.evaluateJavaScript("window.scrollBy(0, \(-y))")
+            return
+        }
+        #endif
+        // Straight to the window: they have been through this monitor once.
+        for event in events { window?.sendEvent(event) }
+    }
 
     // MARK: Swipe
 
@@ -212,5 +241,29 @@ final class GestureMonitor {
         guard webView.window === window else { return false }
         let point = webView.convert(event.locationInWindow, from: nil)
         return webView.bounds.contains(point)
+    }
+}
+
+/// Decides whether a two-finger gesture is a sideways swipe or a scroll,
+/// from the travel on both axes once there is enough of it to tell.
+nonisolated struct AxisLock {
+    enum Axis: Equatable { case horizontal, vertical }
+
+    /// Points of travel before deciding: enough to see a direction, little
+    /// enough that a scroll does not feel late.
+    static let distance: CGFloat = 10
+    /// Horizontal wins only when clearly sideways — within about 40° of
+    /// the horizontal — so a slightly slanted scroll stays a scroll.
+    static let bias: CGFloat = 1.2
+
+    private(set) var x: CGFloat = 0
+    private(set) var y: CGFloat = 0
+
+    /// Adds one event's deltas; returns the axis once it is decided.
+    mutating func add(x dx: CGFloat, y dy: CGFloat) -> Axis? {
+        x += dx
+        y += dy
+        guard abs(x) + abs(y) >= Self.distance else { return nil }
+        return abs(x) > abs(y) * Self.bias ? .horizontal : .vertical
     }
 }
