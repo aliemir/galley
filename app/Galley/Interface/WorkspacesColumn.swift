@@ -91,6 +91,7 @@ private struct WorkspaceRow: View {
         .onTapGesture { model.selectWorkspace(workspace.id) }
         .onHover { isHovered = $0 }
         .help(workspace.root.path)
+        .reorderable(workspace, edge: .top)
         .contextMenu { WorkspaceMenu(workspace: workspace) }
         .identityEditor(for: workspace, arrowEdge: .trailing)
         .accessibilityElement(children: .combine)
@@ -166,6 +167,7 @@ private struct RailTile: View {
             .contentShape(Rectangle())
             .onTapGesture { model.selectWorkspace(workspace.id) }
             .onHover { isHovered = $0 }
+            .reorderable(workspace, edge: .top)
             .help(workspace.unreadCount > 0 ? "\(workspace.name) — \(workspace.unreadCount) unread" : workspace.name)
             .contextMenu { WorkspaceMenu(workspace: workspace) }
             .identityEditor(for: workspace, arrowEdge: .trailing)
@@ -195,6 +197,11 @@ private struct WorkspaceMenu: View {
 }
 
 private extension View {
+    /// Drag a workspace onto another to take its place.
+    func reorderable(_ workspace: Workspace, edge: Edge) -> some View {
+        modifier(WorkspaceReorder(workspace: workspace))
+    }
+
     /// The name-and-icon popover, opened from the workspace's context menu.
     func identityEditor(for workspace: Workspace, arrowEdge: Edge) -> some View {
         modifier(IdentityEditorPresenter(workspace: workspace, arrowEdge: arrowEdge))
@@ -219,5 +226,49 @@ private struct IdentityEditorPresenter: ViewModifier {
                 .environment(model)
                 .environment(\.palette, palette)
         }
+    }
+}
+
+/// Drag and drop between workspaces, with a line where the dragged one lands.
+private struct WorkspaceReorder: ViewModifier {
+    let workspace: Workspace
+    @Environment(AppModel.self) private var model
+    @Environment(\.palette) private var palette
+    @State private var isTargeted = false
+
+    private var landsBelow: Bool {
+        // Dragged down the list, a workspace lands below its target; up, above.
+        guard let dragged = model.draggedWorkspace,
+              let from = model.workspaces.firstIndex(where: { $0.id == dragged }),
+              let to = model.workspaces.firstIndex(where: { $0.id == workspace.id }) else { return false }
+        return to > from
+    }
+
+    func body(content: Content) -> some View {
+        content
+            .overlay(alignment: landsBelow ? .bottom : .top) {
+                if isTargeted, model.draggedWorkspace != workspace.id {
+                    Capsule()
+                        .fill(palette.accent)
+                        .frame(height: 2)
+                        .padding(.horizontal, 4)
+                        .offset(y: landsBelow ? 2 : -2)
+                        .allowsHitTesting(false)
+                }
+            }
+            .draggable(workspace.id.uuidString) {
+                HStack(spacing: 6) {
+                    WorkspaceIcon(workspace: workspace, size: 18)
+                    Text(workspace.name).font(.system(size: 12, weight: .medium))
+                }
+                .padding(6)
+                .onAppear { model.draggedWorkspace = workspace.id }
+            }
+            .dropDestination(for: String.self) { items, _ in
+                defer { model.draggedWorkspace = nil }
+                guard let dragged = items.first.flatMap(UUID.init(uuidString:)) else { return false }
+                model.moveWorkspace(dragged, to: workspace.id)
+                return true
+            } isTargeted: { isTargeted = $0 }
     }
 }

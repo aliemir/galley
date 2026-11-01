@@ -26,6 +26,8 @@ otherwise have to re-derive. Not worth one: typo fixes and formatting.
 
 ## 2026-11-01
 
+- Files can be pinned (context menu, ⌥⌘P): a Pinned section heads the Files column
+- Workspaces reorder by dragging, in the list and the rail
 - Workspaces have a colour (ten swatches or automatic) that tints their icon and rail ring
 - Dragging the Workspaces edge narrower than 105 pt folds it into the icon
   rail, and dragging the rail wider than 130 pt opens the list again

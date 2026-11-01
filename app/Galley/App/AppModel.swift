@@ -306,6 +306,24 @@ final class AppModel {
     /// Bumped to move keyboard focus into the Files column.
     var filesFocusRequest = 0
 
+    /// The workspace being dragged in the list, for the drop indicator.
+    var draggedWorkspace: UUID?
+
+    /// Drag-to-reorder: `id` takes `target`'s place in the list, and the
+    /// library keeps the same order.
+    func moveWorkspace(_ id: UUID, to target: UUID) {
+        guard id != target,
+              let from = workspaces.firstIndex(where: { $0.id == id }),
+              let to = workspaces.firstIndex(where: { $0.id == target }) else { return }
+        withAnimation(.snappy(duration: 0.22)) {
+            workspaces.move(fromOffsets: IndexSet(integer: from), toOffset: to > from ? to + 1 : to)
+        }
+        let order = workspaces.map(\.id)
+        library.update { state in
+            state.workspaces.sort { (order.firstIndex(of: $0.id) ?? .max) < (order.firstIndex(of: $1.id) ?? .max) }
+        }
+    }
+
     func removeWorkspace(_ id: UUID) {
         guard let workspace = workspaces.first(where: { $0.id == id }) else { return }
         if current?.workspaceID == id {
@@ -649,24 +667,6 @@ final class AppModel {
         refreshPage(transition: "none", keepPosition: true)
     }
 
-    func toggleRead(_ file: DocumentFile, in workspace: Workspace) {
-        if file.id == current?.file.id, workspace.id == current?.workspaceID { toggleRead(); return }
-        if workspace.status(of: file) == .read {
-            workspace.markUnread(file.id)
-        } else if let text = WorkspaceScanner.read(file.url) {
-            workspace.markRead(file.id, text: text)
-        }
-    }
-
-    func markAllRead() {
-        guard let workspace = selectedWorkspace else { return }
-        workspace.markAllRead()
-        if let current, current.workspaceID == workspace.id {
-            self.current?.status = .read
-            self.current?.changes = .none
-            refreshPage(transition: "none", keepPosition: true)
-        }
-    }
     func togglePin(_ file: DocumentFile, in workspace: Workspace) {
         let pin = !workspace.isPinned(file.id)
         library.updateWorkspace(workspace.id) { record in
@@ -687,6 +687,24 @@ final class AppModel {
         return workspace.isPinned(current.file.id)
     }
 
+    func toggleRead(_ file: DocumentFile, in workspace: Workspace) {
+        if file.id == current?.file.id, workspace.id == current?.workspaceID { toggleRead(); return }
+        if workspace.status(of: file) == .read {
+            workspace.markUnread(file.id)
+        } else if let text = WorkspaceScanner.read(file.url) {
+            workspace.markRead(file.id, text: text)
+        }
+    }
+
+    func markAllRead() {
+        guard let workspace = selectedWorkspace else { return }
+        workspace.markAllRead()
+        if let current, current.workspaceID == workspace.id {
+            self.current?.status = .read
+            self.current?.changes = .none
+            refreshPage(transition: "none", keepPosition: true)
+        }
+    }
 
     // MARK: Panels
 
