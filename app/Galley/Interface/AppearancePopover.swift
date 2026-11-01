@@ -27,27 +27,28 @@ struct ThemePicker: View {
                 $0 == .system ? "Auto" : $0.label
             }
 
-            HStack(spacing: 10) {
-                ForEach(Theme.light) { swatch($0) }
+            // The themes for what is on screen now; the rest are a click away.
+            LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 8), count: 4), spacing: 10) {
+                ForEach(model.isDark ? Theme.dark : Theme.light) { swatch($0) }
             }
-            HStack(spacing: 10) {
-                ForEach(Theme.dark) { swatch($0) }
+            Button("All Themes…") {
+                UserDefaults.standard.set("themes", forKey: "settingsTab")
+                model.isAppearanceVisible = false
+                openSettings()
             }
+            .buttonStyle(.link)
+            .font(.system(size: 11.5))
         }
     }
+
+    @Environment(\.openSettings) private var openSettings
 
     private func swatch(_ theme: Theme) -> some View {
         let settings = model.settings
         let isActive = model.theme.id == theme.id
         let isChosen = theme.isDark ? settings.darkTheme == theme.id : settings.lightTheme == theme.id
         return Button {
-            if theme.isDark {
-                settings.darkTheme = theme.id
-                if !model.isDark { settings.appearance = .dark }
-            } else {
-                settings.lightTheme = theme.id
-                if model.isDark { settings.appearance = .light }
-            }
+            ThemeChoice.choose(theme, model: model)
         } label: {
             VStack(spacing: 5) {
                 ZStack {
@@ -73,6 +74,8 @@ struct ThemePicker: View {
                 Text(theme.name)
                     .font(.system(size: 10.5, weight: isActive ? .semibold : .regular))
                     .foregroundStyle(isActive ? .primary : .secondary)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
             }
         }
         .buttonStyle(.plain)

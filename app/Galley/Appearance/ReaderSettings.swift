@@ -177,6 +177,18 @@ final class ReaderSettings {
         isDark ? Theme.named(darkTheme, fallback: .graphite) : Theme.named(lightTheme, fallback: .paper)
     }
 
+    /// Typeface, size, spacing and width as they ship.
+    func restoreTypography() {
+        font = .newYork
+        fontSize = 17
+        lineSpacing = .regular
+        lineWidth = .regular
+    }
+
+    var typographyIsDefault: Bool {
+        font == .newYork && fontSize == 17 && lineSpacing == .regular && lineWidth == .regular
+    }
+
     func adjustFontSize(by delta: Double) {
         fontSize = min(Self.fontSizes.upperBound, max(Self.fontSizes.lowerBound, fontSize + delta))
     }

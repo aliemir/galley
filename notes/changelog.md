@@ -26,6 +26,14 @@ otherwise have to re-derive. Not worth one: typo fixes and formatting.
 
 ## 2026-11-01
 
+- Settings rebuilt as panes, Bear-style: General, Reading (typeface cards,
+  size slider, spacing, width, Restore Defaults) and Themes — a gallery of
+  cards, each a small page in its own colours (a change, a highlight, a
+  link, a line of code). Thirteen well-known themes join Galley's six:
+  Solarized Light/Dark, Rosé Pine and Dawn, Catppuccin Latte/Mocha, GitHub
+  Light/Dark, Gruvbox Light/Dark, Nord, Dracula, Tokyo Night (palettes
+  credited in Acknowledgements.txt). The Aa popover shows the themes for the
+  appearance on screen, with "All Themes…"
 - Palette sections: Backspace in an empty field now leaves them (the Mac's
   Backspace sends U+7F, which the `.delete` handler never saw), and Tab goes
   back to names rather than on to text

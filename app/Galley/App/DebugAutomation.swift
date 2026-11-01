@@ -17,7 +17,7 @@ final class DebugAutomation {
     static let commands = [
         "snapshot", "probe", "reload", "reset", "palette", "palette.close", "highlight", "next", "previous", "fold", "unfold", "change", "find.close", "resize.small", "resize.large",
         "scroll.top", "scroll.bottom", "dark", "light", "system",
-        "appearance", "appearance.close", "settings", "settings.close", "settings.reading", "settings.appearance",
+        "appearance", "appearance.close", "settings", "settings.close", "settings.general", "settings.reading", "settings.themes", "settings.shortcuts", "settings.icon",
         "js", "searchopen", "search.token", "search.rate limits", "names.rate", "note", "feedback.copy", "feedback.copyall", "pin", "movepin", "movews", "divider.narrow", "divider.wide", "toggle.outline", "toggle.files", "toggle.workspaces", "focusfiles", "type.api", "type.rate", "type.s", "type.sta", "key.return", "key.escape", "key.down", "key.ctrltab", "key.ctrlshifttab", "key.cmdw", "key.cmdt", "key.cmdreturn", "key.backspace", "key.tab", "type.#", "tab.new", "tab.newnext", "tab.next", "tab.close", "tab.others", "tab.state", "tab.move", "menus", "opened.remove", "columns.reset", "columns.filesfirst", "columns.nocontents", "rail", "rail.off", "identity", "identity.close", "icon.test", "icon.reset", "swipe.right", "swipe.left", "swipe.hold", "swipe.release", "swipe.wobble", "pull.hold", "pull.half", "pull.back", "pull.backhalf", "pull.release",
     ] + (1...4).map { "level.\($0)" }
         + Theme.all.map { "theme.\($0.id)" }
@@ -77,7 +77,7 @@ final class DebugAutomation {
         case "palette": model.isQuickOpenVisible = argument != "close"
         case "appearance": model.isAppearanceVisible = argument != "close"
         case "settings":
-            if argument == "reading" || argument == "appearance" {
+            if ["general", "reading", "themes", "shortcuts", "icon"].contains(argument) {
                 UserDefaults.standard.set(argument, forKey: "settingsTab")
             }
             if argument == "close" {
