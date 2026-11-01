@@ -26,6 +26,11 @@ otherwise have to re-derive. Not worth one: typo fixes and formatting.
 
 ## 2026-11-01
 
+- The agent skill lives in `.agents/skills/galley` — the shared convention,
+  read by Codex — and is linked from `.claude/skills` (Claude Code, and Cursor
+  reads it too) and `.gemini/skills` when those agents are installed; a
+  project install writes `.agents` and links `.claude` relatively. The panel
+  and `galley skill install` say which agents will find it
 - The guide's pictures show four workspaces in the rail — three more small
   agent folders made by `tools/capture-guide.sh`, with their own icons and
   colours (debug `dress`) and a new file's blue dot

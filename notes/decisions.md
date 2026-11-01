@@ -293,3 +293,15 @@ left out on purpose: an agent finishes a file, not a quote.
 The skill tells agents to read with `galley feedback`, act on every item,
 and clear only files they finished (`--addressed` when something is left).
 
+## 2026-11-01 — The skill lives in `.agents`, linked for each agent
+
+**Chosen:** one SKILL.md in `~/.agents/skills/galley` (or a project's
+`.agents/skills/galley`), linked as `../../.agents/skills/galley` from
+`.claude/skills` and, when Gemini CLI is installed, `.gemini/skills`. Codex
+reads `.agents/skills` itself (Codex's docs); Claude Code reads only
+`.claude/skills`; Cursor reads `.claude` and `.codex` skill folders too. The
+same layout the reader's own skills and this repo's already use.
+
+**Rejected:** `.claude/skills` alone (Claude Code only), or a copy per agent
+(copies drift when the skill is updated).
+

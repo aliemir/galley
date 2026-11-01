@@ -69,7 +69,7 @@ struct AgentSetupView: View {
             VStack(alignment: .leading, spacing: 8) {
                 caption("Then ask your agent")
                 CopyField(text: "Address my feedback in Galley.", monospaced: false)
-                caption("The skill for one project only, or the text for other agents")
+                caption("The skill for one project only (.agents and .claude), or its text for other agents")
                 CopyField(text: "galley skill install --project")
                 CopyField(text: "galley skill print")
             }
@@ -109,10 +109,12 @@ struct AgentSetupView: View {
 
     private var skillDetail: String {
         let folder = (AgentSkill.globalFolder.path as NSString).abbreviatingWithTildeInPath
+        let agents = setup.skillAgents.isEmpty ? "" : " For " + ListFormatter.localizedString(byJoining: setup.skillAgents) + "."
         switch setup.skill {
-        case .missing: return "Teaches Claude Code, in every project, how to read your feedback and clear what it finished. Goes in \(folder)."
-        case .installed: return "Installed in \(folder)."
-        case .outdated: return "An older version is in \(folder)."
+        case .missing:
+            return "Teaches your agents, in every project, how to read your feedback and clear what they finished. Goes in \(folder), where Codex reads it, linked for Claude Code and Gemini CLI."
+        case .installed: return "Installed in \(folder).\(agents)"
+        case .outdated: return "In \(folder), but older, or not linked for every agent here."
         }
     }
 

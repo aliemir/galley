@@ -26,7 +26,8 @@ nonisolated enum CLI {
       galley install [folder]          Put `galley` on the PATH (default: /usr/local/bin)
       galley skill install [--global | --project [folder] | --dir folder]
                                        Install the agent skill that teaches agents to read
-                                       your feedback (default: --global, ~/.claude/skills)
+                                       your feedback: in ~/.agents/skills (Codex and others),
+                                       linked for Claude Code and Gemini CLI when present
       galley skill print               Print the skill, for agents that keep skills elsewhere
       galley help                      This text
 
@@ -204,21 +205,31 @@ nonisolated enum CLI {
         }
         guard action == "install" else { return fail("Unknown skill command \(action). See `galley help`.") }
         let options = Array(arguments.dropFirst())
-        let folder: URL
-        if let index = options.firstIndex(of: "--dir"), index + 1 < options.count {
-            folder = absolute(options[index + 1])
-        } else if let index = options.firstIndex(of: "--project") {
-            let next = index + 1 < options.count && !options[index + 1].hasPrefix("-") ? options[index + 1] : "."
-            folder = AgentSkill.folder(in: absolute(next))
-        } else {
-            folder = AgentSkill.globalFolder
-        }
         do {
-            let file = try AgentSkill.install(into: folder)
-            print("Installed the Galley skill: \(file.path)")
+            if let index = options.firstIndex(of: "--dir"), index + 1 < options.count {
+                let file = try AgentSkill.write(into: absolute(options[index + 1]))
+                print("Installed the Galley skill: \(file.path)")
+                return 0
+            }
+            let root: URL
+            let isProject: Bool
+            if let index = options.firstIndex(of: "--project") {
+                let next = index + 1 < options.count && !options[index + 1].hasPrefix("-") ? options[index + 1] : "."
+                root = absolute(next)
+                isProject = true
+            } else {
+                root = AgentSkill.home
+                isProject = false
+            }
+            let agents = try AgentSkill.install(in: root, isProject: isProject)
+            let place = (root.appendingPathComponent(AgentSkill.canonical).path as NSString).abbreviatingWithTildeInPath
+            print("Installed the Galley skill in \(place)")
+            print(agents.isEmpty
+                ? "No agent folders found; Codex and other agents that read .agents/skills will find it."
+                : "For: " + agents.joined(separator: ", ") + (isProject ? ", and agents that read .agents/skills" : ""))
             return 0
         } catch {
-            return fail("Could not write the skill into \(folder.path): \(error.localizedDescription)")
+            return fail("Could not install the skill: \(error.localizedDescription)")
         }
     }
 
@@ -274,20 +285,91 @@ nonisolated enum FeedbackRequest {
 /// The skill that teaches an agent to read the reader's feedback with
 /// `galley feedback`. Installed by `galley skill install` or from the app.
 nonisolated enum AgentSkill {
-    static var globalFolder: URL {
-        URL(fileURLWithPath: NSHomeDirectory()).appendingPathComponent(".claude/skills/galley", isDirectory: true)
+    /// One skill, kept where the shared convention puts it — `.agents/skills`,
+    /// which Codex reads — and linked into the folders other agents read:
+    /// `.claude/skills` (Claude Code, and Cursor, which reads it too) and
+    /// `.gemini/skills` for Gemini CLI. The same layout as this repo's own
+    /// skills.
+    static let canonical = ".agents/skills/galley"
+
+    /// Agents with a skills folder of their own: the folder they keep in the
+    /// home directory (whose presence means the agent is installed), and
+    /// where its link goes.
+    static let linked: [(name: String, home: String, link: String)] = [
+        ("Claude Code", ".claude", ".claude/skills/galley"),
+        ("Gemini CLI", ".gemini", ".gemini/skills/galley"),
+    ]
+
+    /// Agents that find the skill without a link of their own.
+    static let reading: [(name: String, home: String)] = [("Codex", ".codex"), ("Cursor", ".cursor")]
+
+    static var home: URL {
+        #if DEBUG
+        // Tests install into a made-up home: NSHomeDirectory() ignores $HOME.
+        if let path = ProcessInfo.processInfo.environment["GALLEY_HOME"] { return URL(fileURLWithPath: path, isDirectory: true) }
+        #endif
+        return URL(fileURLWithPath: NSHomeDirectory(), isDirectory: true)
     }
 
-    static func folder(in project: URL) -> URL {
-        project.appendingPathComponent(".claude/skills/galley", isDirectory: true)
-    }
+    static var globalFolder: URL { home.appendingPathComponent(canonical, isDirectory: true) }
 
+    /// Writes the skill into `root`'s `.agents/skills/galley` and links it
+    /// from every agent folder that is there (always Claude Code's in a
+    /// project, whose `.claude` may not exist yet). Returns the agents
+    /// that will find it.
     @discardableResult
-    static func install(into folder: URL) throws -> URL {
+    static func install(in root: URL, isProject: Bool) throws -> [String] {
+        let fileManager = FileManager.default
+        let folder = root.appendingPathComponent(canonical, isDirectory: true)
+        try write(into: folder)
+        var agents: [String] = []
+        for agent in linked where isProject ? agent.home == ".claude" : fileManager.fileExists(atPath: root.appendingPathComponent(agent.home).path) {
+            let link = root.appendingPathComponent(agent.link)
+            try fileManager.createDirectory(at: link.deletingLastPathComponent(), withIntermediateDirectories: true)
+            // An earlier install wrote a folder here: a link takes its place.
+            if isOurs(link) || (try? fileManager.destinationOfSymbolicLink(atPath: link.path)) != nil {
+                try? fileManager.removeItem(at: link)
+            }
+            if !fileManager.fileExists(atPath: link.path) {
+                // Relative, as `../../.agents/skills/galley`, so a project's
+                // link survives being moved or cloned.
+                try fileManager.createSymbolicLink(atPath: link.path, withDestinationPath: "../../" + canonical)
+            }
+            agents.append(agent.name)
+        }
+        if !isProject {
+            agents += reading.filter { fileManager.fileExists(atPath: root.appendingPathComponent($0.home).path) }.map(\.name)
+        }
+        return agents
+    }
+
+    /// Writes SKILL.md into one folder, nothing else (`--dir`).
+    @discardableResult
+    static func write(into folder: URL) throws -> URL {
         try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
         let file = folder.appendingPathComponent("SKILL.md")
         try Data(text.utf8).write(to: file, options: .atomic)
         return file
+    }
+
+    /// Takes the skill and its links out of the home folder — only what is
+    /// Galley's.
+    static func remove() throws {
+        let fileManager = FileManager.default
+        for agent in linked {
+            let link = home.appendingPathComponent(agent.link)
+            if (try? fileManager.destinationOfSymbolicLink(atPath: link.path)) != nil || isOurs(link) {
+                try fileManager.removeItem(at: link)
+            }
+        }
+        if isOurs(globalFolder) { try fileManager.removeItem(at: globalFolder) }
+    }
+
+    /// A folder holding Galley's skill (not a link).
+    static func isOurs(_ folder: URL) -> Bool {
+        guard (try? FileManager.default.destinationOfSymbolicLink(atPath: folder.path)) == nil,
+              let text = try? String(contentsOf: folder.appendingPathComponent("SKILL.md"), encoding: .utf8) else { return false }
+        return text.hasPrefix("---\nname: galley")
     }
 
     static let text = """

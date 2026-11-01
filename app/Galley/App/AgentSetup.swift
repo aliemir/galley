@@ -19,6 +19,8 @@ final class AgentSetup {
 
     private(set) var command: CommandStatus = .missing
     private(set) var skill: SkillStatus = .missing
+    /// The agents that read the installed skill.
+    private(set) var skillAgents: [String] = []
 
     /// Where `galley install` and package managers put commands.
     static let folders = ["/usr/local/bin", "/opt/homebrew/bin", "~/.local/bin", "~/bin"]
@@ -46,9 +48,14 @@ final class AgentSetup {
         }
         command = found
         if let text = try? String(contentsOf: skillFile, encoding: .utf8) {
-            skill = text == AgentSkill.text ? .installed : .outdated
+            // Up to date, and linked for every agent folder that is here.
+            let links = AgentSkill.linked.filter { fileManager.fileExists(atPath: AgentSkill.home.appendingPathComponent($0.home).path) }
+            let linkedAll = links.allSatisfy { fileManager.fileExists(atPath: AgentSkill.home.appendingPathComponent($0.link).appendingPathComponent("SKILL.md").path) }
+            skill = text == AgentSkill.text && linkedAll ? .installed : .outdated
+            skillAgents = links.map(\.name) + AgentSkill.reading.filter { fileManager.fileExists(atPath: AgentSkill.home.appendingPathComponent($0.home).path) }.map(\.name)
         } else {
             skill = .missing
+            skillAgents = []
         }
     }
 
@@ -95,7 +102,7 @@ final class AgentSetup {
     func installSkill() -> String? {
         defer { refresh() }
         do {
-            try AgentSkill.install(into: AgentSkill.globalFolder)
+            try AgentSkill.install(in: AgentSkill.home, isProject: false)
             return nil
         } catch {
             return error.localizedDescription
@@ -105,10 +112,8 @@ final class AgentSetup {
     @discardableResult
     func removeSkill() -> String? {
         defer { refresh() }
-        // Only a folder that holds Galley's skill.
-        guard let text = try? String(contentsOf: skillFile, encoding: .utf8), text.hasPrefix("---\nname: galley") else { return nil }
         do {
-            try FileManager.default.removeItem(at: AgentSkill.globalFolder)
+            try AgentSkill.remove()
             return nil
         } catch {
             return error.localizedDescription
