@@ -26,6 +26,7 @@ otherwise have to re-derive. Not worth one: typo fixes and formatting.
 
 ## 2026-11-01
 
+- Pinned files reorder by dragging, and any file dragged onto the Pinned section (or the Files header) is pinned there
 - Default swipe order is Files → Contents → Workspaces; installs still on the old default move to it once
 - Files can be pinned (context menu, ⌥⌘P): a Pinned section heads the Files column
 - Workspaces reorder by dragging, in the list and the rail

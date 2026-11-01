@@ -683,6 +683,37 @@ final class AppModel {
         workspace.touch()
     }
 
+    /// The pinned file being dragged, for the drop indicator.
+    var draggedPin: String?
+
+    /// Drag-to-reorder in the Pinned section: `id` takes `target`'s place.
+    func movePin(_ id: String, to target: String, in workspace: Workspace) {
+        guard id != target else { return }
+        withAnimation(.snappy(duration: 0.22)) {
+            library.updateWorkspace(workspace.id) { record in
+                guard let from = record.pinned.firstIndex(of: id), let to = record.pinned.firstIndex(of: target) else { return }
+                record.pinned.move(fromOffsets: IndexSet(integer: from), toOffset: to > from ? to + 1 : to)
+            }
+            workspace.touch()
+        }
+    }
+
+    /// A file dropped on the Pinned section: pinned in `target`'s place, or
+    /// at the end when dropped on the section itself.
+    func pin(_ id: String, at target: String?, in workspace: Workspace) {
+        withAnimation(.snappy(duration: 0.22)) {
+            library.updateWorkspace(workspace.id) { record in
+                record.pinned.removeAll { $0 == id }
+                if let target, let index = record.pinned.firstIndex(of: target) {
+                    record.pinned.insert(id, at: index)
+                } else {
+                    record.pinned.append(id)
+                }
+            }
+            workspace.touch()
+        }
+    }
+
     /// ⌥⌘P: pins or unpins the open document.
     func togglePinCurrent() {
         guard let current, let workspace = currentWorkspace else { return }

@@ -17,6 +17,7 @@ struct FilesColumn: View {
                 ColumnHeader(title: workspace.name, subtitle: subtitle(workspace)) {
                     menu(workspace)
                 }
+                .modifier(PinDropZone(workspace: workspace))
                 content(workspace)
             } else {
                 ColumnHeader(title: "Files") { EmptyView() }
@@ -79,8 +80,10 @@ struct FilesColumn: View {
                         if !pinned.isEmpty {
                             SectionLabel(title: "Pinned", count: pinned.count)
                                 .padding(.horizontal, -8)
+                                .modifier(PinDropZone(workspace: workspace))
                             ForEach(pinned) { file in
                                 FileRow(file: file, workspace: workspace, depth: 0, showsLocation: true, marksPin: false)
+                                    .modifier(PinReorder(file: file, workspace: workspace))
                                     .id("pin/" + file.id)
                             }
                         }
@@ -372,6 +375,7 @@ struct FileRow: View {
         .onTapGesture { model.open(file) }
         .onHover { isHovered = $0 }
         .help(file.relativePath)
+        .modifier(DragToPin(file: file, enabled: marksPin))
         .contextMenu {
             Button(workspace.isPinned(file.id) ? "Unpin" : "Pin") {
                 withAnimation(.snappy(duration: 0.2)) { model.togglePin(file, in: workspace) }
@@ -407,5 +411,122 @@ struct StatusDot: View {
         case .changed:
             Circle().fill(palette.change).frame(width: 7, height: 7)
         }
+    }
+}
+
+/// Drag a pinned file onto another to take its place, with a line where it
+/// lands — the same gesture as reordering workspaces.
+private struct PinReorder: ViewModifier {
+    let file: DocumentFile
+    let workspace: Workspace
+    @Environment(AppModel.self) private var model
+    @Environment(\.palette) private var palette
+    @State private var isTargeted = false
+
+
+    private var landsBelow: Bool {
+        // Dragged down the list, a file lands below its target; up, above.
+        let pinned = workspace.record?.pinned ?? []
+        guard let dragged = model.draggedPin,
+              let from = pinned.firstIndex(of: dragged),
+              let to = pinned.firstIndex(of: file.id) else { return false }
+        return to > from
+    }
+
+    func body(content: Content) -> some View {
+        content
+            .overlay(alignment: landsBelow ? .bottom : .top) {
+                if isTargeted, model.draggedPin != file.id {
+                    Capsule()
+                        .fill(palette.accent)
+                        .frame(height: 2)
+                        .padding(.horizontal, 4)
+                        .offset(y: landsBelow ? 2 : -2)
+                        .allowsHitTesting(false)
+                }
+            }
+            .draggable(PinDrag.pinned + file.id) {
+                Text(model.settings.displayName(for: file))
+                    .font(.system(size: 12, weight: .medium))
+                    .padding(6)
+                    .onAppear { model.draggedPin = file.id }
+            }
+            .dropDestination(for: String.self) { items, _ in
+                defer { model.draggedPin = nil }
+                guard let item = items.first else { return false }
+                if item.hasPrefix(PinDrag.pinned) {
+                    model.movePin(String(item.dropFirst(PinDrag.pinned.count)), to: file.id, in: workspace)
+                } else if item.hasPrefix(PinDrag.file) {
+                    // A file from the list: pinned in this one's place.
+                    model.pin(String(item.dropFirst(PinDrag.file.count)), at: file.id, in: workspace)
+                } else {
+                    return false
+                }
+                return true
+            } isTargeted: { isTargeted = $0 }
+    }
+}
+
+/// What a drag inside the Files column carries: a pinned file being
+/// reordered, or a file from the list on its way to being pinned.
+private enum PinDrag {
+    static let pinned = "galley-pin:"
+    static let file = "galley-file:"
+}
+
+/// Any file in the list can be dragged to the Pinned section.
+private struct DragToPin: ViewModifier {
+    let file: DocumentFile
+    let enabled: Bool
+    @Environment(AppModel.self) private var model
+
+    func body(content: Content) -> some View {
+        if enabled {
+            content.draggable(PinDrag.file + file.id) {
+                Label(model.settings.displayName(for: file), systemImage: "pin")
+                    .font(.system(size: 12, weight: .medium))
+                    .padding(6)
+            }
+        } else {
+            content
+        }
+    }
+}
+
+/// The Pinned label, and the column's header (the only place to drop on
+/// before anything is pinned): a file dropped here is pinned at the end.
+private struct PinDropZone: ViewModifier {
+    let workspace: Workspace
+    @Environment(AppModel.self) private var model
+    @Environment(\.palette) private var palette
+    @State private var isTargeted = false
+
+    func body(content: Content) -> some View {
+        content
+            .overlay {
+                if isTargeted {
+                    RoundedRectangle(cornerRadius: 8, style: .continuous)
+                        .fill(palette.accent.opacity(0.1))
+                        .strokeBorder(palette.accent.opacity(0.6), lineWidth: 1.5)
+                        .overlay(
+                            Label("Drop to pin", systemImage: "pin.fill")
+                                .font(.system(size: 12, weight: .semibold))
+                                .foregroundStyle(palette.accent)
+                        )
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 2)
+                        .allowsHitTesting(false)
+                }
+            }
+            .dropDestination(for: String.self) { items, _ in
+                guard let item = items.first else { return false }
+                let prefix = item.hasPrefix(PinDrag.file) ? PinDrag.file : item.hasPrefix(PinDrag.pinned) ? PinDrag.pinned : nil
+                guard let prefix else { return false }
+                model.pin(String(item.dropFirst(prefix.count)), at: nil, in: workspace)
+                model.draggedPin = nil
+                return true
+            } isTargeted: { targeted in
+                withAnimation(.easeOut(duration: 0.12)) { isTargeted = targeted }
+            }
     }
 }
