@@ -44,8 +44,15 @@ final class Workspace: Identifiable {
 
     /// The folder's name on disk.
     var folderName: String { root.lastPathComponent }
-    /// The name Galley shows.
-    var name: String { ReaderSettings.shared.displayFolderName(folderName) }
+    /// The name Galley shows: the reader's own, or the tidied folder name.
+    var name: String {
+        if let custom = record?.customName?.trimmingCharacters(in: .whitespaces), !custom.isEmpty { return custom }
+        return defaultName
+    }
+
+    var defaultName: String { ReaderSettings.shared.displayFolderName(folderName) }
+
+    var icon: WorkspaceIcon.Kind { WorkspaceIcon.Kind(stored: record?.icon) }
     var record: WorkspaceRecord? {
         _ = revision
         return library.record(id)

@@ -18,7 +18,7 @@ final class DebugAutomation {
         "snapshot", "probe", "reload", "reset", "palette", "palette.close", "highlight", "next", "previous", "fold", "unfold", "change", "find.close", "resize.small", "resize.large",
         "scroll.top", "scroll.bottom", "dark", "light", "system",
         "appearance", "appearance.close", "settings", "settings.close", "settings.reading", "settings.appearance",
-        "js", "columns.reset", "columns.filesfirst", "columns.nocontents", "swipe.right", "swipe.left", "swipe.hold", "swipe.release", "swipe.wobble", "pull.hold", "pull.half", "pull.back", "pull.backhalf", "pull.release",
+        "js", "columns.reset", "columns.filesfirst", "columns.nocontents", "rail", "rail.off", "identity", "identity.close", "icon.test", "icon.reset", "swipe.right", "swipe.left", "swipe.hold", "swipe.release", "swipe.wobble", "pull.hold", "pull.half", "pull.back", "pull.backhalf", "pull.release",
     ] + (1...4).map { "level.\($0)" }
         + Theme.all.map { "theme.\($0.id)" }
         + (0..<30).map { "open.\($0)" }
@@ -112,6 +112,17 @@ final class DebugAutomation {
             let size = argument == "small" ? NSSize(width: 900, height: 640) : NSSize(width: 1440, height: 900)
             window.setFrame(NSRect(origin: window.frame.origin, size: size), display: true, animate: false)
         case "find": model.hideFind()
+        case "rail": model.settings.workspacesAsIcons = argument != "off"
+        case "identity": model.customizingWorkspace = argument == "close" ? nil : model.selectedWorkspaceID
+        case "icon":
+            guard let id = model.selectedWorkspaceID else { return }
+            if argument == "test" {
+                model.setWorkspaceIcon(.emoji("📐"), for: id)
+                model.setWorkspaceName("Design notes", for: id)
+            } else {
+                model.setWorkspaceIcon(.monogram, for: id)
+                model.setWorkspaceName(nil, for: id)
+            }
         case "columns":
             switch argument {
             case "filesfirst": model.settings.columnOrder = [.files, .outline, .workspaces]

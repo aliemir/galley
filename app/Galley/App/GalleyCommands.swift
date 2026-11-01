@@ -69,6 +69,11 @@ struct GalleyCommands: Commands {
                 set: { model.setColumnHidden(.outline, !$0) }
             ))
             .keyboardShortcut("2", modifiers: [.command, .option])
+            Toggle("Workspaces as Icons", isOn: Binding(
+                get: { model.settings.workspacesAsIcons },
+                set: { value in withAnimation(.galleyPanel) { model.settings.workspacesAsIcons = value } }
+            ))
+            .keyboardShortcut("4", modifiers: [.command, .option])
             Divider()
             Button("Bigger Text") { model.settings.adjustFontSize(by: 1) }
                 .keyboardShortcut("+")

@@ -275,6 +275,22 @@ final class AppModel {
         reveal(.files)
     }
 
+    /// Names and icons live in the library only; the folder is untouched.
+    func setWorkspaceName(_ name: String?, for id: UUID) {
+        let trimmed = name?.trimmingCharacters(in: .whitespacesAndNewlines)
+        library.updateWorkspace(id) { $0.customName = trimmed?.isEmpty == false ? trimmed : nil }
+        workspaces.first { $0.id == id }?.touch()
+        refreshPage(transition: "none", keepPosition: true)
+    }
+
+    func setWorkspaceIcon(_ icon: WorkspaceIcon.Kind, for id: UUID) {
+        library.updateWorkspace(id) { $0.icon = icon.stored }
+        workspaces.first { $0.id == id }?.touch()
+    }
+
+    /// The workspace whose name-and-icon editor is open.
+    var customizingWorkspace: UUID?
+
     func removeWorkspace(_ id: UUID) {
         guard let workspace = workspaces.first(where: { $0.id == id }) else { return }
         if current?.workspaceID == id {

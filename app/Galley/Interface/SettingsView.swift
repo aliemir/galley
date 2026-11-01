@@ -37,6 +37,7 @@ private struct ReadingSettings: View {
 
             Section {
                 ColumnOrderList()
+                Toggle("Show workspaces as icons only", isOn: $settings.workspacesAsIcons)
             } header: {
                 Text("Columns")
             } footer: {

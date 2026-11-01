@@ -31,6 +31,10 @@ nonisolated struct WorkspaceRecord: Codable, Identifiable, Sendable {
     var selectedFile: String?
     var collapsedFolders: [String] = []
     var files: [String: FileRecord] = [:]
+    /// The reader's own name for the workspace; the folder is never renamed.
+    var customName: String?
+    /// `symbol:<SF Symbol>` or `emoji:<character>`; nil shows a monogram.
+    var icon: String?
 
     init(id: UUID, bookmark: Data?, path: String, addedAt: Date) {
         self.id = id
@@ -50,6 +54,8 @@ nonisolated struct WorkspaceRecord: Codable, Identifiable, Sendable {
         selectedFile = try c.decodeIfPresent(String.self, forKey: .selectedFile)
         collapsedFolders = try c.decodeIfPresent([String].self, forKey: .collapsedFolders) ?? []
         files = try c.decodeIfPresent([String: FileRecord].self, forKey: .files) ?? [:]
+        customName = try c.decodeIfPresent(String.self, forKey: .customName)
+        icon = try c.decodeIfPresent(String.self, forKey: .icon)
     }
 }
 
