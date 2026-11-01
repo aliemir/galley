@@ -26,6 +26,8 @@ otherwise have to re-derive. Not worth one: typo fixes and formatting.
 
 ## 2026-11-02
 
+- The agent skill shows `galley feedback --json` as data (path, items with
+  text, note, section) and a `jq` line for picking out notes
 - Links to files: Markdown opens in Galley wherever it is — this workspace,
   another (switching to it), or none (joining Opened Files), at the linked
   section; documents (images, PDF, text and code, media, office files) open

@@ -400,6 +400,31 @@ nonisolated enum AgentSkill {
     the user's note when they wrote one. No output (and "No feedback on …" on
     stderr) means there is none.
 
+    With `--json`, the same as data — one entry per file, `note` empty when
+    the user wrote none, `section` empty for a passage above the first
+    heading:
+
+    ```json
+    [
+      {
+        "path": "/Users/you/project/plans/auth.md",
+        "items": [
+          {
+            "text": "Tokens live for 15 minutes.",
+            "note": "Make it 10 for admin sessions.",
+            "section": ["Rollout", "Token shape"]
+          }
+        ]
+      }
+    ]
+    ```
+
+    Handy for picking out parts, e.g. every note with where it is:
+
+    ```sh
+    galley feedback plans --json | jq -r '.[] | .path as $file | .items[] | $file + " — " + (.section | join(" › ")) + ": " + .note'
+    ```
+
     ## Act on it
 
     - Each item points at a passage in that file. Find it, and change the
