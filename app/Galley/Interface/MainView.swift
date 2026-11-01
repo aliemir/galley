@@ -106,8 +106,8 @@ private struct ColumnStack: View {
             HStack(spacing: 0) {
                 // Places are fixed; the reader's order only decides which
                 // column a swipe brings in next.
-                ForEach(PanelColumn.arrangement.filter(model.columns.contains)) { column in
-                    self.column(column, scale: fit.scale, limit: fit.depth)
+                ForEach(PanelColumn.arrangement) { column in
+                    self.column(column, scale: fit.scale, fitting: fit.columns)
                 }
                 PageView()
                     .frame(minWidth: 280, maxWidth: .infinity)
@@ -119,30 +119,31 @@ private struct ColumnStack: View {
     private static let minimumScale: CGFloat = 0.72
 
     /// Columns give up some width before the page does; when even narrowed
-    /// columns do not fit, the outermost ones step aside (without changing
-    /// the chosen depth, so they return when the window grows).
-    private func fitting(available: CGFloat) -> (scale: CGFloat, depth: Int) {
-        let columns = model.columns
-        // While a swipe is revealing a column, fit the depth it is heading to,
-        // or the incoming column would be over the limit and stay hidden.
-        var depth = min(columns.count, model.depth + (model.swipeProgress > 0 ? 1 : 0))
-        while depth > 0 {
-            let needed = columns.prefix(depth).reduce(0) { $0 + model.columnWidth($1) }
+    /// columns do not fit, the ones latest in the reader's order step aside
+    /// (without being hidden, so they return when the window grows).
+    private func fitting(available: CGFloat) -> (scale: CGFloat, columns: Set<PanelColumn>) {
+        // While a swipe is revealing a column, fit it too, or it would be
+        // over the limit and stay hidden.
+        var wanted = model.visibleColumns
+        if model.swipeProgress > 0, let incoming = model.nextToReveal { wanted.insert(incoming) }
+        var ranked = model.settings.columnOrder.filter(wanted.contains)
+        while !ranked.isEmpty {
+            let needed = ranked.reduce(0) { $0 + model.columnWidth($1) }
             let scale = min(1, (available - Self.minimumPage) / needed)
-            if scale >= Self.minimumScale { return (scale, depth) }
-            depth -= 1
+            if scale >= Self.minimumScale { return (scale, Set(ranked)) }
+            ranked.removeLast()
         }
-        return (1, 0)
+        return (1, [])
     }
 
     /// How much of a column shows: 1 when it is in, 0 when out, and in
     /// between while a swipe is moving it.
-    private func fraction(_ column: PanelColumn, limit: Int) -> CGFloat {
-        guard let index = model.columns.firstIndex(of: column), index < limit else { return 0 }
+    private func fraction(_ column: PanelColumn, fitting: Set<PanelColumn>) -> CGFloat {
+        guard fitting.contains(column) else { return 0 }
         let progress = model.swipeProgress
-        if progress > 0, index == model.depth { return progress }
-        if progress < 0, index == model.depth - 1 { return 1 + progress }
-        return index < model.depth ? 1 : 0
+        if progress > 0, column == model.nextToReveal { return progress }
+        if progress < 0, column == model.nextToHide { return 1 + progress }
+        return model.isShowing(column) ? 1 : 0
     }
 
     @ViewBuilder
@@ -154,10 +155,10 @@ private struct ColumnStack: View {
         }
     }
 
-    private func column(_ column: PanelColumn, scale: CGFloat, limit: Int) -> some View {
+    private func column(_ column: PanelColumn, scale: CGFloat, fitting: Set<PanelColumn>) -> some View {
         let isRail = column == .workspaces && model.settings.workspacesAsIcons
         let width = model.columnWidth(column) * (isRail ? 1 : scale)
-        let fraction = fraction(column, limit: limit)
+        let fraction = fraction(column, fitting: fitting)
         return content(column)
             .frame(width: width)
             .frame(maxHeight: .infinity)
@@ -228,7 +229,7 @@ private struct PanelToggle: View {
     @Environment(\.palette) private var palette
 
     var body: some View {
-        IconButton(systemName: "sidebar.left", help: model.depth == 0 ? "Show Panels (⌘])" : "Focus on the Page") {
+        IconButton(systemName: "sidebar.left", help: model.visibleColumns.isEmpty ? "Show Panels (⌘\\)" : "Focus on the Page (⌘\\)") {
             model.togglePanels()
         }
         .padding(.leading, 80)

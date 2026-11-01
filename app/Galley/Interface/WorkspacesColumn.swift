@@ -16,8 +16,7 @@ struct WorkspacesColumn: View {
         VStack(spacing: 0) {
             ColumnHeader(title: "Workspaces") {
                 Menu {
-                    Button("Show as Icons") { model.settings.workspacesAsIcons = true }
-                        .keyboardShortcut("4", modifiers: [.command, .option])
+                    Button("Show as Icons (⌥⌘4)") { model.settings.workspacesAsIcons = true }
                 } label: {
                     Image(systemName: "ellipsis")
                         .font(.system(size: 13, weight: .medium))

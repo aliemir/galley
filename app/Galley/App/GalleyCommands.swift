@@ -54,21 +54,20 @@ struct GalleyCommands: Commands {
         }
 
         CommandGroup(before: .toolbar) {
-            // ⌘1 is the page alone; ⌘2… add columns in the reader's order.
-            ForEach(0...PanelColumn.allCases.count, id: \.self) { depth in
-                Button(depthLabel(depth)) { model.setDepth(depth) }
-                    .keyboardShortcut(KeyEquivalent(Character("\(depth + 1)")))
-                    .disabled(depth > model.columns.count)
+            // ⌘1–⌘3 toggle each column; the numbers follow their places.
+            ForEach(Array(PanelColumn.arrangement.enumerated()), id: \.element) { index, column in
+                Toggle(column.title, isOn: Binding(
+                    get: { model.isShowing(column) },
+                    set: { model.setColumn(column, visible: $0) }
+                ))
+                .keyboardShortcut(KeyEquivalent(Character("\(index + 1)")))
             }
-            Button("Show More Panels") { model.stepLevel(1) }
+            Button(model.visibleColumns.isEmpty ? "Show Panels" : "Hide All Panels") { model.togglePanels() }
+                .keyboardShortcut("\\")
+            Button("Show Next Panel") { model.stepLevel(1) }
                 .keyboardShortcut("]")
-            Button("Show Fewer Panels") { model.stepLevel(-1) }
+            Button("Hide Last Panel") { model.stepLevel(-1) }
                 .keyboardShortcut("[")
-            Toggle("Contents Column", isOn: Binding(
-                get: { !model.settings.hiddenColumns.contains(.outline) },
-                set: { model.setColumnHidden(.outline, !$0) }
-            ))
-            .keyboardShortcut("2", modifiers: [.command, .option])
             Toggle("Workspaces as Icons", isOn: Binding(
                 get: { model.settings.workspacesAsIcons },
                 set: { value in withAnimation(.galleyPanel) { model.settings.workspacesAsIcons = value } }
@@ -125,12 +124,5 @@ struct GalleyCommands: Commands {
                 .keyboardShortcut(.rightArrow, modifiers: [.command, .option])
                 .disabled(model.current == nil)
         }
-    }
-
-    private func depthLabel(_ depth: Int) -> String {
-        guard depth > 0 else { return "Page Only" }
-        let columns = model.columns
-        guard depth <= columns.count else { return "\(depth) Columns" }
-        return "Page and " + columns.prefix(depth).map(\.title).formatted(.list(type: .and))
     }
 }

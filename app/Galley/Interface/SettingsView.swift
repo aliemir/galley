@@ -41,7 +41,7 @@ private struct ReadingSettings: View {
             } header: {
                 Text("Columns")
             } footer: {
-                Text("Swiping right reveals them from the top down, and swiping left puts them away in reverse; ⌘] and ⌘[ do the same. Each keeps its place on screen. Drag to reorder.")
+                Text("Swiping right brings them in from the top down, and swiping left takes them away in reverse; ⌘] and ⌘[ do the same. Drag to reorder; switch one off and swipes pass over it. Each column keeps its place, and ⌘1, ⌘2 and ⌘3 show or hide Workspaces, Files and Contents on their own; ⌘\\ hides them all.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
@@ -106,9 +106,10 @@ private struct ColumnOrderList: View {
                     .foregroundStyle(.secondary)
                     .frame(width: 12)
                 Toggle(column.title, isOn: Binding(
-                    get: { !settings.hiddenColumns.contains(column) },
-                    set: { model.setColumnHidden(column, !$0) }
+                    get: { !settings.swipeSkips.contains(column) },
+                    set: { model.setSwipeSkips(column, !$0) }
                 ))
+                .help("Off: swipes pass over \(column.title); its shortcut still shows it")
             }
             .padding(.vertical, 1)
             .contentShape(Rectangle())

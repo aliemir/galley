@@ -38,7 +38,7 @@ struct OutlineColumn: View {
                 Button("Previous Change") { model.jumpToChange(-1) }
             }
             Divider()
-            Button("Hide Contents Column") { model.setColumnHidden(.outline, true) }
+            Button("Hide Contents (⌘3)") { model.setColumn(.outline, visible: false) }
                 .keyboardShortcut("2", modifiers: [.command, .option])
         } label: {
             Image(systemName: "ellipsis")

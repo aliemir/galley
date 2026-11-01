@@ -18,7 +18,7 @@ final class DebugAutomation {
         "snapshot", "probe", "reload", "reset", "palette", "palette.close", "highlight", "next", "previous", "fold", "unfold", "change", "find.close", "resize.small", "resize.large",
         "scroll.top", "scroll.bottom", "dark", "light", "system",
         "appearance", "appearance.close", "settings", "settings.close", "settings.reading", "settings.appearance",
-        "js", "focusfiles", "type.api", "type.rate", "type.s", "type.sta", "key.return", "key.escape", "key.down", "columns.reset", "columns.filesfirst", "columns.nocontents", "rail", "rail.off", "identity", "identity.close", "icon.test", "icon.reset", "swipe.right", "swipe.left", "swipe.hold", "swipe.release", "swipe.wobble", "pull.hold", "pull.half", "pull.back", "pull.backhalf", "pull.release",
+        "js", "toggle.outline", "toggle.files", "toggle.workspaces", "focusfiles", "type.api", "type.rate", "type.s", "type.sta", "key.return", "key.escape", "key.down", "columns.reset", "columns.filesfirst", "columns.nocontents", "rail", "rail.off", "identity", "identity.close", "icon.test", "icon.reset", "swipe.right", "swipe.left", "swipe.hold", "swipe.release", "swipe.wobble", "pull.hold", "pull.half", "pull.back", "pull.backhalf", "pull.release",
     ] + (1...4).map { "level.\($0)" }
         + Theme.all.map { "theme.\($0.id)" }
         + (0..<30).map { "open.\($0)" }
@@ -86,7 +86,7 @@ final class DebugAutomation {
         case "fold": model.foldAll(true)
         case "unfold": model.foldAll(false)
         case "change": model.jumpToChange(1)
-        case "level": if let level = Int(argument) { model.setDepth(level - 1) }
+        case "level": if let level = Int(argument) { model.setVisibleColumns(Set(model.columns.prefix(max(0, level - 1)))) }
         case "theme":
             let theme = Theme.named(argument, fallback: .paper)
             if theme.isDark { model.settings.darkTheme = theme.id; model.settings.appearance = .dark } else {
@@ -123,6 +123,7 @@ final class DebugAutomation {
                 model.setWorkspaceIcon(.monogram, for: id)
                 model.setWorkspaceName(nil, for: id)
             }
+        case "toggle": if let column = PanelColumn(rawValue: argument) { model.toggleColumn(column) }
         case "focusfiles": model.filesFocusRequest += 1
         case "type": for character in argument { postKey(String(character), keyCode: 0) }
         case "key":
@@ -134,10 +135,10 @@ final class DebugAutomation {
         case "columns":
             switch argument {
             case "filesfirst": model.settings.columnOrder = [.files, .outline, .workspaces]
-            case "nocontents": model.setColumnHidden(.outline, true)
+            case "nocontents": model.setSwipeSkips(.outline, true)
             default:
                 model.settings.columnOrder = PanelColumn.allCases
-                model.settings.hiddenColumns = []
+                model.settings.swipeSkips = []
             }
         case "js":
             // Runs /private/tmp/galley-debug/eval.js in the page and logs the result.

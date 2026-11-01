@@ -51,8 +51,8 @@ final class AppModel {
     private(set) var current: OpenDocument?
     private(set) var currentHeading: String?
 
-    /// How many of `columns` are showing, from the page outwards; 0 is the page alone.
-    private(set) var depth = 2
+    /// The columns showing; each toggles on its own, swipes follow the order.
+    private(set) var visibleColumns: Set<PanelColumn> = [.outline, .files]
     /// -1…1 while a horizontal swipe is in flight: positive reveals the next
     /// column, negative hides the outermost one.
     var swipeProgress: Double = 0
@@ -74,8 +74,8 @@ final class AppModel {
     let settings = ReaderSettings.shared
     let reader = ReaderController()
     @ObservationIgnored private let library = Library()
-    /// The depth the panel button brings back.
-    @ObservationIgnored private var lastDepth = 2
+    /// What the panel button brings back.
+    @ObservationIgnored private var lastVisibleColumns: Set<PanelColumn> = [.outline, .files]
     @ObservationIgnored private var pendingRestore: String?
     @ObservationIgnored private var readerAtBottom = false
     @ObservationIgnored private var readerAtTop = true
@@ -102,9 +102,10 @@ final class AppModel {
 
     init() {
         let state = library.state
-        // Stored as the old 1-based level, whose numbers mean the same depth.
-        depth = max(0, state.level - 1)
-        lastDepth = max(1, state.lastPanelLevel - 1)
+        // Older libraries kept a depth into the default order as a 1-based level.
+        let byLevel = { (level: Int) in Set(PanelColumn.allCases.prefix(max(0, level - 1))) }
+        visibleColumns = state.visibleColumns.map { Set($0.compactMap(PanelColumn.init(rawValue:))) } ?? byLevel(state.level)
+        lastVisibleColumns = state.lastVisibleColumns.map { Set($0.compactMap(PanelColumn.init(rawValue:))) } ?? byLevel(state.lastPanelLevel)
         for record in state.workspaces {
             attach(Workspace(record: record, library: library), baseline: false)
         }
@@ -664,24 +665,25 @@ final class AppModel {
 
     // MARK: Panels
 
-    /// The columns in play, in the reader's reveal order, without the ones
-    /// switched off.
+    /// The order swipes go through, without the columns they pass over.
     var columns: [PanelColumn] {
-        settings.columnOrder.filter { !settings.hiddenColumns.contains($0) }
+        settings.columnOrder.filter { !settings.swipeSkips.contains($0) }
     }
 
-    /// The columns showing now, in reveal order.
-    var shownColumns: ArraySlice<PanelColumn> { columns.prefix(depth) }
+    func isShowing(_ column: PanelColumn) -> Bool { visibleColumns.contains(column) }
 
-    func isShowing(_ column: PanelColumn) -> Bool { shownColumns.contains(column) }
+    /// What a swipe right brings in: the first hidden column in the order.
+    var nextToReveal: PanelColumn? { columns.first { !visibleColumns.contains($0) } }
 
-    func setDepth(_ requested: Int, animated: Bool = true) {
-        let newDepth = min(columns.count, max(0, requested))
+    /// What a swipe left takes away: the last showing column in the order.
+    var nextToHide: PanelColumn? { columns.last { visibleColumns.contains($0) } }
+
+    func setVisibleColumns(_ newValue: Set<PanelColumn>, animated: Bool = true) {
         let apply = {
-            self.depth = newDepth
+            self.visibleColumns = newValue
             self.swipeProgress = 0
         }
-        if animated, newDepth != depth {
+        if animated, newValue != visibleColumns {
             beginPanelMotion()
             withAnimation(.galleyPanel, completionCriteria: .logicallyComplete) { apply() } completion: {
                 self.endPanelMotion()
@@ -689,17 +691,25 @@ final class AppModel {
         } else {
             apply()
         }
-        if newDepth > 0 { lastDepth = newDepth }
+        if !newValue.isEmpty { lastVisibleColumns = newValue }
         library.update {
-            $0.level = newDepth + 1
-            $0.lastPanelLevel = self.lastDepth + 1
+            $0.visibleColumns = newValue.map(\.rawValue).sorted()
+            $0.lastVisibleColumns = self.lastVisibleColumns.map(\.rawValue).sorted()
         }
     }
 
-    /// Shows `column`, and every column between it and the page.
+    func setColumn(_ column: PanelColumn, visible: Bool) {
+        var columns = visibleColumns
+        if visible { columns.insert(column) } else { columns.remove(column) }
+        setVisibleColumns(columns)
+    }
+
+    func toggleColumn(_ column: PanelColumn) {
+        setColumn(column, visible: !isShowing(column))
+    }
+
     func reveal(_ column: PanelColumn) {
-        guard let index = columns.firstIndex(of: column), index >= depth else { return }
-        setDepth(index + 1)
+        if !isShowing(column) { setColumn(column, visible: true) }
     }
 
     // MARK: Panel motion
@@ -735,27 +745,21 @@ final class AppModel {
         }
     }
 
+    /// ⌘] and ⌘[: a swipe's worth, through the order.
     func stepLevel(_ delta: Int) {
-        let target = depth + delta
-        guard (0...columns.count).contains(target) else { NSSound.beep(); return }
-        setDepth(target)
+        guard let column = delta > 0 ? nextToReveal : nextToHide else { NSSound.beep(); return }
+        setColumn(column, visible: delta > 0)
     }
 
     // MARK: Columns
 
-    func setColumnHidden(_ column: PanelColumn, _ hidden: Bool) {
-        let wasShowing = isShowing(column)
-        if hidden { settings.hiddenColumns.insert(column) } else { settings.hiddenColumns.remove(column) }
-        // Keep the same columns on screen, less (or plus) this one.
-        setDepth(depth + (hidden ? (wasShowing ? -1 : 0) : 0), animated: true)
+    /// Whether swipes and ⌘] / ⌘[ pass over a column.
+    func setSwipeSkips(_ column: PanelColumn, _ skips: Bool) {
+        if skips { settings.swipeSkips.insert(column) } else { settings.swipeSkips.remove(column) }
     }
 
     func moveColumns(from source: IndexSet, to destination: Int) {
-        let showing = Set(shownColumns)
         settings.columnOrder.move(fromOffsets: source, toOffset: destination)
-        // Whatever was on screen stays on screen where the order allows.
-        let newDepth = (columns.lastIndex { showing.contains($0) }).map { $0 + 1 } ?? 0
-        setDepth(showing.isEmpty ? 0 : newDepth)
     }
 
     static let columnLimits: [PanelColumn: ClosedRange<CGFloat>] = [
@@ -784,7 +788,7 @@ final class AppModel {
 
     /// The toolbar button: page alone, or back to the panels you had.
     func togglePanels() {
-        setDepth(depth == 0 ? max(1, min(lastDepth, columns.count)) : 0)
+        setVisibleColumns(visibleColumns.isEmpty ? (lastVisibleColumns.isEmpty ? [.files] : lastVisibleColumns) : [])
     }
 
     // MARK: Reader events

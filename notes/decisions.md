@@ -132,18 +132,22 @@ What actually bothered the user was only the scrollbar popping up and moving
 while the page's length changed under the slide, so the page now hides its
 scrollbar (`scrollbar-width: none`) for the duration of the motion.
 
-## 2026-11-01 — Columns keep their places; the reader orders the reveals
+## 2026-11-01 — Columns toggle on their own; swipes follow the reader's order
 
-**Chosen:** the panel state is a *depth* — how many columns of the reader's
-reveal order are showing — instead of fixed levels (page, outline, files,
-workspaces). The order (Settings → Reading → Columns) decides only which
-column a swipe right brings in next and which a swipe left takes away;
-every column keeps its fixed place on screen (Workspaces · Files ·
-Contents · page). Any column can be switched off; the order skips it.
+**Chosen:** the panel state is the *set* of columns showing. Each column
+keeps its fixed place (Workspaces · Files · Contents · page) and toggles on
+its own — ⌘1 / ⌘2 / ⌘3, numbered by place, also in the View menu with
+checkmarks; ⌘\ hides them all and brings the same set back. The order in
+Settings → Reading → Columns only drives swipes and ⌘] / ⌘[: a swipe right
+brings in the first hidden column in the order, a swipe left takes away the
+last showing one. A column switched off there is passed over by swipes but
+still has its shortcut. On narrow windows the columns latest in the order
+step aside first.
 
-**Rejected:** letting the order also rearrange the columns (first in the
-order next to the page). Built first and changed the same day at the
-user's request — the order is "how we toggle things", not a layout.
+**Rejected, in the order they were tried the same day:** a depth into the
+order that also rearranged the columns (the order is "how we toggle
+things", not a layout); then a depth with fixed places (showing Workspaces
+forced every column before it in the order to show too).
 
-The stored state keeps the old 1-based level number (depth + 1), so
-existing libraries open unchanged with the default order.
+Older libraries stored a 1-based level; it is read as a depth into the
+default order the first time, then the set is stored instead.

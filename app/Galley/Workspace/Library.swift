@@ -64,6 +64,10 @@ nonisolated struct LibraryState: Codable, Sendable {
     var selectedWorkspace: UUID?
     var level: Int = 3
     var lastPanelLevel: Int = 3
+    /// The columns showing, and the set the panel button brings back. Older
+    /// libraries have only `level`, a depth into the default order.
+    var visibleColumns: [String]?
+    var lastVisibleColumns: [String]?
 
     init() {}
 
@@ -73,6 +77,8 @@ nonisolated struct LibraryState: Codable, Sendable {
         selectedWorkspace = try c.decodeIfPresent(UUID.self, forKey: .selectedWorkspace)
         level = try c.decodeIfPresent(Int.self, forKey: .level) ?? 3
         lastPanelLevel = try c.decodeIfPresent(Int.self, forKey: .lastPanelLevel) ?? 3
+        visibleColumns = try c.decodeIfPresent([String].self, forKey: .visibleColumns)
+        lastVisibleColumns = try c.decodeIfPresent([String].self, forKey: .lastVisibleColumns)
     }
 }
 

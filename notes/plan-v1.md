@@ -21,19 +21,18 @@ insertions, not in a separate diff view.
 | Files | security-scoped bookmarks + FSEvents | Works sandboxed or not |
 | State | JSON in Application Support, settings in `UserDefaults` | Small, inspectable |
 
-## Navigation — one axis
+## Navigation — columns
 
-Columns sit in fixed places: **Workspaces · Files · Contents · Page**. The
-order they are revealed in is the reader's (Settings → Reading → Columns,
-drag to reorder; each can be switched off, Contents also with ⌥⌘2): each
-swipe right brings in the next column of that order in its own place, and
-swiping left takes them away in reverse.
+Columns sit in fixed places: **Workspaces · Files · Contents · Page**, and
+each shows or hides on its own (⌘1 / ⌘2 / ⌘3, the View menu; ⌘\ for all).
 
 - Two-finger horizontal swipe, **interactive** — the column follows the
-  fingers and snaps on release (fingers right = reveal, left = hide).
-- `⌘[` / `⌘]` step, `⌘1` is the page alone and `⌘2`… add columns in order.
+  fingers and snaps on release (fingers right = reveal, left = hide). Which
+  column comes next is the reader's order (Settings → Reading → Columns,
+  drag to reorder; a column switched off there is passed over).
+- `⌘]` / `⌘[` do what a swipe does.
 - Column widths are the reader's: drag a divider, double-click it for the
-  default.
+  default. Workspaces can be a rail of icons (⌥⌘4).
 
 ## Continuous reading
 

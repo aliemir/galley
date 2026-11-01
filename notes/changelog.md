@@ -26,6 +26,8 @@ otherwise have to re-derive. Not worth one: typo fixes and formatting.
 
 ## 2026-11-01
 
+- Columns toggle independently: ⌘1 Workspaces, ⌘2 Files, ⌘3 Contents (View
+  menu too), ⌘\ hides all; swipes and ⌘] / ⌘[ follow the reader's order
 - Column order now sets only the reveal order; columns keep their places on screen
 - Type-to-select in the Files column: typing jumps a highlight to the
   matching file (prefix, then word start; a repeated letter cycles), Return
