@@ -18,7 +18,7 @@ final class DebugAutomation {
         "snapshot", "probe", "reload", "reset", "palette", "palette.close", "highlight", "next", "previous", "fold", "unfold", "change", "find.close", "resize.small", "resize.large",
         "scroll.top", "scroll.bottom", "dark", "light", "system",
         "appearance", "appearance.close", "settings", "settings.close", "settings.reading", "settings.appearance",
-        "js", "columns.reset", "columns.filesfirst", "columns.nocontents", "rail", "rail.off", "identity", "identity.close", "icon.test", "icon.reset", "swipe.right", "swipe.left", "swipe.hold", "swipe.release", "swipe.wobble", "pull.hold", "pull.half", "pull.back", "pull.backhalf", "pull.release",
+        "js", "focusfiles", "type.api", "type.rate", "type.s", "type.sta", "key.return", "key.escape", "key.down", "columns.reset", "columns.filesfirst", "columns.nocontents", "rail", "rail.off", "identity", "identity.close", "icon.test", "icon.reset", "swipe.right", "swipe.left", "swipe.hold", "swipe.release", "swipe.wobble", "pull.hold", "pull.half", "pull.back", "pull.backhalf", "pull.release",
     ] + (1...4).map { "level.\($0)" }
         + Theme.all.map { "theme.\($0.id)" }
         + (0..<30).map { "open.\($0)" }
@@ -123,6 +123,14 @@ final class DebugAutomation {
                 model.setWorkspaceIcon(.monogram, for: id)
                 model.setWorkspaceName(nil, for: id)
             }
+        case "focusfiles": model.filesFocusRequest += 1
+        case "type": for character in argument { postKey(String(character), keyCode: 0) }
+        case "key":
+            switch argument {
+            case "return": postKey("\r", keyCode: 36)
+            case "escape": postKey("\u{1b}", keyCode: 53)
+            default: postKey(String(UnicodeScalar(NSDownArrowFunctionKey)!), keyCode: 125)
+            }
         case "columns":
             switch argument {
             case "filesfirst": model.settings.columnOrder = [.files, .outline, .workspaces]
@@ -201,6 +209,19 @@ final class DebugAutomation {
         guard let ns = NSEvent(cgEvent: event) else { return }
         debugLog("[swipe] phase=\(ns.phase.rawValue) dx=\(ns.scrollingDeltaX) dy=\(ns.scrollingDeltaY) inverted=\(ns.isDirectionInvertedFromDevice)")
         GestureMonitor.current?.inject(ns)
+    }
+
+    /// A key press as the keyboard would send it to the main window.
+    private func postKey(_ characters: String, keyCode: UInt16) {
+        guard let window = mainWindow else { return }
+        for type in [NSEvent.EventType.keyDown, .keyUp] {
+            guard let event = NSEvent.keyEvent(
+                with: type, location: .zero, modifierFlags: [], timestamp: ProcessInfo.processInfo.systemUptime,
+                windowNumber: window.windowNumber, context: nil, characters: characters,
+                charactersIgnoringModifiers: characters, isARepeat: false, keyCode: keyCode
+            ) else { continue }
+            NSApp.postEvent(event, atStart: false)
+        }
     }
 
     private var mainWindow: NSWindow? {

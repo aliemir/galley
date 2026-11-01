@@ -192,6 +192,9 @@ swift tools/galley-debug.swift level.3 theme.sepia open.1 snapshot
 #             (trackpad gestures fed through the real GestureMonitor)
 #             js (runs /private/tmp/galley-debug/eval.js in the page, logs
 #             the result to stderr — measure layout, read scroll position)
+#             focusfiles type.<text> key.return|escape|down (real key events
+#             posted to the window) rail[.off] identity[.close] icon.test|reset
+#             columns.reset|filesfirst|nocontents
 # real on-screen captures (needs Screen Recording for the terminal) —
 # popovers and Settings are their own windows, so capture by window id:
 swift tools/window-bounds.swift Galley     # id layer x,y,w,h title
