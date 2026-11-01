@@ -26,6 +26,12 @@ otherwise have to re-derive. Not worth one: typo fixes and formatting.
 
 ## 2026-11-02
 
+- Links to files: Markdown opens in Galley wherever it is — this workspace,
+  another (switching to it), or none (joining Opened Files), at the linked
+  section; documents (images, PDF, text and code, media, office files) open
+  in their default app; apps, scripts, installers, workflows and executables
+  are only shown in Finder, with a note why; HTML and unknown types ask
+  (`LinkTarget`)
 - The minimum is macOS 15 Sequoia (was 26): nothing needed 26; it builds for
   15 unchanged. The website says so
 

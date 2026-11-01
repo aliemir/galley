@@ -169,8 +169,10 @@ flowchart LR
 
 Galley only reads. It never writes to a Markdown file, keeps nothing outside
 your Mac, and the page it draws cannot reach the network or run anything a
-file brings with it: scripts, styles and frames in a file's HTML are removed,
-and links to anything but the web or mail ask before they open.
+file brings with it: scripts, styles and frames in a file's HTML are removed.
+A link to another Markdown file opens it in Galley; a link to a document — an
+image, a PDF — opens it in its app; a link to an app or a script only shows
+it in Finder.
 
 ---
 

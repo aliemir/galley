@@ -318,3 +318,16 @@ so 15 is the version right before 26.
 paragraphs break a little more plainly; nothing else is known. Test the
 first release on macOS 15 (a virtual machine is enough) before shipping.
 
+## 2026-11-02 — What a link to a file may do
+
+**Chosen:** Markdown opens in Galley wherever it lives; a document opens in
+its default app; anything that can run (apps, scripts — `public.script`
+covers shell, Python, AppleScript — installers, disk images, workflows,
+Shortcuts, `.inetloc`, or any file with the execute bit that is not a known
+document) is only shown in Finder; HTML (it runs scripts in a browser) and
+unknown types ask, offering Open or Show in Finder.
+
+**Why:** the rule stays "a link in an agent's Markdown never starts code
+with one click", but showing every file in Finder (the sandbox-era
+behaviour) made a link to a screenshot or a PDF a detour.
+
