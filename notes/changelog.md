@@ -26,6 +26,8 @@ otherwise have to re-derive. Not worth one: typo fixes and formatting.
 
 ## 2026-11-01
 
+- The eye button for hidden comments is gone from the top strip; ⇧⌘H, the
+  View menu and Settings remain
 - Connecting agents has a home: a terminal button in the top strip (until
   the command and the skill are both installed, or "Don't show this button
   again") opens a panel — what the command does, Install for the command

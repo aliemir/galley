@@ -98,8 +98,8 @@ them; a tab whose file an agent rewrote shows a dot.
 ## Hidden comments
 
 HTML comments (`<!-- like this -->`) are invisible on a rendered page — but an
-agent reading the file sees every word. Press **⇧⌘H**, or the eye at the top
-right of any page that has some, to show them faint and labelled.
+agent reading the file sees every word. Press **⇧⌘H** (View → Show Hidden Comments)
+to show them faint and labelled.
 
 <!-- This is a hidden comment. If you can read it, Show Hidden Comments is on. Press ⇧⌘H again to hide it. -->
 

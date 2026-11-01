@@ -66,16 +66,6 @@ struct PageView: View {
                     icon: { WorkspaceIcon(workspace: workspace, size: 15) }
                 )
             }
-            if let count = model.current?.rendered.hiddenComments, count > 0 {
-                // Only on pages that hide something.
-                IconButton(
-                    systemName: model.settings.showComments ? "eye" : "eye.slash",
-                    help: (model.settings.showComments ? "Hide" : "Show") + (count == 1 ? " the hidden comment" : " \(count) hidden comments") + Shortcuts.shared.label(.showComments),
-                    isActive: model.settings.showComments
-                ) {
-                    model.settings.showComments.toggle()
-                }
-            }
             if model.current?.changes.isEmpty == false {
                 IconButton(systemName: "arrow.down.to.line.compact", help: "Next Change" + Shortcuts.shared.label(.nextChange)) {
                     model.jumpToChange(1)
