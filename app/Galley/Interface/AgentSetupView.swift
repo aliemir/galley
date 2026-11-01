@@ -45,12 +45,12 @@ struct AgentSetupView: View {
 
             step(
                 number: 2,
-                title: "The agent skill",
+                title: "The agent skill, for all projects",
                 detail: skillDetail,
                 done: setup.skill == .installed
             ) {
                 switch setup.skill {
-                case .missing: Button("Install") { problem = setup.installSkill() }
+                case .missing: Button("Install Globally") { problem = setup.installSkill() }
                 case .outdated: Button("Update") { problem = setup.installSkill() }
                 case .installed:
                     if place == .settings {
@@ -112,7 +112,7 @@ struct AgentSetupView: View {
         let agents = setup.skillAgents.isEmpty ? "" : " For " + ListFormatter.localizedString(byJoining: setup.skillAgents) + "."
         switch setup.skill {
         case .missing:
-            return "Teaches your agents, in every project, how to read your feedback and clear what they finished. Goes in \(folder), where Codex reads it, linked for Claude Code and Gemini CLI."
+            return "Teaches your agents how to read your feedback and clear what they finished. Goes in \(folder) for every project, linked for Claude Code and Gemini CLI. For one project only, use the command below."
         case .installed: return "Installed in \(folder).\(agents)"
         case .outdated: return "In \(folder), but older, or not linked for every agent here."
         }
