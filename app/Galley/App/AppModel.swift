@@ -449,7 +449,7 @@ final class AppModel {
     private func makePayload(_ document: OpenDocument, in workspace: Workspace, transition: String) -> PagePayload {
         var meta: [String] = []
         let folder = document.file.folder
-        meta.append(folder.isEmpty ? workspace.name : ([workspace.name] + folder.split(separator: "/").map(String.init)).joined(separator: " / "))
+        meta.append(folder.isEmpty ? workspace.name : workspace.name + " / " + settings.displayFolderPath(folder))
         meta.append(Self.relativeDate(document.file.modified))
         meta.append("\(document.rendered.readingMinutes) min read")
 

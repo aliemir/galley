@@ -20,6 +20,18 @@ struct PrettyNameTests {
     func names(input: String, expected: String) {
         #expect(PrettyName.make(fromFilename: input) == expected)
     }
+
+    @Test(arguments: [
+        ("doodle-cases", "Doodle cases"),
+        ("03-research", "Research"),
+        ("store_metadata", "Store metadata"),
+        ("v1.2-notes", "V1.2 notes"),
+        ("notes", "Notes"),
+        ("API", "API"),
+    ])
+    func folderNames(input: String, expected: String) {
+        #expect(PrettyName.make(fromFolderName: input) == expected)
+    }
 }
 
 struct RendererTests {

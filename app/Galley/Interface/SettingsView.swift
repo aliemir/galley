@@ -26,7 +26,7 @@ private struct ReadingSettings: View {
                 ForEach(NameStyle.allCases) { Text($0.label).tag($0) }
             } label: {
                 Text("Show files by")
-                Text("“2026-10-30_auth-migrationPlan.md” reads as “Auth migration plan”. The real name is always in the tooltip.")
+                Text("“2026-10-30_auth-migrationPlan.md” reads as “Auth migration plan”, and folders are tidied the same way unless you pick file names. The real name is always in the tooltip.")
             }
 
             Picker("Continue to", selection: $settings.continueOrder) {

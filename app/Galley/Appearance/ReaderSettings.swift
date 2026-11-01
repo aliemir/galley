@@ -158,6 +158,16 @@ final class ReaderSettings {
         fontSize = min(Self.fontSizes.upperBound, max(Self.fontSizes.lowerBound, fontSize + delta))
     }
 
+    /// Folder names follow the file names: tidied unless raw names were asked for.
+    func displayFolderName(_ name: String) -> String {
+        nameStyle == .filename ? name : PrettyName.make(fromFolderName: name)
+    }
+
+    /// `plans/q3-launch` → "Plans / Q3 launch".
+    func displayFolderPath(_ path: String) -> String {
+        path.split(separator: "/").map { displayFolderName(String($0)) }.joined(separator: " / ")
+    }
+
     func displayName(for file: DocumentFile) -> String {
         switch nameStyle {
         case .pretty: file.prettyName

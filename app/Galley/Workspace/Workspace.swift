@@ -42,7 +42,10 @@ final class Workspace: Identifiable {
     /// views reading `record` refresh.
     private(set) var revision = 0
 
-    var name: String { root.lastPathComponent }
+    /// The folder's name on disk.
+    var folderName: String { root.lastPathComponent }
+    /// The name Galley shows.
+    var name: String { ReaderSettings.shared.displayFolderName(folderName) }
     var record: WorkspaceRecord? {
         _ = revision
         return library.record(id)

@@ -168,10 +168,11 @@ private struct FolderRow: View {
                 .foregroundStyle(palette.ink3)
                 .rotationEffect(.degrees(isCollapsed ? 0 : 90))
                 .frame(width: 12)
-            Text(folder.name)
+            Text(model.settings.displayFolderName(folder.name))
                 .font(.system(size: 12.5, weight: .medium))
                 .foregroundStyle(palette.ink2)
                 .lineLimit(1)
+                .help(folder.name)
             Spacer(minLength: 4)
             if isCollapsed, unread > 0 {
                 Circle().fill(palette.unread).frame(width: 6, height: 6)
@@ -261,7 +262,7 @@ struct FileRow: View {
     }
 
     private var location: String {
-        let folder = file.folder.isEmpty ? workspace.name : file.folder.replacingOccurrences(of: "/", with: " / ")
+        let folder = file.folder.isEmpty ? workspace.name : model.settings.displayFolderPath(file.folder)
         return "\(folder) · \(AppModel.relativeDate(file.modified).lowercased())"
     }
 }

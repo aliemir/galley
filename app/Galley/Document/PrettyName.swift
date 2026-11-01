@@ -22,7 +22,16 @@ nonisolated enum PrettyName {
         if let dot = name.lastIndex(of: "."), dot != name.startIndex {
             name = String(name[..<dot])
         }
-        name = stripLeadingDateOrNumber(name)
+        return tidy(name, original: filename)
+    }
+
+    /// `03-research_notes` → "Research notes". Dots stay: a folder has no extension.
+    static func make(fromFolderName folder: String) -> String {
+        tidy(folder, original: folder)
+    }
+
+    private static func tidy(_ stem: String, original filename: String) -> String {
+        let name = stripLeadingDateOrNumber(stem)
 
         // camelCase and digit boundaries become spaces.
         var spaced = ""
