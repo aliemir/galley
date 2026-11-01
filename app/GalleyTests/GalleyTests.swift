@@ -295,10 +295,10 @@ struct AxisLockTests {
     }
 
     @Test func smallSwipesMoveNothing() {
-        #expect(AxisLock.swipeProgress(fingerX: 20, distance: 200) == 0)
-        #expect(AxisLock.swipeProgress(fingerX: -27, distance: 200) == 0)
-        #expect(AxisLock.swipeProgress(fingerX: 128, distance: 200) == 0.5)
-        #expect(AxisLock.swipeProgress(fingerX: -128, distance: 200) == -0.5)
+        #expect(AxisLock.swipeProgress(fingerX: 30, distance: 200) == 0)
+        #expect(AxisLock.swipeProgress(fingerX: -39, distance: 200) == 0)
+        #expect(AxisLock.swipeProgress(fingerX: 140, distance: 200) == 0.5)
+        #expect(AxisLock.swipeProgress(fingerX: -140, distance: 200) == -0.5)
     }
 }
 

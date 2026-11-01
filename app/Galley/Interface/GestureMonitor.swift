@@ -327,7 +327,7 @@ nonisolated struct AxisLock {
 
     /// Finger travel that moves no column: small and accidental swipes leave
     /// the panels, and the text beside them, alone.
-    static let swipeDeadZone: CGFloat = 28
+    static let swipeDeadZone: CGFloat = 40
 
     /// -1…1 of a column's reveal for `fingerX` points of sideways travel,
     /// counted from the end of the dead zone.
