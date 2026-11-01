@@ -26,6 +26,7 @@ otherwise have to re-derive. Not worth one: typo fixes and formatting.
 
 ## 2026-11-01
 
+- Pull to next/previous now needs 220 pt of pull (was 150 — felt too short)
 - Pull-to-next/previous rebuilt from the user's screen recording: the page
   draws its own stretch, so the ring, the page movement and the cue are one
   value; the bottom "Next" block is gone and appears only while pulling;

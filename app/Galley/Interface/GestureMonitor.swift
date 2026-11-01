@@ -40,7 +40,10 @@ final class GestureMonitor {
     /// Points of finger travel for a full column reveal.
     private let swipeDistance: CGFloat = 200
     /// Points of extra pull to continue to the next or previous document.
-    private let pullDistance: CGFloat = 150
+    private let pullDistance: CGFloat = 220
+    /// Mouse-wheel notches count 10 points each; kept apart from the
+    /// trackpad's distance so tuning one does not change the other.
+    private let wheelPullDistance: CGFloat = 240
 
     init(window: NSWindow, model: AppModel) {
         self.window = window
@@ -271,7 +274,7 @@ final class GestureMonitor {
         if wheelEdge != edge { clearWheelPull() }
         wheelEdge = edge
         wheelPull += abs(towardEnd) * (event.hasPreciseScrollingDeltas ? 1 : 10)
-        let threshold = pullDistance * 1.6
+        let threshold = wheelPullDistance
         model.reader.setPull(Double(wheelPull), threshold: Double(threshold), atStart: edge == .start)
         if wheelPull >= threshold {
             wheelEdge = nil
