@@ -13,12 +13,12 @@ struct WelcomeView: View {
                     .font(.system(size: 11, weight: .semibold))
                     .tracking(2.4)
                     .foregroundStyle(palette.ink3)
-                Text("A printed copy of\nwhat your agents wrote.")
+                Text("Read what your\nagents write.")
                     .font(.system(size: 34, weight: .bold, design: .serif))
                     .foregroundStyle(palette.ink)
                     .lineSpacing(2)
                     .fixedSize(horizontal: false, vertical: true)
-                Text("Open a folder your agents write Markdown into. Every file reads like a page, and whatever changes after you have read it is marked in the margin — like a proof back from the printer.")
+                Text("Each file is set like a page in a book. When an agent changes something you have already read, the change is marked. Highlight a passage, add a note, and hand it back as feedback.")
                     .font(.system(size: 15, design: .serif))
                     .foregroundStyle(palette.ink2)
                     .lineSpacing(4)
@@ -36,7 +36,7 @@ struct WelcomeView: View {
                     }
                     .buttonStyle(.plain)
                     .keyboardShortcut(.defaultAction)
-                    Text("or drop a folder — or a single file — on this window")
+                    Text("or drop a folder or file here")
                         .font(.system(size: 12))
                         .foregroundStyle(palette.ink3)
                 }
@@ -45,9 +45,9 @@ struct WelcomeView: View {
             .frame(maxWidth: 440, alignment: .leading)
             Spacer()
             HStack(spacing: 22) {
-                hint("hand.draw", "Swipe sideways to show or hide panels")
-                hint("arrow.down.circle", "Pull past the end to turn the page")
-                hint("lock", "Read-only. Your files are never changed")
+                hint("arrow.down.circle", "Pull past the end for the next file")
+                hint("highlighter", "Highlight to leave feedback")
+                hint("lock", "Read-only: your files are never changed")
             }
             .padding(.bottom, 34)
         }
