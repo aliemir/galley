@@ -26,6 +26,9 @@ otherwise have to re-derive. Not worth one: typo fixes and formatting.
 
 ## 2026-11-01
 
+- Type-to-select in the Files column: typing jumps a highlight to the
+  matching file (prefix, then word start; a repeated letter cycles), Return
+  opens it, Esc cancels; what was typed shows briefly at the column's foot
 - Workspaces get their own name and icon (symbol, emoji or a tinted
   monogram) from "Name and Icon…" in their context menu — the folder is
   never renamed — and can show as a narrow rail of icons (⌥⌘4)

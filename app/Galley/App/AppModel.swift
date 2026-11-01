@@ -291,6 +291,12 @@ final class AppModel {
     /// The workspace whose name-and-icon editor is open.
     var customizingWorkspace: UUID?
 
+    /// The file type-to-select landed on in the Files column, before Return
+    /// opens it; nil when the selection is simply the open file.
+    var filesCursor: String?
+    /// Bumped to move keyboard focus into the Files column.
+    var filesFocusRequest = 0
+
     func removeWorkspace(_ id: UUID) {
         guard let workspace = workspaces.first(where: { $0.id == id }) else { return }
         if current?.workspaceID == id {
@@ -386,6 +392,7 @@ final class AppModel {
             return
         }
         guard let source = WorkspaceScanner.read(file.url) else { return }
+        filesCursor = nil
         leaveCurrent()
         load(file, in: workspace, source: source, transition: transition, heading: heading, landingAtEnd: landingAtEnd)
         library.updateWorkspace(workspace.id) { $0.selectedFile = file.id }

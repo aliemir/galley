@@ -5,6 +5,9 @@ struct FilesColumn: View {
     @Environment(\.palette) private var palette
     @FocusState private var isFocused: Bool
     @AppStorage("filesSort") private var sort: FileSort = .folders
+    @State private var typeSelect = TypeSelect()
+    @State private var typedBubble = ""
+    @State private var bubbleFade: Task<Void, Never>?
 
     enum FileSort: String { case folders, recent }
 
@@ -100,25 +103,112 @@ struct FilesColumn: View {
                     guard let id else { return }
                     withAnimation(.easeOut(duration: 0.2)) { proxy.scrollTo(id, anchor: nil) }
                 }
+                .onChange(of: model.filesCursor) { _, id in
+                    guard let id else { return }
+                    withAnimation(.easeOut(duration: 0.16)) { proxy.scrollTo(id, anchor: nil) }
+                }
             }
+            .overlay(alignment: .bottom) { bubble }
             .focusable()
             .focused($isFocused)
             .focusEffectDisabled()
             .simultaneousGesture(TapGesture().onEnded { isFocused = true })
+            .onChange(of: isFocused) { _, focused in if !focused { endTypeSelect() } }
+            .onChange(of: model.filesFocusRequest) { isFocused = true }
             .onKeyPress(.downArrow) { step(1, in: workspace); return .handled }
             .onKeyPress(.upArrow) { step(-1, in: workspace); return .handled }
             .onKeyPress(.rightArrow) { model.focusPage(); return .handled }
-            .onKeyPress(.return) { model.focusPage(); return .handled }
-            .onKeyPress(.space) { model.reader.scrollPage(1); return .handled }
+            .onKeyPress(.return) { openCursor(in: workspace); return .handled }
+            .onKeyPress(.escape) {
+                guard model.filesCursor != nil || typeSelect.isActive else { return .ignored }
+                endTypeSelect()
+                return .handled
+            }
+            .onKeyPress(phases: .down) { press in typeToSelect(press, in: workspace) }
         }
     }
 
+    /// The files in the order the column shows them.
+    private func order(_ workspace: Workspace) -> [DocumentFile] {
+        sort == .folders ? visibleFiles(workspace.tree, workspace: workspace) : workspace.files.sorted { $0.modified > $1.modified }
+    }
+
+    /// Arrows open as they go, starting from wherever typing landed.
     private func step(_ delta: Int, in workspace: Workspace) {
-        let order = sort == .folders ? visibleFiles(workspace.tree, workspace: workspace) : workspace.files.sorted { $0.modified > $1.modified }
+        let order = order(workspace)
         guard !order.isEmpty else { return }
-        let index = order.firstIndex { $0.id == model.current?.file.id } ?? -1
+        let from = model.filesCursor ?? model.current?.file.id
+        let index = order.firstIndex { $0.id == from } ?? -1
         let next = min(order.count - 1, max(0, index + delta))
+        endTypeSelect()
         model.open(order[next])
+    }
+
+    /// Return opens the file typing landed on; on the open file it moves
+    /// into the page, as before.
+    private func openCursor(in workspace: Workspace) {
+        if let id = model.filesCursor, id != model.current?.file.id, let file = workspace.file(id) {
+            endTypeSelect()
+            model.open(file)
+        } else {
+            endTypeSelect()
+            model.focusPage()
+        }
+    }
+
+    private func typeToSelect(_ press: KeyPress, in workspace: Workspace) -> KeyPress.Result {
+        guard press.modifiers.isSubset(of: [.shift]), let character = press.characters.first,
+              press.characters.count == 1 else { return .ignored }
+        // Space adds to a search under way; otherwise it pages the reader.
+        if character == " " {
+            guard typeSelect.continues() else { model.reader.scrollPage(1); return .handled }
+        } else if !(character.isLetter || character.isNumber || character.isPunctuation || character.isSymbol) {
+            return .ignored
+        }
+        let query = typeSelect.type(String(character))
+        showBubble(query)
+        let files = order(workspace)
+        let names = files.map { model.settings.displayName(for: $0) }
+        let from = files.firstIndex { $0.id == (model.filesCursor ?? model.current?.file.id) }
+        if let index = TypeSelect.match(query, in: names, current: from) {
+            model.filesCursor = files[index].id == model.current?.file.id ? nil : files[index].id
+        }
+        return .handled
+    }
+
+    private func endTypeSelect() {
+        typeSelect.reset()
+        model.filesCursor = nil
+        bubbleFade?.cancel()
+        withAnimation(.easeOut(duration: 0.15)) { typedBubble = "" }
+    }
+
+    private func showBubble(_ text: String) {
+        withAnimation(.easeOut(duration: 0.12)) { typedBubble = text }
+        bubbleFade?.cancel()
+        bubbleFade = Task {
+            try? await Task.sleep(for: .seconds(TypeSelect.timeout + 0.3))
+            guard !Task.isCancelled else { return }
+            withAnimation(.easeOut(duration: 0.25)) { typedBubble = "" }
+        }
+    }
+
+    /// What has been typed, briefly, at the foot of the column.
+    @ViewBuilder
+    private var bubble: some View {
+        if !typedBubble.isEmpty {
+            Text(typedBubble)
+                .font(.system(size: 12, weight: .medium).monospacedDigit())
+                .foregroundStyle(palette.ink)
+                .padding(.horizontal, 10)
+                .padding(.vertical, 5)
+                .background(Capsule().fill(.regularMaterial))
+                .overlay(Capsule().strokeBorder(palette.rule))
+                .padding(.bottom, 12)
+                .transition(.opacity.combined(with: .scale(scale: 0.96)))
+                .allowsHitTesting(false)
+                .accessibilityHidden(true)
+        }
     }
 
     private func visibleFiles(_ folder: FolderNode, workspace: Workspace) -> [DocumentFile] {
@@ -215,6 +305,11 @@ struct FileRow: View {
         model.current?.file.id == file.id && model.current?.workspaceID == workspace.id
     }
 
+    /// Where typing landed: Return opens it.
+    private var isCursor: Bool {
+        model.filesCursor == file.id && model.selectedWorkspaceID == workspace.id
+    }
+
     var body: some View {
         let status = workspace.status(of: file)
         HStack(alignment: showsLocation ? .firstTextBaseline : .center, spacing: 7) {
@@ -243,7 +338,11 @@ struct FileRow: View {
         .frame(minHeight: 28)
         .background(
             RoundedRectangle(cornerRadius: 7, style: .continuous)
-                .fill(isSelected ? palette.selection : (isHovered ? palette.hover : .clear))
+                .fill(isSelected ? palette.selection : (isCursor ? palette.accent.opacity(0.1) : (isHovered ? palette.hover : .clear)))
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 7, style: .continuous)
+                .strokeBorder(palette.accent.opacity(isCursor ? 0.7 : 0), lineWidth: 1.5)
         )
         .contentShape(Rectangle())
         .onTapGesture { model.open(file) }

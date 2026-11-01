@@ -294,3 +294,41 @@ struct AxisLockTests {
         #expect(decide([(5, 5), (5, 5)]) == .vertical)
     }
 }
+
+struct TypeSelectTests {
+    let names = ["README", "Auth migration plan", "API rate limits", "Competitor readers", "Standup notes", "Señor search"]
+
+    @Test func prefixPicksTheFirstMatch() {
+        #expect(TypeSelect.match("a", in: names, current: nil) == 1)
+        #expect(TypeSelect.match("api", in: names, current: nil) == 2)
+        #expect(TypeSelect.match("API R", in: names, current: nil) == 2)
+    }
+
+    @Test func caseAndAccentsDoNotMatter() {
+        #expect(TypeSelect.match("senor", in: names, current: nil) == 5)
+        #expect(TypeSelect.match("readme", in: names, current: nil) == 0)
+    }
+
+    @Test func wordStartsAreASecondChoice() {
+        #expect(TypeSelect.match("rate", in: names, current: nil) == 2)
+        #expect(TypeSelect.match("notes", in: names, current: nil) == 4)
+    }
+
+    @Test func repeatingALetterCycles() {
+        // Two names start with "s": the second "s" steps from the first to the next.
+        #expect(TypeSelect.match("ss", in: names, current: 4) == 5)
+        #expect(TypeSelect.match("ss", in: names, current: 5) == 4)
+    }
+
+    @Test func noMatchLeavesTheSelectionAlone() {
+        #expect(TypeSelect.match("zzz", in: names, current: 2) == nil)
+    }
+
+    @Test func aPauseStartsOver() {
+        var select = TypeSelect()
+        let start = Date()
+        #expect(select.type("a", at: start) == "a")
+        #expect(select.type("p", at: start.addingTimeInterval(0.4)) == "ap")
+        #expect(select.type("c", at: start.addingTimeInterval(2)) == "c")
+    }
+}
