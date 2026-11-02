@@ -26,8 +26,9 @@ otherwise have to re-derive. Not worth one: typo fixes and formatting.
 
 ## 2026-11-02
 
-- Return confirms the Clear Feedback alerts: AppKit takes Return off a
-  destructive button as the alert shows, which left no default at all
+- The Clear Feedback alerts confirm with ⌘⌫, shown on the red Clear button
+  ("Clear ⌘⌫"); Return does nothing there, so a stray one clears nothing,
+  and Escape cancels
 - The palette's actions include Find Next (⌘G) and Find Previous (⇧⌘G) once
   there is something to find on the page
 - Fuzzy matching tries every starting place, so a query that names a whole

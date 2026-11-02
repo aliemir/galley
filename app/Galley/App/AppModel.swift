@@ -1534,23 +1534,29 @@ final class AppModel {
         let alert = NSAlert()
         alert.messageText = title
         alert.informativeText = detail + ". This cannot be undone."
-        alert.addButton(withTitle: "Clear")
+        // Red and never Return, so a stray Return cannot clear anything:
+        // ⌘⌫, as Move to Trash, said on the button. Escape cancels.
+        alert.addButton(withTitle: "Clear  ⌘⌫")
         alert.addButton(withTitle: "Cancel")
         let clear = alert.buttons[0]
         clear.hasDestructiveAction = true
-        // Red, and still Return. The alert takes Return off a destructive
-        // button as it shows, which left it with no default at all, so the
-        // key goes back on once it is up.
-        let returnKey = { DispatchQueue.main.async { clear.keyEquivalent = "\r" } }
+        // The alert sets its buttons' keys as it shows; this goes on after.
+        let keys = {
+            DispatchQueue.main.async {
+                // The Delete key sends DEL (U+7F), which a button compares as is.
+                clear.keyEquivalent = "\u{7F}"
+                clear.keyEquivalentModifierMask = .command
+            }
+        }
         guard let window = NSApp.keyWindow ?? NSApp.mainWindow else {
-            returnKey()
+            keys()
             if alert.runModal() == .alertFirstButtonReturn { action() }
             return
         }
         alert.beginSheetModal(for: window) { response in
             if response == .alertFirstButtonReturn { action() }
         }
-        returnKey()
+        keys()
     }
 
     // MARK: Links
