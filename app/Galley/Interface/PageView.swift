@@ -81,7 +81,8 @@ struct PageView: View {
                         .environment(model)
                 }
             }
-            // Either can be hidden in Settings; Find's still shows while its bar is open.
+            // Either can be hidden in Settings; it still shows while its bar
+            // or panel is open (the palette's actions open Appearance).
             if model.settings.showFindButton || model.isFindVisible {
                 IconButton(systemName: "magnifyingglass", help: "Find" + Shortcuts.shared.label(.find), isActive: model.isFindVisible) {
                     withAnimation(.easeOut(duration: 0.18)) {
@@ -89,7 +90,7 @@ struct PageView: View {
                     }
                 }
             }
-            if model.settings.showAppearanceButton {
+            if model.settings.showAppearanceButton || model.isAppearanceVisible {
                 IconButton(systemName: "textformat.size", help: "Appearance", isActive: model.isAppearanceVisible) {
                     model.isAppearanceVisible.toggle()
                 }

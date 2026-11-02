@@ -331,3 +331,21 @@ unknown types ask, offering Open or Show in Finder.
 with one click", but showing every file in Finder (the sandbox-era
 behaviour) made a link to a screenshot or a PDF a detour.
 
+
+## 2026-11-02 — Actions live in the ⌘K palette, not a palette of their own
+
+**Chosen:** a third mode of the existing palette — `>` typed at the start, or
+⇧⌘P to open it there — listing what the menus and the top bar do, under the
+menus' names and with their shortcuts. Actions that would do nothing now are
+left out, not greyed; themes and appearances only come up when a query asks.
+The palette's own modes (Go to File, Search All Files, New Tab, Go to Section)
+switch it in place instead of closing it.
+
+**Why:** one place to type into, with the same keys (Tab, Backspace, arrows) as
+`#` for sections. The menus stay the source of truth: an action runs the same
+model call its menu item does.
+
+**Rejected:** a separate command window (a second palette to learn); a
+shortcut for the Appearance panel (it is all in Settings → Reading and Themes,
+and the reader said it was not needed); listing every theme in the opening
+list (nineteen rows of noise).

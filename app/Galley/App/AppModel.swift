@@ -100,6 +100,10 @@ final class AppModel {
     @ObservationIgnored let textIndex = TextIndex()
     /// Text the palette opens with: "#" jumps straight to sections.
     var quickOpenSeed = ""
+    #if DEBUG
+    /// The palette's frame in the window, logged by `palette.frame`.
+    @ObservationIgnored var paletteFrame: CGRect = .zero
+    #endif
     var isFindVisible = false
     var isAppearanceVisible = false
     /// Bumped by ⌘F to refocus the field when the bar is already open.

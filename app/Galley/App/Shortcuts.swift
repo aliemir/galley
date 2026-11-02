@@ -67,7 +67,7 @@ nonisolated struct KeyShortcut: Codable, Hashable, Sendable {
 
 /// Everything with a shortcut, grouped as the menus are.
 enum ShortcutAction: String, CaseIterable, Identifiable {
-    case newTab, open, goToFile, searchAllFiles, goToSection, openInDefaultApp, revealInFinder, copyPath
+    case newTab, open, goToFile, searchAllFiles, goToSection, allActions, openInDefaultApp, revealInFinder, copyPath
     case closeTab, closeOtherTabs, print
     case find, findNext, findPrevious
     case toggleWorkspaces, toggleFiles, toggleContents, togglePanels, showNextPanel, hideLastPanel, workspacesAsIcons
@@ -85,6 +85,7 @@ enum ShortcutAction: String, CaseIterable, Identifiable {
         case .goToFile: "Go to File"
         case .searchAllFiles: "Search All Files"
         case .goToSection: "Go to Section"
+        case .allActions: "All Actions"
         case .openInDefaultApp: "Open in Default App"
         case .revealInFinder: "Reveal in Finder"
         case .copyPath: "Copy Path"
@@ -126,7 +127,7 @@ enum ShortcutAction: String, CaseIterable, Identifiable {
 
     var group: String {
         switch self {
-        case .newTab, .open, .goToFile, .searchAllFiles, .goToSection, .openInDefaultApp, .revealInFinder, .copyPath,
+        case .newTab, .open, .goToFile, .searchAllFiles, .goToSection, .allActions, .openInDefaultApp, .revealInFinder, .copyPath,
              .closeTab, .closeOtherTabs, .print: "File"
         case .find, .findNext, .findPrevious: "Find"
         case .toggleWorkspaces, .toggleFiles, .toggleContents, .togglePanels, .showNextPanel, .hideLastPanel, .workspacesAsIcons,
@@ -146,6 +147,7 @@ enum ShortcutAction: String, CaseIterable, Identifiable {
         case .goToFile: KeyShortcut("k")
         case .searchAllFiles: KeyShortcut("f", [.command, .shift])
         case .goToSection: KeyShortcut("k", [.command, .shift])
+        case .allActions: KeyShortcut("p", [.command, .shift])
         case .openInDefaultApp: KeyShortcut("e")
         case .revealInFinder: KeyShortcut("r", [.command, .option])
         case .copyPath: KeyShortcut("c", [.command, .option, .shift])

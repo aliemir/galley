@@ -26,6 +26,9 @@ otherwise have to re-derive. Not worth one: typo fixes and formatting.
 
 ## 2026-11-02
 
+- The palette has an actions mode: `>` in ⌘K, or ⇧⌘P, lists everything in
+  the menus and the top bar with its shortcut (themes and appearances once a
+  query asks); actions that would do nothing are left out
 - Settings → General can hide the Find and Appearance buttons at the top
   right; a hidden Find button still shows while the find bar is open
 - Website lists the features as eight cards above the hero picture, a title

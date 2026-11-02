@@ -145,6 +145,37 @@ debug level.3 palette wait.1500
 shot palette "$(window)"
 debug palette.close
 
+# 4b. The palette's four modes, each cut out of the window along its own
+# rounded edge, for the website: file names, sections, text, actions.
+bar() {
+  local name=$1; shift
+  debug "$@" wait.1400 palette.frame wait.300
+  local frame=($(grep '^palette frame' "$WORK/log.txt" | tail -1 | cut -d' ' -f3-))
+  local file="website/public/images/palette-$name.png"
+  screencapture -x -o -l "$(window)" "$WORK/bar.png"
+  python3 - "$WORK/bar.png" "$file" "${frame[@]}" <<'EOF'
+import sys
+from PIL import Image, ImageDraw
+source, out, x, y, w, h = sys.argv[1], sys.argv[2], *map(int, sys.argv[3:7])
+scale = 2
+image = Image.open(source).convert("RGBA").crop((x * scale, y * scale, (x + w) * scale, (y + h) * scale))
+# The palette's corners (14 pt, continuous), drawn large and scaled down so the edge is smooth.
+big = 4
+mask = Image.new("L", (image.width * big, image.height * big), 0)
+ImageDraw.Draw(mask).rounded_rectangle((0, 0, mask.width - 1, mask.height - 1), radius=14 * scale * big, fill=255)
+image.putalpha(mask.resize(image.size, Image.LANCZOS))
+image.save(out, optimize=True)
+EOF
+  xattr -c "$file"
+  debug palette.close wait.500
+  echo "wrote $file"
+}
+# Typed rather than seeded: a seeded query shows selected.
+bar files palette wait.900 type.plan
+bar sections "names.#"
+bar text search wait.900 type.token
+bar actions actions wait.900 type.feedback
+
 # 5. The theme gallery.
 debug settings.themes wait.1800
 shot themes "$(window Themes)"

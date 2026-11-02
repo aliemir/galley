@@ -36,6 +36,12 @@ struct GalleyCommands: Commands {
             }
             .shortcut(.goToSection)
             .disabled(model.current == nil)
+            Button("All Actions…") {
+                model.quickOpenSearchesText = false
+                model.quickOpenSeed = ">"
+                model.isQuickOpenVisible = true
+            }
+            .shortcut(.allActions)
         }
         CommandGroup(after: .newItem) {
             Divider()

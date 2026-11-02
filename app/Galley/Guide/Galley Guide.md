@@ -86,8 +86,12 @@ clear only what it finished. `galley help` lists the rest.
 
 ## Find your way
 
-**⌘K** goes to a file by name — type `#` for a section of this page.
-**⇧⌘F** searches the text of every file. **⌘F** finds on this page.
+**⌘K** goes to a file by name — type `#` for a section of this page, or `>`
+for anything Galley can do. **⇧⌘F** searches the text of every file. **⌘F**
+finds on this page.
+
+**⇧⌘P** goes straight to the actions: everything in the menus and the top
+bar, each with its shortcut — themes too, once you type a name.
 
 ![Go to File, before typing: the most recent files](guide-palette.png)
 
@@ -121,6 +125,7 @@ Dock icon comes in ten colours.
 | **⌘O** | Open a folder or file |
 | **⌘K** / **⇧⌘K** | Go to a file / a section |
 | **⇧⌘F** | Search every file |
+| **⇧⌘P** | All actions |
 | **⌘T** / **⌘W** | New tab / close tab |
 | **⌃Tab** | Next tab |
 | **⌥⌘↓** / **⌥⌘↑** | Next / previous file |
