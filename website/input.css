@@ -121,6 +121,7 @@ main { padding: 0 24px 96px; }
 }
 .features a {
   display: grid; grid-template-columns: auto 1fr; column-gap: 10px; row-gap: 5px; align-items: center;
+  align-content: start; /* a shorter card keeps its title in line with its row's */
   height: 100%; box-sizing: border-box; padding: 18px 20px 19px; border-radius: 12px;
   border: 1px solid var(--rule); background: color-mix(in srgb, var(--paper-2) 45%, var(--paper));
   color: var(--ink); text-decoration: none;
