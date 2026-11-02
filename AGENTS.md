@@ -262,7 +262,11 @@ simulator ones).
   highlights, notes and pins — last writer wins. `pkill -x Galley` before
   launching a test build, and don't drive the app while the user is using
   it (check `ioreg -c IOHIDSystem` idle time). Test highlights and notes on
-  fixture files the user has not marked up.
+  fixture files the user has not marked up. `xcodebuild test` launches the
+  debug app as its test host on the reader's real library and can leave it
+  running after the run — `pkill -x Galley` once tests finish, and before
+  `open`ing a test copy: `open` on an app that is already running only brings
+  that copy forward, ignoring the new `--args`.
 - **Debug output goes to stderr** (`debugLog`) — stdout is block-buffered when
   the app is launched from a script, so `print` output is lost.
 - **Bundle resources are flattened.** Files under `app/Galley/Reader/Web/`
