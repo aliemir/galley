@@ -6,11 +6,10 @@ and Download buttons), **privacy** and **support**. Galley ships from GitHub
 releases, not the App Store. A Cloudflare Worker serving static assets out of
 `public/`, styled with Tailwind v4 (`input.css` holds plain CSS on top of it).
 
-**Before deploying:** the GitHub links are a placeholder,
-`https://github.com/OWNER/REPO` (and `…/releases/latest` for Download) — put
-the real repository in all three pages. `tools/release.sh` attaches the build
-as `Galley.dmg`, so `…/releases/latest/download/Galley.dmg` downloads it
-directly.
+Served at **https://galley.aliemir.dev** (a custom domain in
+`wrangler.jsonc`). The GitHub links go to `https://github.com/aliemir/galley`;
+Download is `…/releases/latest/download/Galley.dmg`, the stable name
+`tools/release.sh` attaches, so it always serves the newest build.
 
 `public/images/guide-*` and `palette-*` come from `tools/capture-guide.sh` —
 recapture there, not by hand. No secrets or bindings: it is public and

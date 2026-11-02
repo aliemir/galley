@@ -10,6 +10,9 @@
     // The path to the directory containing the `index.html` file to be served at `/`
     "directory": "./public",
   },
+  // Served at galley.aliemir.dev; Cloudflare makes the DNS record and the
+  // certificate for a custom domain on deploy.
+  "routes": [{ "pattern": "galley.aliemir.dev", "custom_domain": true }],
   "observability": {
     "enabled": true,
   },
