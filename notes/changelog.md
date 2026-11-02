@@ -12,7 +12,8 @@ Typo fixes and formatting do not need an entry.
 
 - Site: the feature cards keep title and text at the top (a shorter card
   ends in space, not a lower title), and "Closes the loop" has a note-bubble
-  icon with a highlighted line instead of a bar
+  icon with a highlighted line instead of a bar. Every card's icon has a
+  tint of its own, lighter in dark mode
 - Released Galley 1.1.1 (build 150): the Save Feedback button restyled. The
   first release to reach 1.1.0 through Sparkle; its feed verifies
 - The Save button is drawn as the feedback buttons beside it — the purple

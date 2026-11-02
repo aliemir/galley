@@ -136,6 +136,22 @@ main { padding: 0 24px 96px; }
 .features span { grid-column: 1 / -1; font: 400 14px/1.45 var(--font-ui); color: var(--ink-2); text-wrap: pretty; }
 .features .change svg { color: var(--change); }
 .features .hl svg { color: var(--hl-ink); }
+/* Each card its own tint, around the wheel; the first two are the app's
+   own marks (changes, highlights). */
+.features .agent svg { color: #3d8b58; }
+.features .type svg { color: #c24770; }
+.features .place svg { color: #2f6db3; }
+.features .projects svg { color: #208683; }
+.features .private svg { color: #4d5fc4; }
+.features .open svg { color: #6f8a1e; }
+@media (prefers-color-scheme: dark) {
+  .features .agent svg { color: #74c993; }
+  .features .type svg { color: #ee8fae; }
+  .features .place svg { color: #86b3f2; }
+  .features .projects svg { color: #63c7c2; }
+  .features .private svg { color: #99a6f5; }
+  .features .open svg { color: #b6cf62; }
+}
 
 @media (max-width: 960px) { .features { grid-template-columns: repeat(2, minmax(0, 1fr)); max-width: 640px; } }
 /* A phone has room for one card a row: the icon beside the text. */
