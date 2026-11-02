@@ -275,7 +275,7 @@ private struct SaveFeedbackButton: View {
                     Image(systemName: "square.and.arrow.down")
                         .font(.system(size: 12.5))
                 }
-                Text(isDone ? "Saved" : "Save")
+                Text(isDone ? "Saved" : "Save Feedback")
                     .font(.system(size: 11.5, weight: .semibold))
             }
             .foregroundStyle(isHovered ? palette.ink : palette.ink2)
