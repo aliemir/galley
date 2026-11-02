@@ -10,6 +10,9 @@ Typo fixes and formatting do not need an entry.
 
 ## 2026-11-02
 
+- Released Galley 1.0.0 (build 131) on GitHub: signed with the Developer ID,
+  notarized and stapled, `Galley.dmg` 12 MB; notes in
+  `notes/release-notes/1.0.0.md`. The site is live at galley.aliemir.dev
 - `tools/release.sh <version>`: bump, Release archive, Developer ID export,
   notarize and staple the app, a drag-to-Applications `Galley.dmg` signed,
   notarized and stapled, Gatekeeper check, tag, push and a GitHub Release;

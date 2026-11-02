@@ -160,8 +160,12 @@ if [[ ! -f $NOTES ]]; then
   PREVIOUS=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || true)
   {
     print "## What's new\n"
+    # The app's own features and fixes; the site, this script and the notes
+    # are not news to someone downloading the app.
     git log --format='%s' ${PREVIOUS:+$PREVIOUS..}HEAD | grep -E '^(feat|fix)(\([^)]*\))?: ' \
-      | sed -E 's/^(feat|fix)(\([^)]*\))?: /- /' || print "- Maintenance."
+      | grep -vE '^(feat|fix)\((website|release|notes)\)' \
+      | sed -E 's/^(feat|fix)(\([^)]*\))?: //' | awk '{ print "- " toupper(substr($0, 1, 1)) substr($0, 2) }' \
+      | grep . || print "- Maintenance."
   } > $NOTES
 fi
 print "\n---\nmacOS 15 or later. SHA-256 of Galley.dmg: \`$(shasum -a 256 $DMG | cut -d' ' -f1)\`" >> $NOTES
