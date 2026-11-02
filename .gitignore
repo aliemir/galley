@@ -38,3 +38,6 @@ __pycache__/
 
 # LLVM coverage output: an instrumented (test) build run from the repo root
 *.profraw
+
+# --- release builds (tools/release.sh) ---
+build/

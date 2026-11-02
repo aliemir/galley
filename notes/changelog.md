@@ -26,6 +26,11 @@ otherwise have to re-derive. Not worth one: typo fixes and formatting.
 
 ## 2026-11-02
 
+- `tools/release.sh <version>`: bump, Release archive, Developer ID export,
+  notarize and staple the app, a drag-to-Applications `Galley.dmg` signed,
+  notarized and stapled, Gatekeeper check, tag, push and a GitHub Release;
+  `--local` stops at a signed DMG (checked: 1.0.0, build 126, 11 MB). Needs a
+  Developer ID Application certificate and `gh`, neither set up yet
 - Repo trimmed to the app and the site, in the files and the whole history:
   the template's backend, Remotion screenshot generator, App Store metadata,
   privacy template, preflight and rename scripts, the App Store
