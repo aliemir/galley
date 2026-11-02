@@ -10,6 +10,9 @@ Typo fixes and formatting do not need an entry.
 
 ## 2026-11-02
 
+- Site: Make it yours shows all nineteen themes as cards drawn in their own
+  colours, as Settings → Themes does, instead of a screenshot of it;
+  `tools/theme-cards.py` writes them from `Theme.swift`
 - Site: the feature cards keep title and text at the top (a shorter card
   ends in space, not a lower title), and "Closes the loop" has a note-bubble
   icon with a highlighted line instead of a bar. Every card's icon has a

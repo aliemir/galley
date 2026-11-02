@@ -35,7 +35,8 @@ shot() {
   if [[ $# -ge 6 ]]; then sips -c "$3" "$4" --cropOffset "$5" "$6" "$file" --out "$file" >/dev/null; fi
   # The website shows it at full Retina size; the guide's copy is lighter.
   xattr -c "$file"
-  cp "$file" website/public/images/
+  # (Not the theme gallery: the site draws its own, tools/theme-cards.py.)
+  [[ $1 == themes ]] || cp "$file" website/public/images/
   if (( $(sips -g pixelWidth "$file" | awk '/pixelWidth/{print $2}') > 1600 )); then
     sips --resampleWidth 1600 "$file" --out "$file" >/dev/null
   fi

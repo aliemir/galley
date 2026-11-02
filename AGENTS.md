@@ -125,6 +125,7 @@ swift tools/make-icon.swift app/Galley/Assets.xcassets/AppIcon.appiconset
 
 # website — landing, privacy, support
 cd website && npm run dev      # npm run deploy to ship (both build Tailwind first)
+python3 tools/theme-cards.py   # the site's theme cards, from Theme.swift — after changing a theme
 
 # release — see Releases above
 tools/release.sh 1.0.0 --local # signed DMG in build/release/, nothing published

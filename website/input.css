@@ -184,6 +184,54 @@ figure video { background: var(--paper-2); }
 figcaption { max-width: var(--measure); margin: 14px auto 0; font: 400 13.5px/1.5 var(--font-ui); color: var(--ink-3); text-align: center; }
 .features + figure { margin-top: 56px; }
 
+/* — The themes, as Settings → Themes shows them (tools/theme-cards.py) — */
+
+.themes { max-width: 1100px; margin: 40px auto 0; padding: 0 24px; }
+.themes h3 {
+  margin: 28px 0 12px; font: 600 12px/1 var(--font-ui); letter-spacing: 0.08em;
+  text-transform: uppercase; color: var(--ink-3);
+}
+.themes h3:first-child { margin-top: 0; }
+.themes ul {
+  list-style: none; margin: 0; padding: 0;
+  display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px;
+}
+.themes li {
+  display: flex; flex-direction: column; gap: 9px; padding: 14px 15px 15px;
+  border-radius: 12px; background: var(--t-paper); color: var(--t-ink);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--ink) 12%, transparent);
+}
+.themes strong { font: 700 17px/1.2 var(--font-body); }
+.themes p {
+  position: relative; margin: 0; padding-left: 11px;
+  font: 400 13.5px/1.5 var(--font-body); hyphens: none;
+}
+.themes p::before {
+  content: ""; position: absolute; left: 0; top: 0.2em; bottom: 0.2em; width: 3px;
+  border-radius: 2px; background: var(--t-change);
+}
+.themes ins { background: var(--t-insert); padding: 0; }
+.themes mark { color: inherit; background: var(--t-hl); border-radius: 2px; }
+.themes u { color: var(--t-accent); text-underline-offset: 2px; }
+.themes p span { color: var(--t-ink2); }
+.themes code {
+  display: block; margin-top: auto; padding: 5px 8px; border-radius: 6px;
+  font: 400 11px/1.5 var(--font-mono); background: var(--t-code); color: var(--t-ink);
+  white-space: nowrap; overflow: hidden;
+}
+.themes code b { font-weight: 400; color: var(--t-kw); }
+.themes code i { font-style: normal; color: var(--t-fn); }
+.themes code s { text-decoration: none; color: var(--t-str); }
+.themes code em { font-style: normal; color: var(--t-num); }
+@media (max-width: 960px) { .themes ul { grid-template-columns: repeat(2, minmax(0, 1fr)); } .themes { max-width: 640px; } }
+@media (max-width: 520px) {
+  .themes { padding: 0 16px; }
+  .themes ul { gap: 8px; }
+  .themes li { padding: 12px 12px 13px; gap: 8px; }
+  .themes strong { font-size: 16px; }
+  .themes p { font-size: 13px; padding-left: 10px; }
+}
+
 section { margin-top: 88px; }
 h2 { font: 700 1.9em/1.15 var(--font-body); letter-spacing: -0.012em; margin: 0 0 0.55em; text-wrap: balance; }
 p { margin: 0 0 1em; text-wrap: pretty; hyphens: auto; -webkit-hyphens: auto; }
