@@ -26,6 +26,9 @@ otherwise have to re-derive. Not worth one: typo fixes and formatting.
 
 ## 2026-11-02
 
+- Fuzzy matching tries every starting place, so a query that names a whole
+  word finds it rather than letters of an earlier one ("feedback" ranks Copy
+  File Feedback first)
 - The palette keeps the page's selection as it opens and puts it back as it
   closes (WebKit clears it when the field takes the keys), so its Highlight
   and Add Note work; both are listed only when there is a selection.

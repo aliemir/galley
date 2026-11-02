@@ -8,8 +8,16 @@ nonisolated enum Fuzzy {
         guard !needle.isEmpty else { return 0 }
         let haystack = Array(text.lowercased())
         let original = Array(text)
+        // Matching from the first place the first letter appears can spend
+        // the query on the wrong word ("feedback" on the "Fe" of "File
+        // Feedback"): every starting place is tried, and the best kept.
+        let starts = haystack.indices.filter { haystack[$0] == needle[0] }
+        return starts.compactMap { score(needle, in: haystack, original: original, from: $0) }.max()
+    }
+
+    private static func score(_ needle: [Character], in haystack: [Character], original: [Character], from start: Int) -> Int? {
         var score = 0
-        var index = 0
+        var index = start
         var previous = -2
         for character in needle {
             var found: Int?

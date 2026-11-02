@@ -213,6 +213,15 @@ struct FuzzyTests {
     @Test func rejectsMissingCharacters() {
         #expect(Fuzzy.score("xyz", in: "Auth migration plan") == nil)
     }
+
+    /// The whole word wins over letters picked up from an earlier one.
+    @Test func prefersTheWholeWordOverAnEarlierStart() {
+        let file = Fuzzy.score("feedback", in: "Copy File Feedback")
+        let workspace = Fuzzy.score("feedback", in: "Copy Workspace Feedback")
+        #expect(file != nil)
+        #expect(workspace != nil)
+        #expect(file! > workspace!)
+    }
 }
 
 struct PerformanceTests {
