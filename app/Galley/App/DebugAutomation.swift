@@ -18,7 +18,7 @@ final class DebugAutomation {
         "snapshot", "probe", "reload", "reset", "palette", "palette.close", "palette.frame", "search", "type.plan", "type.token", "type.feedback", "type.selection", "type.find", "names.#", "highlight", "next", "previous", "fold", "unfold", "change", "find", "find.close", "resize.small", "resize.large",
         "scroll.top", "scroll.bottom", "dark", "light", "system",
         "appearance", "appearance.close", "settings", "settings.close", "settings.general", "settings.reading", "settings.themes", "settings.shortcuts", "settings.icon", "settings.agents", "agents", "agents.close",
-        "js", "searchopen", "search.token", "search.rate limits", "names.rate", "names.auth", "note", "feedback.copy", "feedback.copyall", "pin", "movepin", "movews", "divider.narrow", "divider.wide", "toggle.outline", "toggle.files", "toggle.workspaces", "focusfiles", "focuspage", "type.api", "type.rate", "type.s", "type.sta", "key.return", "key.escape", "key.down", "key.ctrltab", "key.ctrlshifttab", "key.cmdw", "key.cmdt", "key.cmdreturn", "key.backspace", "key.tab", "type.#", "type.>", "type.nord", "type.fold", "type.feed", "actions", "tab.new", "tab.newnext", "tab.next", "tab.close", "tab.others", "tab.state", "tab.move", "menus", "opened.remove", "highlight.note", "guide", "dress", "shortcut.test", "shortcut.reset", "key.cmdy", "key.cmdf", "key.cmdshiftbracket", "columns.reset", "columns.filesfirst", "columns.nocontents", "rail", "rail.off", "identity", "identity.close", "icon.test", "icon.reset", "swipe.right", "swipe.left", "swipe.slowright", "swipe.slowleft", "pull.slow", "swipe.hold", "swipe.release", "swipe.wobble", "pull.hold", "pull.half", "pull.back", "pull.backhalf", "pull.release",
+        "js", "searchopen", "search.token", "search.rate limits", "names.rate", "names.auth", "note", "feedback.copy", "feedback.copyall", "feedback.clear", "feedback.alert", "pin", "movepin", "movews", "divider.narrow", "divider.wide", "toggle.outline", "toggle.files", "toggle.workspaces", "focusfiles", "focuspage", "type.api", "type.rate", "type.s", "type.sta", "key.return", "key.escape", "key.down", "key.ctrltab", "key.ctrlshifttab", "key.cmdw", "key.cmdt", "key.cmdreturn", "key.backspace", "key.tab", "type.#", "type.>", "type.nord", "type.fold", "type.feed", "actions", "tab.new", "tab.newnext", "tab.next", "tab.close", "tab.others", "tab.state", "tab.move", "menus", "opened.remove", "highlight.note", "guide", "dress", "shortcut.test", "shortcut.reset", "key.cmdy", "key.cmdf", "key.cmdshiftbracket", "columns.reset", "columns.filesfirst", "columns.nocontents", "rail", "rail.off", "identity", "identity.close", "icon.test", "icon.reset", "swipe.right", "swipe.left", "swipe.slowright", "swipe.slowleft", "pull.slow", "swipe.hold", "swipe.release", "swipe.wobble", "pull.hold", "pull.half", "pull.back", "pull.backhalf", "pull.release",
     ] + (1...4).map { "level.\($0)" }
         + (0..<6).map { "ws.\($0)" }
         + Theme.all.map { "theme.\($0.id)" }
@@ -68,7 +68,19 @@ final class DebugAutomation {
                 MainActor.assumeIsolated { self.model.noteSelection() }
             }
         case "feedback":
-            if argument == "copyall" { model.copyWorkspaceFeedback() } else { model.copyFeedback() }
+            switch argument {
+            case "copyall": model.copyWorkspaceFeedback()
+            case "clear": model.clearFeedback()
+            case "alert":
+                // The buttons of the alert over the window, with their keys.
+                func buttons(in view: NSView) -> [NSButton] { view.subviews.flatMap { ($0 as? NSButton).map { [$0] } ?? buttons(in: $0) } }
+                let sheet = mainWindow?.attachedSheet
+                for button in sheet?.contentView.map(buttons(in:)) ?? [] {
+                    debugLog("[alert] \(button.title) key=\(button.keyEquivalent.debugDescription) destructive=\(button.hasDestructiveAction)")
+                }
+                if sheet == nil { debugLog("[alert] none") }
+            default: model.copyFeedback()
+            }
         case "highlight":
             // Selects a phrase in the second paragraph, then highlights it;
             // "note" also writes a note on it, for the guide's picture.
@@ -349,7 +361,8 @@ final class DebugAutomation {
 
     /// A key press as the keyboard would send it to the main window.
     private func postKey(_ characters: String, keyCode: UInt16, modifiers: NSEvent.ModifierFlags = []) {
-        guard let window = mainWindow else { return }
+        // To an alert over the window when there is one, as a real key would go.
+        guard let window = mainWindow?.attachedSheet ?? mainWindow else { return }
         for type in [NSEvent.EventType.keyDown, .keyUp] {
             guard let event = NSEvent.keyEvent(
                 with: type, location: .zero, modifierFlags: modifiers, timestamp: ProcessInfo.processInfo.systemUptime,

@@ -1536,14 +1536,21 @@ final class AppModel {
         alert.informativeText = detail + ". This cannot be undone."
         alert.addButton(withTitle: "Clear")
         alert.addButton(withTitle: "Cancel")
-        alert.buttons.first?.hasDestructiveAction = true
+        let clear = alert.buttons[0]
+        clear.hasDestructiveAction = true
+        // Red, and still Return. The alert takes Return off a destructive
+        // button as it shows, which left it with no default at all, so the
+        // key goes back on once it is up.
+        let returnKey = { DispatchQueue.main.async { clear.keyEquivalent = "\r" } }
         guard let window = NSApp.keyWindow ?? NSApp.mainWindow else {
+            returnKey()
             if alert.runModal() == .alertFirstButtonReturn { action() }
             return
         }
         alert.beginSheetModal(for: window) { response in
             if response == .alertFirstButtonReturn { action() }
         }
+        returnKey()
     }
 
     // MARK: Links
