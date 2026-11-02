@@ -272,7 +272,12 @@
     gutter.innerHTML = spans.map(([t, b], i) =>
       `<div class="bar" data-run="${i}" style="top:${t - 2}px;height:${b - t + 4}px"></div>` +
       `<div class="seen-lane" data-run="${i}" style="top:${t - 2}px;height:${Math.max(b - t + 4, 24)}px">` +
-      `<button type="button" class="seen" title="Mark as read" aria-label="Mark this change as read"></button></div>`).join('');
+      `<button type="button" class="seen" aria-label="Mark this change as read"></button></div>`).join('');
+    // The label grows into the margin on the left; too close to the
+    // window's edge, it grows to the right instead.
+    for (const lane of $$('#gutter .seen-lane')) {
+      if (lane.getBoundingClientRect().left < 86) lane.classList.add('label-right');
+    }
   }
 
   /// The outermost changed block `el` is in, which is what has a bar.

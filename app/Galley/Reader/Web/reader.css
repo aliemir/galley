@@ -382,6 +382,23 @@ ins.g-ins { text-decoration: none; background: var(--insert); border-radius: 2px
 }
 #gutter .seen-lane.show button.seen, #gutter .seen-lane:hover button.seen { opacity: 1; transform: none; }
 #gutter button.seen:hover { background: var(--change); color: var(--paper); }
+/* On hover the tick grows into a pill that says what it does, out into
+   the margin, with the tick at its end. Too close to the window's edge, it
+   grows the other way. */
+#gutter button.seen::before { z-index: 1; }
+#gutter button.seen::after {
+  content: "Mark as read"; position: absolute; top: -1.5px; right: -1.5px; height: 20px;
+  padding: 0 25px 0 10px; border-radius: 99px; white-space: nowrap; pointer-events: none;
+  font: 600 11px/20px var(--font-ui); letter-spacing: .01em;
+  color: var(--paper); background: var(--change);
+  clip-path: inset(0 0 0 calc(100% - 20px) round 99px); opacity: 0;
+  transition: clip-path .18s ease, opacity .1s ease;
+}
+#gutter .label-right button.seen::after {
+  right: auto; left: -1.5px; padding: 0 10px 0 25px;
+  clip-path: inset(0 calc(100% - 20px) 0 0 round 99px);
+}
+#gutter button.seen:hover::after { opacity: 1; clip-path: inset(0 round 99px); transition-delay: .12s; }
 @media (max-width: 560px) { #gutter .seen-lane { display: none; } }
 :root.hide-changes .chg-added { background: none; box-shadow: none; }
 :root.hide-changes tr.chg-added > td { background: none; }

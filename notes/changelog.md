@@ -10,6 +10,8 @@ Typo fixes and formatting do not need an entry.
 
 ## 2026-11-02
 
+- The change tick grows into a "Mark as read" pill on hover, out into the
+  margin (or to the right, when the page is near the window's edge)
 - The Galley Guide, README and decisions cover ticking changes, drafts and
   Save Feedback, and `--wait` / `--watch`
 - `galley feedback` shows saved feedback only (`--drafts` adds drafts,
