@@ -19,6 +19,7 @@ nonisolated enum Fuzzy {
         var score = 0
         var index = start
         var previous = -2
+        var isRun = true
         for character in needle {
             var found: Int?
             while index < haystack.count {
@@ -30,10 +31,18 @@ nonisolated enum Fuzzy {
             let atWordStart = position == 0 || !original[position - 1].isLetter
                 || (original[position].isUppercase && original[position - 1].isLowercase)
             if atWordStart { score += 14 }
-            if position == previous + 1 { score += 8 } else if previous >= 0 { score -= min(6, position - previous - 1) }
+            if position == previous + 1 { score += 8 } else if previous >= 0 {
+                score -= min(6, position - previous - 1)
+                isRun = false
+            }
             previous = position
             index = position + 1
         }
+        // The query as the start of a word, unbroken, beats one that borrows
+        // a letter from a later word: "agents" is Set Up Agents, not the
+        // "Agent S…" of Install Agent Skill.
+        let startsWord = start == 0 || !original[start - 1].isLetter
+        if isRun, startsWord, needle.count > 1 { score += 30 }
         // Shorter texts with the same matches rank first.
         return score * 100 - haystack.count
     }
@@ -132,7 +141,7 @@ struct QuickOpenView: View {
     /// modes, best match first.
     private var actionResults: [Result] {
         let actions = paletteModes + model.paletteActions { pane in
-            if let pane { UserDefaults.standard.set(pane, forKey: "settingsTab") }
+            if let pane { Preferences.store.set(pane, forKey: "settingsTab") }
             openSettings()
         }
         let text = query.trimmingCharacters(in: .whitespaces)

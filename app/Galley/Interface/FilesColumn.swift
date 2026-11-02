@@ -4,7 +4,7 @@ struct FilesColumn: View {
     @Environment(AppModel.self) private var model
     @Environment(\.palette) private var palette
     @FocusState private var isFocused: Bool
-    @AppStorage("filesSort") private var sort: FileSort = .folders
+    @AppStorage("filesSort", store: Preferences.store) private var sort: FileSort = .folders
     @State private var typeSelect = TypeSelect()
     @State private var typedBubble = ""
     @State private var bubbleFade: Task<Void, Never>?

@@ -214,6 +214,15 @@ struct FuzzyTests {
         #expect(Fuzzy.score("xyz", in: "Auth migration plan") == nil)
     }
 
+    /// A word the query spells out ranks above one it only starts.
+    @Test func prefersAWordSpelledOutOverLettersFromTheNext() {
+        let setUp = Fuzzy.score("agents", in: "Set Up Agents…")
+        let install = Fuzzy.score("agents", in: "Install Agent Skill")
+        #expect(setUp != nil)
+        #expect(install != nil)
+        #expect(setUp! > install!)
+    }
+
     /// The whole word wins over letters picked up from an earlier one.
     @Test func prefersTheWholeWordOverAnEarlierStart() {
         let file = Fuzzy.score("feedback", in: "Copy File Feedback")

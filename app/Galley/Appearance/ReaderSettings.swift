@@ -155,7 +155,7 @@ final class ReaderSettings {
 
     private init() {
         SandboxMigration.defaults()
-        let d = UserDefaults.standard
+        let d = Preferences.store
         appearance = AppearanceMode(rawValue: d.string(forKey: "appearance") ?? "") ?? .system
         lightTheme = d.string(forKey: "lightTheme") ?? Theme.paper.id
         darkTheme = d.string(forKey: "darkTheme") ?? Theme.graphite.id
@@ -191,7 +191,7 @@ final class ReaderSettings {
     }
 
     private func save(_ value: Any, _ key: String) {
-        UserDefaults.standard.set(value, forKey: key)
+        Preferences.store.set(value, forKey: key)
     }
 
     func theme(isDark: Bool) -> Theme {

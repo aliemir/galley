@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct SettingsView: View {
-    @AppStorage("settingsTab") private var tab = "general"
+    @AppStorage("settingsTab", store: Preferences.store) private var tab = "general"
 
     var body: some View {
         TabView(selection: $tab) {

@@ -103,7 +103,9 @@ cat > "$WORK/design-notes/type-scale.md" <<'MD'
 Body 17 pt, headings on a 1.25 ratio.
 MD
 
-"$APP/Contents/MacOS/Galley" -GalleyLibrary "$WORK/library" -GalleyOpen "$WORK/Showcase" \
+# A throwaway home too: an install action run by mistake stays in here.
+mkdir -p "$WORK/home"
+GALLEY_HOME="$WORK/home" "$APP/Contents/MacOS/Galley" -GalleyLibrary "$WORK/library" -GalleyOpen "$WORK/Showcase" \
   -appearance light -lightTheme paper -font newYork -fontSize 17 >"$WORK/log.txt" 2>&1 &
 sleep 5
 open "$APP"   # to the front: captures of a window behind others can be stale

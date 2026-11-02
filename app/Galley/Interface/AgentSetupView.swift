@@ -8,7 +8,7 @@ struct AgentSetupView: View {
 
     let place: Place
     @Environment(AppModel.self) private var model
-    @AppStorage("hideAgentButton") private var hideButton = false
+    @AppStorage("hideAgentButton", store: Preferences.store) private var hideButton = false
     @State private var problem: String?
 
     private var setup: AgentSetup { model.agents }

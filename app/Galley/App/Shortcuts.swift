@@ -199,7 +199,7 @@ final class Shortcuts {
     private var overrides: [String: KeyShortcut]
 
     private init() {
-        if let data = UserDefaults.standard.data(forKey: "shortcuts"),
+        if let data = Preferences.store.data(forKey: "shortcuts"),
            let stored = try? JSONDecoder().decode([String: KeyShortcut].self, from: data) {
             overrides = stored
         } else {
@@ -208,7 +208,7 @@ final class Shortcuts {
     }
 
     private func save() {
-        UserDefaults.standard.set(try? JSONEncoder().encode(overrides), forKey: "shortcuts")
+        Preferences.store.set(try? JSONEncoder().encode(overrides), forKey: "shortcuts")
     }
 
     subscript(action: ShortcutAction) -> KeyShortcut? {

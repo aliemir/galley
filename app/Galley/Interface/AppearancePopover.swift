@@ -32,7 +32,7 @@ struct ThemePicker: View {
                 ForEach(model.isDark ? Theme.dark : Theme.light) { swatch($0) }
             }
             Button("All Themes…") {
-                UserDefaults.standard.set("themes", forKey: "settingsTab")
+                Preferences.store.set("themes", forKey: "settingsTab")
                 model.isAppearanceVisible = false
                 openSettings()
             }

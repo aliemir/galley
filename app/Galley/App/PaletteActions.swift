@@ -34,6 +34,14 @@ extension AppModel {
         add("Open…", "File", "folder.badge.plus", .open) { self.openFolderPanel() }
         add("Open in Default App", "File", "arrow.up.forward.app", .openInDefaultApp, when: hasFile) { self.openInEditor() }
         add("Reveal in Finder", "File", "folder", .revealInFinder, when: selectedWorkspace != nil) { self.revealInFinder() }
+        if hasFile, let workspace = selectedWorkspace, !workspace.isOpenedFiles {
+            add("Reveal Workspace in Finder", "File", "folder") { NSWorkspace.shared.activateFileViewerSelecting(workspace.revealURLs) }
+        }
+        // A file opened on its own, as its row's menu offers.
+        if let file = current?.file, currentWorkspace?.isOpenedFiles == true {
+            add("Add Its Folder as a Workspace…", "File", "folder.badge.plus") { self.addFolder(of: file) }
+            add("Remove from Opened Files", "File", "minus.circle") { self.removeOpenedFile(file) }
+        }
         add("Copy Path", "File", "doc.on.clipboard", .copyPath, when: hasFile) { self.copyPath() }
         add("Print…", "File", "printer", .print, when: hasFile) { self.printPage() }
         add(tabs.count > 1 ? "Close Tab" : "Close Window", "File", "xmark.square", .closeTab) { self.closeTabOrWindow() }
@@ -58,6 +66,21 @@ extension AppModel {
         }
         add(visibleColumns.isEmpty ? "Show Panels" : "Hide All Panels", "View", "rectangle.leadinghalf.inset.filled", .togglePanels) {
             self.togglePanels()
+        }
+        // The Files column's sort, stored where its menu keeps it.
+        let sortsByFolder = Preferences.store.string(forKey: "filesSort") != "recent"
+        add(sortsByFolder ? "Sort Files by Recently Changed" : "Sort Files by Folder", "View", "arrow.up.arrow.down", when: selectedWorkspace != nil) {
+            Preferences.store.set(sortsByFolder ? "recent" : "folders", forKey: "filesSort")
+        }
+        add("Workspace Name and Icon…", "View", "paintpalette", when: selectedWorkspace != nil) {
+            // The editor opens from the workspace's row, so the column comes first.
+            guard let id = self.selectedWorkspaceID else { return }
+            if self.isShowing(.workspaces) {
+                self.customizingWorkspace = id
+            } else {
+                self.setColumn(.workspaces, visible: true)
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { self.customizingWorkspace = id }
+            }
         }
         add(settings.workspacesAsIcons ? "Show Workspaces as a List" : "Show Workspaces as Icons", "View", "square.grid.2x2", .workspacesAsIcons) {
             withAnimation(.galleyPanel) { self.settings.workspacesAsIcons.toggle() }
@@ -113,7 +136,14 @@ extension AppModel {
 
         add("Settings…", "Galley", "gearshape") { openSettings(nil) }
         add("Customize Shortcuts…", "Galley", "command") { openSettings("shortcuts") }
-        add("Set Up Agents…", "Galley", "terminal") { openSettings("agents") }
+        add("Set Up Agents…", "Galley", "terminal") {
+            // The top bar's panel while its button is there, Settings after.
+            if !self.agents.isComplete, !Preferences.store.bool(forKey: "hideAgentButton") {
+                self.isAgentSetupVisible = true
+            } else {
+                openSettings("agents")
+            }
+        }
         add("Install Command Line Tool…", "Galley", "terminal") { self.installCommandLineTool() }
         add("Install Agent Skill", "Galley", "sparkles") { self.installAgentSkill() }
         add("Galley Guide", "Help", "book") { self.openGuide() }

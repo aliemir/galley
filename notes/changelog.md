@@ -26,6 +26,14 @@ otherwise have to re-derive. Not worth one: typo fixes and formatting.
 
 ## 2026-11-02
 
+- The palette covers the rest of the top bar and the columns' menus: Reveal
+  Workspace in Finder, Sort Files by Folder / Recently Changed, Workspace Name
+  and Icon…, and for an opened file Add Its Folder as a Workspace… and Remove
+  from Opened Files; Set Up Agents… opens the top bar's panel while its button
+  is shown. A query that spells out a word from its start ranks first
+- Debug copies on a throwaway library keep their own settings
+  (`Preferences.store`) and home (`GALLEY_HOME`), so scripted tests never
+  touch the reader's
 - The Clear Feedback alerts confirm with ⌘⌫, shown on the red Clear button
   ("Clear ⌘⌫"); Return does nothing there, so a stray one clears nothing,
   and Escape cancels

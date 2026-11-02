@@ -267,6 +267,17 @@ simulator ones).
   running after the run — `pkill -x Galley` once tests finish, and before
   `open`ing a test copy: `open` on an app that is already running only brings
   that copy forward, ignoring the new `--args`.
+- **A test copy keeps its own settings.** A debug build launched with
+  `-GalleyLibrary` reads and writes `com.aliemir.galley.test` (emptied each
+  launch) instead of the reader's preferences, through `Preferences.store` —
+  every settings read and write goes through it, `@AppStorage` included
+  (`store: Preferences.store`). Launch arguments (`-lightTheme sepia`) still
+  apply. Without `-GalleyLibrary`, a debug build is the reader's app.
+- **A test copy installs into its own home.** The palette and Settings can
+  install the agent skill into `~/.agents`, `~/.claude` and `~/.gemini`. Launch
+  test copies with `GALLEY_HOME=<throwaway dir>` (debug builds only) so an
+  action run by a test lands there — the capture script does. `open --args`
+  cannot set it; run the binary directly.
 - **Debug output goes to stderr** (`debugLog`) — stdout is block-buffered when
   the app is launched from a script, so `print` output is lost.
 - **Bundle resources are flattened.** Files under `app/Galley/Reader/Web/`

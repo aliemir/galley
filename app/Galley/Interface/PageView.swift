@@ -7,7 +7,7 @@ struct PageView: View {
     @Environment(AppModel.self) private var model
     @Environment(\.palette) private var palette
 
-    @AppStorage("hideAgentButton") private var hideAgentButton = false
+    @AppStorage("hideAgentButton", store: Preferences.store) private var hideAgentButton = false
 
     /// Where the page starts in the window: at the left edge, the tabs keep
     /// clear of the traffic lights and the panel button.
