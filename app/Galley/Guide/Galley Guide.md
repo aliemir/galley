@@ -51,6 +51,11 @@ the file, the page shows what is new: added paragraphs get a bar in the
 margin and a wash, edited ones show the words that came in. Removals stay
 out of the way. **⌘J** jumps to the next change.
 
+Go through them one at a time if you like: the tick beside a change's bar
+(it shows when the pointer is on the change), or **⌥⌘J** for the change at
+the top, marks just that one read. Ticked changes stay read until the agent
+rewrites them again, and the last tick marks the file read.
+
 ![An edited plan with its changes marked](guide-changes.png)
 
 ## Mark it up
@@ -59,6 +64,12 @@ Select a passage and choose **Highlight**, or **Note** to say something about
 it. Your marks are purple everywhere, so they never look like the agent's
 changes. Every highlight and note on a page is listed under **Feedback** in
 the Contents column.
+
+New marks are drafts — dashed — and only you see them. When a round is ready,
+**Save Feedback** (**⌘S**, or the button at the top right) saves every draft
+in the workspace: the marks fill in, and now your agents see them. Editing a
+saved note makes it a draft again. Prefer agents to see each mark as you make
+it? Turn drafts off in **Settings → General**.
 
 ![A highlighted passage with a note under it](guide-feedback.png)
 
@@ -76,13 +87,17 @@ feedback in Galley"*. It runs:
 
 | Command | What it does |
 |:--------|:-------------|
-| `galley feedback plan.md` | Your highlights and notes on a file, or on every file under a folder |
+| `galley feedback plan.md` | Your saved highlights and notes on a file, or on every file under a folder |
+| `galley feedback docs --wait` | Waits for your next save there, then prints it |
+| `galley feedback docs --watch` | Prints each save as it happens — for an agent that keeps watching |
 | `galley feedback clear plan.md` | Clears them once the agent has dealt with them |
 | `galley feedback clear docs --addressed` | Clears only the passages it rewrote |
 | `galley plan.md` | Opens a file or folder in Galley |
 
 The skill teaches the agent to work through every item, say what it did, and
-clear only what it finished. `galley help` lists the rest.
+clear only what it finished — never your drafts. Ask it to *"keep watching
+for my feedback"* and it waits for each save, acts on it, and waits again.
+`galley help` lists the rest.
 
 ## Find your way
 
@@ -131,7 +146,9 @@ Dock icon comes in ten colours.
 | **⌥⌘↓** / **⌥⌘↑** | Next / previous file |
 | **⌥⌘U** | Next unread file |
 | **⌘J** / **⇧⌘J** | Next / previous change |
+| **⌥⌘J** | Mark the change read |
 | **⌃⌘H** / **⌃⌘N** | Highlight / add a note to the selection |
+| **⌘S** | Save feedback |
 | **⇧⌘C** | Copy feedback |
 | **⌘1** **⌘2** **⌘3** / **⌘\\** | Workspaces, Files, Contents / all |
 | **⇧⌘H** | Show hidden comments |

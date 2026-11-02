@@ -19,9 +19,11 @@ into, and every file reads like a typeset page.
 
 - **See what changed.** What an agent changed since you last read a file is
   marked in the page itself — a bar in the margin, new words washed — not in a
-  diff. New and changed files carry a dot, down to the Dock icon.
-- **Mark it up, hand it back.** Highlight a passage, add a note, and copy it
-  all as feedback for your agent, with the file and section of each passage.
+  diff. Tick changes read one by one, or the whole file at once. New and
+  changed files carry a dot, down to the Dock icon.
+- **Mark it up, hand it back.** Highlight a passage, add a note, and save the
+  round when it is ready — or copy it all as feedback for your agent, with
+  the file and section of each passage.
 - **Or let the agent read it.** The bundled `galley` command and its agent
   skill let Claude Code, Codex, Cursor and other agents read your feedback,
   act on it, and clear what they finished.
@@ -34,12 +36,15 @@ into, and every file reads like a typeset page.
 ## Agents
 
 Install the command and the skill from **Settings → Agents** (one click each),
-then ask your agent to *address my feedback in Galley*. Or use the command
-yourself:
+then ask your agent to *address my feedback in Galley* — or to *keep watching
+for my feedback*, and it picks up each round as you save it. Or use the
+command yourself:
 
 ```sh
-galley feedback plans/auth.md          # the highlights and notes on a file or folder
+galley feedback plans/auth.md          # the saved highlights and notes on a file or folder
 galley feedback . --json               # the same, as data
+galley feedback . --wait               # wait for your next save, then print it
+galley feedback . --watch              # print every save as it happens
 galley feedback clear plans/auth.md    # clear them once they are dealt with
 galley help                            # everything else
 ```

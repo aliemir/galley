@@ -10,6 +10,8 @@ Typo fixes and formatting do not need an entry.
 
 ## 2026-11-02
 
+- The Galley Guide, README and decisions cover ticking changes, drafts and
+  Save Feedback, and `--wait` / `--watch`
 - `galley feedback` shows saved feedback only (`--drafts` adds drafts,
   marked as such; JSON items carry `draft` and `saved`), and says on stderr
   when drafts are waiting. `--wait` blocks until the reader's next save

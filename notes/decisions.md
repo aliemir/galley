@@ -345,3 +345,56 @@ pipeline had nothing to do, and a public repo should not carry dead
 scaffolding.
 
 **Rejected:** keeping the scaffolding "ready" — it was never touched.
+
+## 2026-11-02 — Changes can be read one at a time
+
+**Chosen:** a tick beside each change bar (and ⌥⌘J for the change at the top
+of the view) marks that run of changed blocks read. The file remembers the
+ticked blocks by the hash of their text, on top of the last-read snapshot;
+the last tick saves a new snapshot and clears them. Once a file is being
+ticked, leaving it no longer marks it read.
+
+**Why:** a long rewrite is reviewed piece by piece, like files in a pull
+request. Remembering blocks by their text means a block the agent rewrites
+again comes back as changed, with no bookkeeping of positions.
+
+**Rejected:**
+- *Rewriting the snapshot to take in each ticked block.* The snapshot is
+  Markdown and the diff works on rendered blocks; splicing one into the
+  other is fragile for tables, lists and code.
+- *The tick on the bar itself.* The heading fold buttons sit right there;
+  the tick has a column of its own further out, and is hidden in very
+  narrow windows, where Mark as Read still works.
+
+## 2026-11-02 — Feedback is a draft until the reader saves it
+
+**Chosen:** new highlights and notes are drafts — dashed on the page and in
+the Contents column — until **Save Feedback** (⌘S, the top bar's button
+while drafts wait) saves every draft in the workspace, stamping when. A
+changed note becomes a draft again. Drafts are on by default and can be
+turned off in Settings → General, which makes every mark saved as it is
+made. Highlights from before have no flag and count as saved. Drafts stay
+in the library the whole time; saving only changes their state.
+
+The command shows saved feedback only (`--drafts` for the rest), and
+`clear` leaves drafts alone. `galley feedback --wait` exits after the next
+save under a path, printing what it added; `--watch` prints each save as it
+comes. A save is a highlight whose id and save time are new, read from
+`library.json`, which the app writes at once on a save.
+
+**Why:** a reader marking a long plan is not done after the first note, and
+an agent acting on half a round wastes both their time. An explicit save
+is the signal an agent can wait on, which is what makes "keep watching for
+my feedback" work — and later, hooks that hand a saved round to an agent
+with the next prompt.
+
+**Rejected:**
+- *"Submit" with a paper plane* (the first name): the reader preferred
+  Save, which also takes the Mac's ⌘S.
+- *Comparing save times with the clock* for `--wait`: the library keeps
+  whole seconds, so a save in the same second as the command starts would
+  be missed or doubled.
+- *A distributed notification from the app* for `--wait`: lost when nothing
+  is listening at that instant; the library file is always there to read.
+- *Printing all saved feedback on each save*: an agent that has not cleared
+  the last round would act on it twice.
