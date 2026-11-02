@@ -139,6 +139,10 @@ final class ReaderSettings {
     var columnWidths: [String: Double] { didSet { save(columnWidths, "columnWidths") } }
     /// The number of files to read, on the Dock icon.
     var dockBadge: Bool { didSet { save(dockBadge, "dockBadge") } }
+    /// The Find and Appearance buttons at the top right. Hidden, Find's
+    /// still shows while its bar is open.
+    var showFindButton: Bool { didSet { save(showFindButton, "showFindButton") } }
+    var showAppearanceButton: Bool { didSet { save(showAppearanceButton, "showAppearanceButton") } }
     /// The Dock icon's palette (`AppIcon.variants`).
     var appIcon: String {
         didSet {
@@ -182,6 +186,8 @@ final class ReaderSettings {
         columnWidths = d.dictionary(forKey: "columnWidths") as? [String: Double] ?? [:]
         appIcon = d.string(forKey: "appIcon") ?? AppIcon.standard
         dockBadge = d.object(forKey: "dockBadge") as? Bool ?? true
+        showFindButton = d.object(forKey: "showFindButton") as? Bool ?? true
+        showAppearanceButton = d.object(forKey: "showAppearanceButton") as? Bool ?? true
     }
 
     private func save(_ value: Any, _ key: String) {

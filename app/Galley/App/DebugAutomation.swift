@@ -15,7 +15,7 @@ import WebKit
 final class DebugAutomation {
     static let prefix = "com.aliemir.galley.debug."
     static let commands = [
-        "snapshot", "probe", "reload", "reset", "palette", "palette.close", "highlight", "next", "previous", "fold", "unfold", "change", "find.close", "resize.small", "resize.large",
+        "snapshot", "probe", "reload", "reset", "palette", "palette.close", "highlight", "next", "previous", "fold", "unfold", "change", "find", "find.close", "resize.small", "resize.large",
         "scroll.top", "scroll.bottom", "dark", "light", "system",
         "appearance", "appearance.close", "settings", "settings.close", "settings.general", "settings.reading", "settings.themes", "settings.shortcuts", "settings.icon", "settings.agents", "agents", "agents.close",
         "js", "searchopen", "search.token", "search.rate limits", "names.rate", "names.auth", "note", "feedback.copy", "feedback.copyall", "pin", "movepin", "movews", "divider.narrow", "divider.wide", "toggle.outline", "toggle.files", "toggle.workspaces", "focusfiles", "type.api", "type.rate", "type.s", "type.sta", "key.return", "key.escape", "key.down", "key.ctrltab", "key.ctrlshifttab", "key.cmdw", "key.cmdt", "key.cmdreturn", "key.backspace", "key.tab", "type.#", "tab.new", "tab.newnext", "tab.next", "tab.close", "tab.others", "tab.state", "tab.move", "menus", "opened.remove", "highlight.note", "guide", "dress", "shortcut.test", "shortcut.reset", "key.cmdy", "key.cmdf", "key.cmdshiftbracket", "columns.reset", "columns.filesfirst", "columns.nocontents", "rail", "rail.off", "identity", "identity.close", "icon.test", "icon.reset", "swipe.right", "swipe.left", "swipe.slowright", "swipe.slowleft", "pull.slow", "swipe.hold", "swipe.release", "swipe.wobble", "pull.hold", "pull.half", "pull.back", "pull.backhalf", "pull.release",
@@ -131,7 +131,11 @@ final class DebugAutomation {
             guard let window = mainWindow else { return }
             let size = argument == "small" ? NSSize(width: 900, height: 640) : NSSize(width: 1440, height: 900)
             window.setFrame(NSRect(origin: window.frame.origin, size: size), display: true, animate: false)
-        case "find": model.hideFind()
+        case "find":
+            if argument == "close" { model.hideFind() } else {
+                model.showFind()
+                model.findFocusRequest += 1
+            }
         case "rail": model.settings.workspacesAsIcons = argument != "off"
         case "identity": model.customizingWorkspace = argument == "close" ? nil : model.selectedWorkspaceID
         case "icon":

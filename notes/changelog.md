@@ -26,6 +26,8 @@ otherwise have to re-derive. Not worth one: typo fixes and formatting.
 
 ## 2026-11-02
 
+- Settings → General can hide the Find and Appearance buttons at the top
+  right; a hidden Find button still shows while the find bar is open
 - Website lists the features as eight cards above the hero picture, a title
   and one line each (tracks changes, closes the loop, agent-ready, beautiful
   to read, remembers your place, all your projects, read-only and private,

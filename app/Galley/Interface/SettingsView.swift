@@ -61,6 +61,17 @@ private struct GeneralSettings: View {
             }
 
             Section {
+                Toggle("Find", isOn: $settings.showFindButton)
+                Toggle("Appearance", isOn: $settings.showAppearanceButton)
+            } header: {
+                Text("Buttons at the top right")
+            } footer: {
+                Text("Find still opens with \(key(.find)), and its button shows while the bar is open. Everything in Appearance is also under Reading and Themes.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+
+            Section {
                 ColumnOrderList()
                 Toggle("Show workspaces as icons only", isOn: $settings.workspacesAsIcons)
             } header: {
