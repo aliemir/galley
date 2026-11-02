@@ -10,6 +10,12 @@ Typo fixes and formatting do not need an entry.
 
 ## 2026-11-02
 
+- `galley feedback` shows saved feedback only (`--drafts` adds drafts,
+  marked as such; JSON items carry `draft` and `saved`), and says on stderr
+  when drafts are waiting. `--wait` blocks until the reader's next save
+  under a path, prints what it added and exits (`--timeout`, status 2);
+  `--watch` prints each save as it happens, for an agent's monitor. The
+  skill teaches both, and to leave drafts alone
 - Feedback starts as a draft: highlights and notes are dashed on the page
   (and in the Contents column's list) until the reader saves them with Save
   Feedback — the top bar's button while drafts wait, ⌘S, the Document menu

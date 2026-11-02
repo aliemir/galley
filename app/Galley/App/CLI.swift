@@ -17,12 +17,18 @@ nonisolated enum CLI {
 
     Usage:
       galley [path …]                  Open files or folders in Galley (no path: just open it)
-      galley feedback [path] [--json]  Print the highlights and notes on a file, or on every
-                                       file under a folder (default: the current folder)
-      galley feedback clear path … [--addressed]
-                                       Clear the feedback on files, or on every file under
-                                       folders; --addressed clears only passages that are
-                                       no longer in the text
+      galley feedback [path] [--json] [--drafts]
+                                       Print the highlights and notes the reader saved on a
+                                       file, or on every file under a folder (default: the
+                                       current folder); --drafts adds the unsaved ones
+      galley feedback [path] --wait [--timeout seconds]
+                                       Wait for the reader's next save there, print what it
+                                       added, and exit (status 2 on timeout)
+      galley feedback [path] --watch   Print each save there as it happens, until stopped
+      galley feedback clear path … [--addressed] [--drafts]
+                                       Clear the saved feedback on files, or on every file
+                                       under folders; --addressed clears only passages that
+                                       are no longer in the text, --drafts drafts too
       galley install [folder]          Put `galley` on the PATH (default: /usr/local/bin)
       galley skill install [--global | --project [folder] | --dir folder]
                                        Install the agent skill that teaches agents to read
@@ -72,47 +78,168 @@ nonisolated enum CLI {
     // MARK: Feedback
 
     /// The feedback on `path` (a file, or every file under a folder) in the
-    /// form Copy Feedback gives, minus passages no longer in the text.
+    /// form Copy Feedback gives, minus passages no longer in the text. Only
+    /// what the reader saved, unless `--drafts`; `--wait` and `--watch`
+    /// wait for the reader's next save.
     static func feedback(_ arguments: [String]) -> Int32 {
         if arguments.first == "clear" { return clear(Array(arguments.dropFirst())) }
-        let json = arguments.contains("--json")
-        let target = absolute(arguments.first { !$0.hasPrefix("-") } ?? ".")
+        var options = FeedbackOptions()
+        var paths: [String] = []
+        var index = 0
+        while index < arguments.count {
+            let argument = arguments[index]
+            switch argument {
+            case "--json": options.json = true
+            case "--drafts": options.includeDrafts = true
+            case "--wait": options.mode = .wait
+            case "--watch": options.mode = .watch
+            case "--timeout":
+                index += 1
+                guard index < arguments.count, let seconds = TimeInterval(arguments[index]), seconds > 0 else {
+                    return fail("--timeout takes a number of seconds, e.g. --timeout 600")
+                }
+                options.timeout = seconds
+            default:
+                if argument.hasPrefix("-") { return fail("Unknown option \(argument). See `galley help`.") }
+                paths.append(argument)
+            }
+            index += 1
+        }
+        let target = absolute(paths.first ?? ".")
         let state: LibraryState
         do {
             state = try LibraryLocation.read()
         } catch {
             return fail("Galley has no library yet: open a folder in Galley first.")
         }
-        let files = collect(state, under: target)
-        if json {
-            let items = files.map { ["path": $0.path, "items": $0.items.map { ["text": $0.text, "note": $0.note ?? "", "section": $0.section] as [String: Any] }] as [String: Any] }
-            let data = (try? JSONSerialization.data(withJSONObject: items, options: [.prettyPrinted, .sortedKeys])) ?? Data("[]".utf8)
-            print(String(decoding: data, as: UTF8.self))
+        if options.mode != .now { return waitForSaves(from: state, under: target, options) }
+
+        let files = collect(state, under: target, includeDrafts: options.includeDrafts)
+        if options.json {
+            write(json(files, pretty: true))
             return 0
         }
         guard !files.isEmpty else {
-            FileHandle.standardError.write(Data("No feedback on \(target.path).\n".utf8))
+            let drafts = collect(state, under: target, includeDrafts: true).reduce(0) { $0 + $1.items.count }
+            let note = drafts == 0 ? "" : " \(drafts == 1 ? "1 draft is" : "\(drafts) drafts are") not saved yet — the reader saves them when they are ready (--drafts shows them now)."
+            FileHandle.standardError.write(Data("No feedback on \(target.path).\(note)\n".utf8))
             return 0
         }
-        print(Feedback.format(files), terminator: "")
+        write(Feedback.format(files))
         return 0
     }
 
-    static func collect(_ state: LibraryState, under target: URL) -> [Feedback.File] {
-        let prefix = target.standardizedFileURL.path
+    struct FeedbackOptions {
+        enum Mode { case now, wait, watch }
+        var mode = Mode.now
+        var json = false
+        var includeDrafts = false
+        var timeout: TimeInterval?
+    }
+
+    /// `--wait`: blocks until the reader saves feedback under `target`,
+    /// prints what that save added, and exits. `--watch`: prints each save
+    /// as it comes, until stopped. A save is told by the highlights it
+    /// stamps: one whose id and save time were not there before.
+    static func waitForSaves(from state: LibraryState, under target: URL, _ options: FeedbackOptions) -> Int32 {
+        let library = LibraryLocation.directory.appendingPathComponent("library.json")
+        var known = saves(in: state, under: target)
+        var modified = modificationDate(library)
+        let deadline = options.timeout.map { Date().addingTimeInterval($0) }
+        while true {
+            if let deadline, Date() >= deadline {
+                let seconds = Int((options.timeout ?? 0).rounded())
+                FileHandle.standardError.write(Data("No feedback saved on \(target.path) in \(seconds == 1 ? "1 second" : "\(seconds) seconds").\n".utf8))
+                return 2
+            }
+            Thread.sleep(forTimeInterval: 0.4)
+            let now = modificationDate(library)
+            guard now != modified else { continue }
+            modified = now
+            // Mid-write or briefly missing: the next look will have it.
+            guard let state = try? LibraryLocation.read() else { continue }
+            let current = saves(in: state, under: target)
+            let new = current.subtracting(known)
+            known.formUnion(current)
+            guard !new.isEmpty else { continue }
+            let files = collect(state, under: target, includeDrafts: false, only: Set(new.map(\.id)))
+            // Every saved passage the agent has already rewritten: nothing to say.
+            guard !files.isEmpty else { continue }
+            if options.json {
+                write(json(files, pretty: options.mode == .wait))
+            } else {
+                write(Feedback.format(files) + (options.mode == .watch ? "\n" : ""))
+            }
+            if options.mode == .wait { return 0 }
+        }
+    }
+
+    struct Save: Hashable { var id: String; var sent: Date? }
+
+    /// The saved highlights under `target`, each with when it was saved.
+    static func saves(in state: LibraryState, under target: URL) -> Set<Save> {
+        var result = Set<Save>()
+        forEachFile(in: state, under: target) { _, highlights in
+            for highlight in highlights where !highlight.isDraft {
+                result.insert(Save(id: highlight.id, sent: highlight.sent))
+            }
+        }
+        return result
+    }
+
+    static func modificationDate(_ url: URL) -> Date? {
+        (try? FileManager.default.attributesOfItem(atPath: url.path))?[.modificationDate] as? Date
+    }
+
+    /// Feedback for agents: saved only, unless `includeDrafts`; with
+    /// `only`, just those highlights.
+    static func collect(_ state: LibraryState, under target: URL, includeDrafts: Bool = false, only: Set<String>? = nil) -> [Feedback.File] {
         var files: [Feedback.File] = []
+        forEachFile(in: state, under: target) { path, highlights in
+            let chosen = highlights.filter { (includeDrafts || !$0.isDraft) && (only?.contains($0.id) ?? true) }
+            guard !chosen.isEmpty else { return }
+            let source = WorkspaceScanner.read(URL(fileURLWithPath: path)) ?? ""
+            let items = Feedback.items(chosen, in: source)
+            if !items.isEmpty { files.append(Feedback.File(path: path, items: items)) }
+        }
+        return files.sorted { $0.path.localizedStandardCompare($1.path) == .orderedAscending }
+    }
+
+    /// Each file at or under `target` that has highlights, by absolute path.
+    static func forEachFile(in state: LibraryState, under target: URL, _ body: (String, [Highlight]) -> Void) {
+        let prefix = target.standardizedFileURL.path
         for workspace in state.workspaces {
             for (id, record) in workspace.files {
                 guard let highlights = record.highlights, !highlights.isEmpty else { continue }
-                // Opened files are keyed by their absolute path.
-                let path = workspace.kind == "files" ? id : URL(fileURLWithPath: workspace.path).appendingPathComponent(id).standardizedFileURL.path
+                let path = FeedbackClearing.path(of: id, in: workspace)
                 guard FeedbackClearing.matches(path, [prefix]) else { continue }
-                let source = WorkspaceScanner.read(URL(fileURLWithPath: path)) ?? ""
-                let items = Feedback.items(highlights, in: source)
-                if !items.isEmpty { files.append(Feedback.File(path: path, items: items)) }
+                body(path, highlights)
             }
         }
-        return files.sorted { $0.path.localizedStandardCompare($1.path) == .orderedAscending }
+    }
+
+    static func json(_ files: [Feedback.File], pretty: Bool) -> String {
+        let formatter = ISO8601DateFormatter()
+        let items = files.map { file in
+            [
+                "path": file.path,
+                "items": file.items.map { item in
+                    [
+                        "text": item.text, "note": item.note ?? "", "section": item.section,
+                        "draft": item.draft, "saved": item.saved.map(formatter.string(from:)) ?? NSNull(),
+                    ] as [String: Any]
+                },
+            ] as [String: Any]
+        }
+        let options: JSONSerialization.WritingOptions = pretty ? [.prettyPrinted, .sortedKeys, .withoutEscapingSlashes] : [.sortedKeys, .withoutEscapingSlashes]
+        let data = (try? JSONSerialization.data(withJSONObject: items, options: options)) ?? Data("[]".utf8)
+        return String(decoding: data, as: UTF8.self) + "\n"
+    }
+
+    /// Straight out, never held in a buffer: a monitor reading `--watch`
+    /// sees each save as it happens.
+    static func write(_ text: String) {
+        FileHandle.standardOutput.write(Data(text.utf8))
     }
 
     /// Clears feedback by path. Galley holds the library while it runs, so
@@ -380,7 +507,7 @@ nonisolated enum AgentSkill {
     static let text = """
     ---
     name: galley
-    description: Read the user's feedback on Markdown files you wrote — passages they highlighted and notes they left in Galley, their Markdown reader. Use when the user says they left feedback, comments, notes or highlights in Galley, or asks you to address their feedback on a plan, spec or other Markdown file.
+    description: Read the user's feedback on Markdown files you wrote — passages they highlighted and notes they left in Galley, their Markdown reader — and wait for more. Use when the user says they left feedback, comments, notes or highlights in Galley, asks you to address their feedback on a plan, spec or other Markdown file, or asks you to watch for or wait on their feedback.
     ---
 
     # Galley feedback
@@ -389,6 +516,11 @@ nonisolated enum AgentSkill {
     While reading they mark it up: they highlight passages and often add a
     note saying what they want. Galley never changes the files — the feedback
     lives in Galley, and you read it with the `galley` command.
+
+    Marks start as drafts. The user **saves** them (Save Feedback, ⌘S) when
+    a round is ready, and only then are they yours: `galley feedback` shows
+    saved feedback. Drafts are their work in progress — leave them alone
+    unless the user asks you to look at them (`--drafts`).
 
     ## Read it
 
@@ -403,11 +535,12 @@ nonisolated enum AgentSkill {
     then numbered items — where the passage is (`Marked in Rollout › Token
     shape`, the headings it sits under), the passage quoted, and under it
     the user's note when they wrote one. No output (and "No feedback on …" on
-    stderr) means there is none.
+    stderr) means there is none; the message says when drafts are waiting
+    to be saved.
 
     With `--json`, the same as data — one entry per file, `note` empty when
     the user wrote none, `section` empty for a passage above the first
-    heading:
+    heading, `saved` when the user saved it:
 
     ```json
     [
@@ -417,7 +550,9 @@ nonisolated enum AgentSkill {
           {
             "text": "Tokens live for 15 minutes.",
             "note": "Make it 10 for admin sessions.",
-            "section": ["Rollout", "Token shape"]
+            "section": ["Rollout", "Token shape"],
+            "draft": false,
+            "saved": "2026-11-02T14:03:11Z"
           }
         ]
       }
@@ -441,6 +576,32 @@ nonisolated enum AgentSkill {
       shows them to the user as likely addressed), so running it again shows
       what is left.
 
+    ## Wait for it
+
+    When the user asks you to wait for their feedback, or to keep watching
+    for it, let `galley` wait — never poll in a loop of your own:
+
+    ```sh
+    galley feedback path --wait                 # blocks until the next save, prints it, exits
+    galley feedback path --wait --timeout 1800  # gives up after 30 minutes (exit status 2)
+    galley feedback path --watch                # prints every save as it happens, until stopped
+    ```
+
+    Both print only what that save added, in the same form as above (one
+    JSON array per line with `--json`). Point them at the folder you are
+    working in, or the one the user named.
+
+    - **Once** ("tell me when I've left feedback"): run `--wait` in the
+      background, and act on its output when it exits.
+    - **Every round** ("keep watching for my feedback"): stream `--watch`
+      with a monitor if your tool has one (each save arrives as one event),
+      or re-run `--wait` after acting on each round. When a monitor expires
+      and you start it again, run `galley feedback path` once first: a save
+      made while nothing was watching is not printed later.
+
+    Act on each round as below, clear what you finished, and say briefly
+    what you did — the user is reading along in Galley.
+
     ## Clear it when you are done
 
     ```sh
@@ -450,7 +611,8 @@ nonisolated enum AgentSkill {
     ```
 
     Clear a file's feedback once you have dealt with every item on it, and
-    only the files you worked on — clearing is not undoable. If you left an
+    only the files you worked on — clearing is not undoable. Clearing takes
+    only saved feedback; the user's drafts stay. If you left an
     item open (a question back to the user, a change you disagreed with), use
     `--addressed`, or leave that file alone and say so. Never edit Galley's
     own data any other way.

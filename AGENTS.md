@@ -74,7 +74,11 @@ The `grilling` skill is for stress-testing a plan on request.
 xcodebuild -project app/Galley.xcodeproj -scheme Galley \
   -destination 'platform=macOS' build
 
-# test — unit tests only; drop -only-testing to include UI tests (see Gotchas)
+# test — unit tests only; drop -only-testing to include UI tests (see Gotchas).
+# TEST_RUNNER_GALLEY_LIBRARY gives the test host a throwaway library, so tests
+# can run while the reader's Galley is open
+TEST_RUNNER_GALLEY_LIBRARY=/private/tmp/galley-debug/testlib \
+TEST_RUNNER_GALLEY_HOME=/private/tmp/galley-debug/testlib/home \
 xcodebuild -project app/Galley.xcodeproj -scheme Galley \
   -destination 'platform=macOS' test -only-testing:GalleyTests
 
@@ -97,6 +101,7 @@ swift tools/galley-debug.swift level.3 theme.sepia open.1 snapshot
 #             tabs and workspaces) key.ctrltab|ctrlshifttab|cmdw|cmdt|cmdreturn|backspace|tab
 #             menus (logs every menu shortcut) opened.remove shortcut.test|reset
 #             settings.general|reading|themes|shortcuts|icon|agents agents[.close]
+#             seen (ticks the change at the top of the view) save (saves drafts)
 # open a single file as Finder would (outside a workspace → Opened Files):
 open -a app/…/Debug/Galley.app /path/to/file.md
 # the Galley Guide's pictures and GIFs (ffmpeg): a debug copy on a throwaway library
@@ -156,8 +161,9 @@ simulator ones).
   launching a test build, and don't drive the app while the user is using
   it (check `ioreg -c IOHIDSystem` idle time). Test highlights and notes on
   fixture files the user has not marked up. `xcodebuild test` launches the
-  debug app as its test host on the reader's real library and can leave it
-  running after the run — `pkill -x Galley` once tests finish, and before
+  debug app as its test host on the reader's real library unless given
+  `TEST_RUNNER_GALLEY_LIBRARY` (see Commands), and can leave it running
+  after the run — quit it once tests finish, and before
   `open`ing a test copy: `open` on an app that is already running only brings
   that copy forward, ignoring the new `--args`.
 - **A test copy keeps its own settings.** A debug build launched with

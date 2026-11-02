@@ -582,6 +582,49 @@ struct FeedbackClearingTests {
         #expect(CLI.collect(state(root: link.path), under: real).map(\.path).contains { $0.hasSuffix("plans/a.md") })
     }
 
+    /// A library from before drafts has no `draft` or `sent`: all saved.
+    @Test func highlightsFromBeforeDraftsAreSaved() throws {
+        let old = #"{"id":"a","text":"alpha","prefix":"","suffix":"","created":"2026-10-01T10:00:00Z"}"#
+        let highlight = try JSONDecoder.library.decode(Highlight.self, from: Data(old.utf8))
+        #expect(!highlight.isDraft)
+        #expect(highlight.sent == nil)
+    }
+
+    /// Agents see saved feedback, and clearing leaves the reader's drafts.
+    @Test func draftsStayOutOfReachUntilSaved() throws {
+        let folder = FileManager.default.temporaryDirectory.appendingPathComponent("galley-drafts-\(UUID().uuidString)")
+        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: folder) }
+        try "Alpha. Beta.".write(to: folder.appendingPathComponent("a.md"), atomically: true, encoding: .utf8)
+        var draft = Highlight(text: "Beta.", prefix: "", suffix: "")
+        draft.draft = true
+        var library = LibraryState()
+        var workspace = WorkspaceRecord(id: UUID(), bookmark: nil, path: folder.path, addedAt: Date())
+        workspace.files["a.md"] = FileRecord(highlights: [Highlight(text: "Alpha.", prefix: "", suffix: ""), draft])
+        library.workspaces = [workspace]
+
+        #expect(CLI.collect(library, under: folder).flatMap(\.items).map(\.text) == ["Alpha."])
+        #expect(CLI.collect(library, under: folder, includeDrafts: true).flatMap(\.items).map(\.draft) == [false, true])
+        var cleared = library
+        #expect(FeedbackClearing.apply(to: &cleared, paths: [folder.path], addressedOnly: false) == .init(highlights: 1, files: 1))
+        #expect(cleared.workspaces[0].files["a.md"]?.highlights?.map(\.id) == [draft.id])
+        #expect(FeedbackClearing.apply(to: &cleared, paths: [folder.path], addressedOnly: false, includeDrafts: true) == .init(highlights: 1, files: 1))
+    }
+
+    /// `--wait` and `--watch` notice a save by a highlight's id and save
+    /// time, not by the clock: saving a changed note again counts too.
+    @Test func aSaveIsANewIdOrANewSaveTime() {
+        var library = state(root: "/work")
+        let before = CLI.saves(in: library, under: URL(fileURLWithPath: "/work"))
+        #expect(before.count == 4)
+        library.workspaces[0].files["notes.md"]?.highlights?[0].sent = Date()
+        var draft = Highlight(text: "epsilon", prefix: "", suffix: "")
+        draft.draft = true
+        library.workspaces[0].files["notes.md"]?.highlights?.append(draft)
+        let after = CLI.saves(in: library, under: URL(fileURLWithPath: "/work"))
+        #expect(after.subtracting(before).map(\.id) == [library.workspaces[0].files["notes.md"]!.highlights![0].id])
+    }
+
     @Test func runsAsACommandOnlyWhenCalledGalley() {
         #expect(CLI.arguments(["/usr/local/bin/galley", "feedback"]) == ["feedback"])
         #expect(CLI.arguments(["/Applications/Galley.app/Contents/MacOS/Galley", "--cli", "help"]) == ["help"])

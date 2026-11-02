@@ -9,6 +9,9 @@ nonisolated enum Feedback {
         /// The headings the passage sits under, outermost first, without the
         /// document's own title: where to find it at a glance.
         var section: [String] = []
+        /// Not saved by the reader yet; listed only when asked for.
+        var draft = false
+        var saved: Date?
     }
 
     struct File: Equatable {
@@ -29,7 +32,7 @@ nonisolated enum Feedback {
                     .map { "   > " + $0 }
                     .joined(separator: "\n")
                 let place = item.section.isEmpty ? "" : " in " + item.section.joined(separator: " › ")
-                var entry = "\(index + 1). Marked\(place):\n" + quote
+                var entry = "\(index + 1). Marked\(place)\(item.draft ? " (draft, not saved yet)" : ""):\n" + quote
                 if let note = item.note?.trimmingCharacters(in: .whitespacesAndNewlines), !note.isEmpty {
                     entry += "\n\n   " + note.replacingOccurrences(of: "\n", with: "\n   ")
                 }
@@ -46,7 +49,7 @@ nonisolated enum Feedback {
         let present = highlights.filter { isStillPresent($0.text, in: source) }
         guard !present.isEmpty else { return [] }
         let places = Sections(source)
-        return present.map { Item(text: $0.text, note: $0.note, section: places.path(for: $0)) }
+        return present.map { Item(text: $0.text, note: $0.note, section: places.path(for: $0), draft: $0.isDraft, saved: $0.sent) }
     }
 
     /// Where passages sit in a file's headings. The file is rendered once;
