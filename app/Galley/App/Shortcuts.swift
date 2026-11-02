@@ -119,7 +119,7 @@ enum ShortcutAction: String, CaseIterable, Identifiable {
         case .markAllRead: "Mark All as Read"
         case .highlight: "Highlight Selection"
         case .addNote: "Add Note to Selection"
-        case .copyFeedback: "Copy Feedback"
+        case .copyFeedback: "Copy File Feedback"
         case .foldAll: "Fold All Sections"
         case .unfoldAll: "Unfold All Sections"
         }

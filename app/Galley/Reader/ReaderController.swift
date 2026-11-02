@@ -195,6 +195,18 @@ final class ReaderController: NSObject {
         return ((result?["count"] as? Int) ?? 0, (result?["index"] as? Int) ?? -1)
     }
 
+    /// Keeps the selection before something else takes the keys; says
+    /// whether there is one. Sent at once, ahead of the focus change.
+    func keepSelection(_ done: @escaping (Bool) -> Void) {
+        guard isReady else { return done(false) }
+        webView.evaluateJavaScript("Reader.keepSelection()") { result, _ in done(result as? Bool ?? false) }
+    }
+
+    /// Puts back the selection `keepSelection` kept, unless there is a newer one.
+    func restoreSelection() {
+        run("Reader.restoreSelection()")
+    }
+
     func selectionText() async -> String {
         (try? await webView.callAsyncJavaScript("return Reader.selectionText()", contentWorld: .page) as? String) ?? ""
     }

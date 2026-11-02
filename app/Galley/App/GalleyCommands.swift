@@ -176,14 +176,15 @@ struct GalleyCommands: Commands {
                 .shortcut(.addNote)
                 .disabled(model.current == nil)
             Divider()
-            Button("Copy Feedback") { model.copyFeedback() }
+            Button("Copy File Feedback") { model.copyFeedback() }
                 .shortcut(.copyFeedback)
                 .disabled(!model.hasFeedback)
-            Button("Copy Feedback for Workspace") { model.copyWorkspaceFeedback() }
-                .disabled(!model.workspaceHasFeedback)
-            Button("Clear Feedback…") { model.clearFeedback() }
+            Button("Clear File Feedback…") { model.clearFeedback() }
                 .disabled(!model.hasFeedback)
-            Button("Clear All Feedback in Workspace…") { model.clearWorkspaceFeedback() }
+            Divider()
+            Button("Copy Workspace Feedback") { model.copyWorkspaceFeedback() }
+                .disabled(!model.workspaceHasFeedback)
+            Button("Clear Workspace Feedback…") { model.clearWorkspaceFeedback() }
                 .disabled(!model.workspaceHasFeedback)
             Divider()
             Button("Fold All Sections") { model.foldAll(true) }

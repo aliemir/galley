@@ -66,7 +66,7 @@ A passage the agent has since rewritten is shown as *likely addressed*.
 
 ## Hand it back
 
-**Copy Feedback** (**⇧⌘C**, or the button at the top right) puts every
+**Copy File Feedback** (**⇧⌘C**, or the button at the top right) puts every
 passage and note on the clipboard — with the file's path and the section each
 passage sits in — ready to paste to your agent.
 

@@ -91,7 +91,22 @@ final class AppModel {
     /// column, negative hides the outermost one.
     var swipeProgress: Double = 0
 
-    var isQuickOpenVisible = false
+    var isQuickOpenVisible = false {
+        didSet {
+            guard isQuickOpenVisible != oldValue else { return }
+            // The palette's field would clear the page's selection: kept
+            // as it opens, put back as it closes (before any action it runs).
+            if isQuickOpenVisible {
+                pageHasSelection = false
+                reader.keepSelection { [weak self] has in self?.pageHasSelection = has }
+            } else {
+                reader.restoreSelection()
+            }
+        }
+    }
+    /// Whether the page had a selection when the palette opened, for its
+    /// Highlight and Add Note actions.
+    var pageHasSelection = false
     /// ⇧⌘F opens the palette searching file text only.
     var quickOpenSearchesText = false
     /// ⌘T opens the palette to choose what the new tab shows.

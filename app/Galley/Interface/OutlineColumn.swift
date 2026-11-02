@@ -61,11 +61,11 @@ private struct OutlineList: View {
     /// Copy or clear the feedback, for this document or the workspace.
     private var feedbackMenu: some View {
         Menu {
-            Button("Copy Feedback" + Shortcuts.shared.label(.copyFeedback)) { model.copyFeedback() }
-            Button("Copy Feedback for Workspace") { model.copyWorkspaceFeedback() }
+            Button("Copy File Feedback" + Shortcuts.shared.label(.copyFeedback)) { model.copyFeedback() }
+            Button("Copy Workspace Feedback") { model.copyWorkspaceFeedback() }
             Divider()
-            Button("Clear Feedback…") { model.clearFeedback() }
-            Button("Clear All Feedback in Workspace…") { model.clearWorkspaceFeedback() }
+            Button("Clear File Feedback…") { model.clearFeedback() }
+            Button("Clear Workspace Feedback…") { model.clearWorkspaceFeedback() }
         } label: {
             Image(systemName: "ellipsis")
                 .font(.system(size: 11, weight: .medium))

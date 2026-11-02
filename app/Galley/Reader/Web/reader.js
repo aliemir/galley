@@ -617,6 +617,30 @@
     return breaks;
   }
 
+  // WebKit drops the page's selection when the web view stops being first
+  // responder, as it does when the palette's field takes the keys. The
+  // palette keeps it as it opens and puts it back as it closes, so its
+  // Highlight and Add Note have something to work on.
+  let keptRange = null;
+
+  function keepSelection() {
+    const selection = window.getSelection();
+    keptRange = selection.rangeCount && !selection.isCollapsed ? selection.getRangeAt(0).cloneRange() : null;
+    return keptRange !== null;
+  }
+
+  function restoreSelection() {
+    const range = keptRange;
+    keptRange = null;
+    const selection = window.getSelection();
+    // Not over a newer selection, nor into a page that was drawn again.
+    if (!range || !range.startContainer.isConnected || !range.endContainer.isConnected) return false;
+    if (selection.rangeCount && !selection.isCollapsed) return false;
+    selection.removeAllRanges();
+    selection.addRange(range);
+    return true;
+  }
+
   function selectionAnchor() {
     const content = $('#content');
     const selection = window.getSelection();
@@ -1102,6 +1126,8 @@
     selectionAnchor() { const a = selectionAnchor(); hidePill(); return a; },
     endFind() { clearFind(); },
     selectionText() { return window.getSelection().toString(); },
+    keepSelection() { return keepSelection(); },
+    restoreSelection() { return restoreSelection(); },
     scrollPage(direction) { window.scrollBy({ top: direction * (window.innerHeight - 80), behavior: 'smooth' }); },
   };
 

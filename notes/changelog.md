@@ -26,6 +26,11 @@ otherwise have to re-derive. Not worth one: typo fixes and formatting.
 
 ## 2026-11-02
 
+- The palette keeps the page's selection as it opens and puts it back as it
+  closes (WebKit clears it when the field takes the keys), so its Highlight
+  and Add Note work; both are listed only when there is a selection.
+  Feedback actions say whose they are: Copy/Clear File Feedback, Copy/Clear
+  Workspace Feedback, in the palette, the menus and the Contents menu
 - Website: "Find anything" shows the palette's four modes as cut-outs
   (files, sections, text, actions), captured by `tools/capture-guide.sh`;
   a new "Keys for everything" section lists every default shortcut by menu

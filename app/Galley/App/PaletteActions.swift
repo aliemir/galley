@@ -97,12 +97,13 @@ extension AppModel {
         add("Mark All as Read", "Document", "checkmark.circle.fill", .markAllRead, when: (selectedWorkspace?.unreadCount ?? 0) > 0) {
             self.markAllRead()
         }
-        add("Highlight Selection", "Document", "highlighter", .highlight, when: hasFile) { self.highlightSelection() }
-        add("Add Note to Selection", "Document", "note.text.badge.plus", .addNote, when: hasFile) { self.noteSelection() }
-        add("Copy Feedback", "Document", "doc.on.doc", .copyFeedback, when: hasFeedback) { self.copyFeedback() }
-        add("Copy Feedback for Workspace", "Document", "doc.on.doc", when: workspaceHasFeedback) { self.copyWorkspaceFeedback() }
-        add("Clear Feedback…", "Document", "trash", when: hasFeedback) { self.clearFeedback() }
-        add("Clear All Feedback in Workspace…", "Document", "trash", when: workspaceHasFeedback) { self.clearWorkspaceFeedback() }
+        let hasSelection = hasFile && pageHasSelection
+        add("Highlight Selection", "Document", "highlighter", .highlight, when: hasSelection) { self.highlightSelection() }
+        add("Add Note to Selection", "Document", "note.text.badge.plus", .addNote, when: hasSelection) { self.noteSelection() }
+        add("Copy File Feedback", "Document", "doc.on.doc", .copyFeedback, when: hasFeedback) { self.copyFeedback() }
+        add("Clear File Feedback…", "Document", "trash", when: hasFeedback) { self.clearFeedback() }
+        add("Copy Workspace Feedback", "Document", "doc.on.doc", when: workspaceHasFeedback) { self.copyWorkspaceFeedback() }
+        add("Clear Workspace Feedback…", "Document", "trash", when: workspaceHasFeedback) { self.clearWorkspaceFeedback() }
         add("Fold All Sections", "Document", "chevron.right.2", .foldAll, when: hasFile) { self.foldAll(true) }
         add("Unfold All Sections", "Document", "chevron.down.2", .unfoldAll, when: hasFile) { self.foldAll(false) }
 
