@@ -10,6 +10,11 @@ Typo fixes and formatting do not need an entry.
 
 ## 2026-11-02
 
+- Save Feedback shows a green dot while an agent waits on the workspace with
+  `galley feedback --wait` or `--watch`, and its tooltip names the agent
+  (from the processes above the command: Claude Code, Codex, Gemini CLI…).
+  Each waiting command keeps a file in the library's `Watchers` folder,
+  refreshed every 5 s and removed on exit; the app reads them every 3 s
 - Site: Make it yours shows all nineteen themes as cards drawn in their own
   colours, as Settings → Themes does, instead of a screenshot of it;
   `tools/theme-cards.py` writes them from `Theme.swift`

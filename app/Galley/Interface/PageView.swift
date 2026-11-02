@@ -72,7 +72,8 @@ struct PageView: View {
                 )
             }
             if let workspace = model.selectedWorkspace, workspace.draftCount > 0 || saveButton.isConfirming {
-                SaveFeedbackButton(count: workspace.draftCount, state: saveButton, workspace: workspace.name) {
+                SaveFeedbackButton(count: workspace.draftCount, state: saveButton, workspace: workspace.name,
+                                   waiting: model.watcher(for: workspace).map { $0.agent ?? "An agent" }) {
                     model.saveFeedback()
                 }
                 .transition(.opacity.combined(with: .scale(scale: 0.9)))
@@ -248,9 +249,12 @@ private struct SaveFeedbackButton: View {
     let count: Int
     let state: SaveButtonState
     let workspace: String
+    /// The agent waiting for this round ("Claude Code"), if one is.
+    let waiting: String?
     let save: () -> Void
     @Environment(\.palette) private var palette
     @State private var isHovered = false
+    @State private var isPulsing = false
 
     private var isDone: Bool { state.isConfirming && count == 0 }
 
@@ -277,6 +281,16 @@ private struct SaveFeedbackButton: View {
                 }
                 Text(isDone ? "Saved" : "Save Feedback")
                     .font(.system(size: 11.5, weight: .semibold))
+                if waiting != nil, !isDone {
+                    // Someone is listening: saving reaches them at once.
+                    Circle()
+                        .fill(Color(nsColor: .systemGreen))
+                        .frame(width: 6, height: 6)
+                        .opacity(isPulsing ? 0.45 : 1)
+                        .animation(.easeInOut(duration: 1.1).repeatForever(autoreverses: true), value: isPulsing)
+                        .onAppear { isPulsing = true }
+                        .transition(.scale.combined(with: .opacity))
+                }
             }
             .foregroundStyle(isHovered ? palette.ink : palette.ink2)
             .padding(.horizontal, 8)
@@ -295,7 +309,11 @@ private struct SaveFeedbackButton: View {
 
     private var help: String {
         let drafts = count == 1 ? "1 draft" : "\(count) drafts"
-        return "Save \(drafts) in \(workspace), for your agents" + Shortcuts.shared.label(.saveFeedback)
+        let shortcut = Shortcuts.shared.label(.saveFeedback)
+        if let waiting {
+            return "\(waiting) is waiting for your feedback: save \(drafts) in \(workspace) and it gets them now" + shortcut
+        }
+        return "Save \(drafts) in \(workspace), for your agents" + shortcut
     }
 }
 

@@ -143,6 +143,9 @@ nonisolated enum CLI {
     /// stamps: one whose id and save time were not there before.
     static func waitForSaves(from state: LibraryState, under target: URL, _ options: FeedbackOptions) -> Int32 {
         let library = LibraryLocation.directory.appendingPathComponent("library.json")
+        // Galley shows the reader that someone is waiting for this.
+        let presence = Watchers.Presence(path: target.path)
+        defer { presence.stop() }
         var known = saves(in: state, under: target)
         var modified = modificationDate(library)
         let deadline = options.timeout.map { Date().addingTimeInterval($0) }
@@ -153,6 +156,7 @@ nonisolated enum CLI {
                 return 2
             }
             Thread.sleep(forTimeInterval: 0.4)
+            presence.beat()
             let now = modificationDate(library)
             guard now != modified else { continue }
             modified = now

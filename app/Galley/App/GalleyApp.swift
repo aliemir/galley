@@ -23,6 +23,7 @@ struct GalleyApp: App {
                 .onAppear {
                     appDelegate.model = model
                     model.listenForFeedbackRequests()
+                    model.lookForWatchers()
                     #if DEBUG
                     appDelegate.automation = DebugAutomation(model: model)
                     #endif

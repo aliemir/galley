@@ -1529,6 +1529,43 @@ final class AppModel {
     /// `galley feedback clear`, sent by the command while Galley runs.
     @ObservationIgnored private var clearRequests: NSObjectProtocol?
 
+    // MARK: Watchers
+
+    /// Agents waiting on `galley feedback --wait` or `--watch`, read from
+    /// the library's Watchers folder every few seconds.
+    private(set) var watchers: [Watchers.Entry] = []
+    @ObservationIgnored private var watcherTimer: Timer?
+
+    func lookForWatchers() {
+        guard watcherTimer == nil else { return }
+        refreshWatchers()
+        watcherTimer = Timer.scheduledTimer(withTimeInterval: 3, repeats: true) { [weak self] _ in
+            MainActor.assumeIsolated { self?.refreshWatchers() }
+        }
+    }
+
+    private func refreshWatchers() {
+        // Off the main thread: a handful of small files, but still disk.
+        Task.detached(priority: .utility) {
+            let live = Watchers.live()
+            await MainActor.run { [weak self] in
+                if self?.watchers != live { self?.watchers = live }
+            }
+        }
+    }
+
+    /// Who is waiting for feedback on `workspace`: a watcher on its folder,
+    /// on a folder that holds it, or (Opened Files) on one of its files.
+    func watcher(for workspace: Workspace) -> Watchers.Entry? {
+        watchers.first { entry in
+            if workspace.isOpenedFiles {
+                return workspace.files.contains { FeedbackClearing.matches($0.url.path, [entry.path]) }
+            }
+            return FeedbackClearing.matches(workspace.root.path, [entry.path])
+                || FeedbackClearing.matches(entry.path, [workspace.root.path])
+        }
+    }
+
     func listenForFeedbackRequests() {
         guard clearRequests == nil else { return }
         clearRequests = DistributedNotificationCenter.default().addObserver(forName: FeedbackRequest.request, object: nil, queue: .main) { [weak self] note in

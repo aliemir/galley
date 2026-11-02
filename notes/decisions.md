@@ -422,3 +422,27 @@ reader or their files (no system profile).
 - *The feed on the website.* Every release would need a site deploy too.
 - *Checking without asking.* A reader who chose Galley for its quiet should
   be asked before its first request.
+
+## 2026-11-02 — Showing that an agent is waiting
+
+**Chosen:** `galley feedback --wait` and `--watch` keep a file per process
+in the library's `Watchers` folder — the watched path, the agent, the start
+time — rewritten every 5 seconds and removed on exit or on SIGINT, SIGTERM
+and SIGHUP. The app lists the folder every 3 seconds and counts a watcher
+while its process is alive and its file is under 15 seconds old (a command
+killed outright leaves a file; the app removes it once stale). A watcher
+covers a workspace when either path holds the other. The agent is named
+from the command's ancestors — process name, executable name, and the first
+two arguments (Claude Code's executable is a version number named `claude`
+only in argv[0]; agents in JavaScript run as `node …/gemini`).
+
+**Why:** saving is a signal; knowing someone is listening tells the reader
+whether it will be acted on now. The files keep it out of `library.json`,
+which only the app writes while it runs.
+
+**Rejected:**
+- *Distributed notifications both ways* (the app asking who is there): a
+  command blocked in its wait would have to answer, and a missed message
+  looks the same as nobody waiting.
+- *A count in `library.json`*: the command would write the library the app
+  holds — the last-writer-wins problem the CLI avoids by asking the app.
