@@ -78,16 +78,16 @@ lights up.
 15. ✅ The guide in the app, and the website (landing, privacy, support)
 16. ✅ The palette's actions mode (`>` or ⇧⌘P)
 17. ✅ Distribution: no sandbox, Developer ID, `tools/release.sh`
+18. ✅ 1.0.0 released on GitHub (signed, notarized); the site at galley.aliemir.dev; the repo public
 
 ## Next
 
-- **The first release** — a Developer ID Application certificate, then
-  `tools/release.sh 1.0.0`; test it on macOS 15 first (a virtual machine is
-  enough), and put the real repository in the website's GitHub links.
+- **Test on macOS 15** — the minimum, which 1.0.0 shipped without being run
+  on; a virtual machine is enough.
 - **Updates** — Sparkle, with its feed published alongside each release.
 - **Quick Look preview** — Space in Finder showing the page typeset.
   Deferred on purpose: it is a separate extension target (its own sandbox,
   WebKit's network entitlement, the renderer and web assets shared into it),
   and its use is browsing files in Finder, which double-click into Galley now
-  covers. Worth it once the app is public: it puts the typography in front of
-  people who have not opened Galley.
+  covers. Worth it now that the app is public: it puts the typography in
+  front of people who have not opened Galley.
