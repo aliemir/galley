@@ -398,3 +398,27 @@ with the next prompt.
   is listening at that instant; the library file is always there to read.
 - *Printing all saved feedback on each save*: an agent that has not cleared
   the last round would act on it twice.
+
+## 2026-11-02 — Updates with Sparkle, fed from GitHub Releases
+
+**Chosen:** Sparkle 2 (Swift package), started only in Release builds. The
+feed is `appcast.xml`, attached to every GitHub release and read from
+`…/releases/latest/download/appcast.xml`, so the newest release is always
+the feed; it lists that release alone. `tools/release.sh` signs the stapled
+DMG with the EdDSA key from the login keychain. Sparkle's own first-run
+question decides automatic checks; Settings → General changes it later.
+
+**Why:** distributed outside the App Store, Galley otherwise stays at
+whatever version someone first downloaded. Sparkle is the standard,
+signature-checked way, about 2.7 MB in the app.
+
+**Consequence:** "no network" is no longer quite true. The copy now says the
+one request is the update check, asked for first, sending nothing about the
+reader or their files (no system profile).
+
+**Rejected:**
+- *A home-made check of GitHub's API with a "new version" banner.* No
+  dependency, but every update is a manual download and drag.
+- *The feed on the website.* Every release would need a site deploy too.
+- *Checking without asking.* A reader who chose Galley for its quiet should
+  be asked before its first request.

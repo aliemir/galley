@@ -10,6 +10,11 @@ Typo fixes and formatting do not need an entry.
 
 ## 2026-11-02
 
+- Galley updates itself with Sparkle 2: Galley → Check for Updates…, the
+  palette, and Settings → General (a daily check, asked about first). The
+  feed is `appcast.xml` on the newest GitHub release, written and signed by
+  `tools/release.sh`. The README, site, privacy page and guide say the update
+  check is the one request Galley makes
 - The change tick grows into a "Mark as read" pill on hover, out into the
   margin (or to the right, when the page is near the window's edge)
 - The Galley Guide, README and decisions cover ticking changes, drafts and

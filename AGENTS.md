@@ -43,8 +43,11 @@ one picture by hand; keep only the pictures that actually changed.
 
 `tools/release.sh <version>` is the whole path: version bump, Release archive,
 Developer ID signing, notarization and stapling (the app, then the DMG), and a
-GitHub Release with `Galley.dmg` attached. `--local` stops after a signed DMG
-on this Mac, for checking the build without publishing. Publishing a release
+GitHub Release with `Galley.dmg` and `appcast.xml` attached. The app updates
+itself with Sparkle from `…/releases/latest/download/appcast.xml`, the feed on
+the newest release, which lists only that release; the script signs the DMG
+for it with the EdDSA key in the login keychain. `--local` stops after a
+signed DMG on this Mac, for checking the build without publishing. Publishing a release
 is outward-facing: run it without `--local` only when the user asks for a
 release.
 
@@ -219,6 +222,11 @@ simulator ones).
 - `.env` holds what the release needs: the App Store Connect API key's issuer
   and key id (notarytool signs in with it) and the team id. The `.p8` lives at
   `~/.appstoreconnect/private_keys/AuthKey_<KEY_ID>.p8`, outside the repo.
+- The Sparkle EdDSA private key lives in the login keychain (Sparkle's
+  `generate_keys`, in `SourcePackages/artifacts/sparkle/Sparkle/bin`); its
+  public half is `SUPublicEDKey` in `app/Info.plist`. Lose the private key
+  and installed copies can no longer update — keep an export
+  (`generate_keys -x <file>`) somewhere safe, never in the repo.
 - Read config with `set -a; source .env; set +a`.
 - Commits use the GitHub no-reply address, not a personal one.
 

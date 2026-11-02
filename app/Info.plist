@@ -66,5 +66,11 @@
 			</dict>
 		</dict>
 	</array>
+	<!-- Sparkle: the feed attached to the newest GitHub release, and the
+	     public half of the key tools/release.sh signs each DMG with. -->
+	<key>SUFeedURL</key>
+	<string>https://github.com/aliemir/galley/releases/latest/download/appcast.xml</string>
+	<key>SUPublicEDKey</key>
+	<string>euqPYHB1smpK1vmfWE2qRPSyHwIBkQ5x2DzYKYxyTfE=</string>
 </dict>
 </plist>

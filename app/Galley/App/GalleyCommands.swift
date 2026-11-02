@@ -135,6 +135,11 @@ struct GalleyCommands: Commands {
             Divider()
         }
 
+        CommandGroup(after: .appInfo) {
+            Button("Check for Updates…") { Updates.shared.checkNow() }
+                .disabled(!Updates.isAvailable)
+        }
+
         CommandGroup(after: .appSettings) {
             Button("Install Command Line Tool…") { model.installCommandLineTool() }
             Button("Install Agent Skill") { model.installAgentSkill() }

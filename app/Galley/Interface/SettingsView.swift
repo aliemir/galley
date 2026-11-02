@@ -70,6 +70,19 @@ private struct GeneralSettings: View {
             }
 
             Section {
+                @Bindable var updates = Updates.shared
+                Toggle(isOn: $updates.checksAutomatically) {
+                    Text("Check for updates automatically")
+                    Text("Once a day, from Galley's releases on GitHub. Nothing about you or your files is sent.")
+                }
+                .disabled(!Updates.isAvailable)
+                Button("Check Now…") { Updates.shared.checkNow() }
+                    .disabled(!Updates.isAvailable)
+            } header: {
+                Text("Updates")
+            }
+
+            Section {
                 Toggle("Find", isOn: $settings.showFindButton)
                 Toggle("Appearance", isOn: $settings.showAppearanceButton)
             } header: {

@@ -31,7 +31,8 @@ into, and every file reads like a typeset page.
   from one file into the next, a palette for files, sections, text and every
   action, and a shortcut for everything.
 - **Paper, not an editor.** Galley never writes to your files and sends
-  nothing anywhere — no account, no analytics, no network.
+  nothing anywhere — no account, no analytics. Its one request is a check
+  for updates, and it asks before making it.
 
 ## Agents
 
@@ -80,6 +81,10 @@ and a drag-to-Applications DMG, then tag and publish a GitHub Release:
    the `.p8` in `~/.appstoreconnect/private_keys/`, and fill in `.env` from
    `.env.example` — notarization signs in with that key.
 3. Install and sign in to the GitHub CLI: `brew install gh`, `gh auth login`.
+4. For updates, make a Sparkle key: build once, then run `generate_keys` from
+   Xcode's `SourcePackages/artifacts/sparkle/Sparkle/bin`. It keeps the key
+   in your keychain and prints the public half — put that in `SUPublicEDKey`
+   in `app/Info.plist`, and `SUFeedURL` to your repository's releases.
 
 ```sh
 tools/release.sh 1.0.0 --local   # a signed DMG in build/release/, nothing published
@@ -87,6 +92,7 @@ tools/release.sh 1.0.0           # notarized, tagged and published on GitHub Rel
 ```
 
 Release notes come from `notes/release-notes/<version>.md` when it exists.
+Each release carries `appcast.xml`, the feed Galley checks for updates.
 
 ## Repository
 

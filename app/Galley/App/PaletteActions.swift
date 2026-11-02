@@ -151,6 +151,7 @@ extension AppModel {
         }
         add("Install Command Line Tool…", "Galley", "terminal") { self.installCommandLineTool() }
         add("Install Agent Skill", "Galley", "sparkles") { self.installAgentSkill() }
+        add("Check for Updates…", "Galley", "arrow.down.circle", when: Updates.isAvailable) { Updates.shared.checkNow() }
         add("Galley Guide", "Help", "book") { self.openGuide() }
         return actions
     }

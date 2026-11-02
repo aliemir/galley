@@ -22,14 +22,15 @@
   <main>
     <article class="column doc">
       <h1>Privacy</h1>
-      <p class="meta"><span>Last updated November 1, 2026</span></p>
+      <p class="meta"><span>Last updated November 2, 2026</span></p>
 
       <p>Galley collects nothing about you. This page says exactly what it does with the things it does handle.</p>
 
       <h2>The app</h2>
       <ul class="plain">
         <li><strong>No account, no analytics, no tracking.</strong> Galley has no sign-in, sends no usage data and contains no third-party analytics or advertising code.</li>
-        <li><strong>No network.</strong> The app makes no requests of its own. The page it draws your files on cannot reach the network: remote images in a file are shown as links, not loaded. A link you click opens in your browser.</li>
+        <li><strong>One request: updates, if you allow it.</strong> Galley asks before it checks for updates. If you agree, it fetches the list of releases from GitHub about once a day — the request carries Galley's version and, like any request, your IP address; nothing about you or your files. Turn it off in Settings → General, or check by hand with Galley → Check for Updates…. Galley makes no other requests.</li>
+        <li><strong>Your files never reach the network.</strong> The page Galley draws your files on cannot make a request: remote images in a file are shown as links, not loaded. A link you click opens in your browser.</li>
         <li><strong>Your files stay where they are.</strong> Galley reads the folders and files you open and never writes to them.</li>
         <li><strong>What Galley keeps, it keeps on your Mac.</strong> Your workspaces, read positions, highlights, notes and a copy of each file as you last read it (to show what changed) live in <code>~/Library/Application Support/Galley</code>; your settings in Galley's preferences. Nothing is synced or uploaded. Deleting that folder removes it all.</li>
         <li><strong>The <code>galley</code> command</strong> reads the same folder, on your Mac, when you or an agent run it. What an agent does with your feedback is up to the agent and its provider.</li>

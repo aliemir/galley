@@ -194,7 +194,8 @@ your Mac, and the page it draws cannot reach the network or run anything a
 file brings with it: scripts, styles and frames in a file's HTML are removed.
 A link to another Markdown file opens it in Galley; a link to a document — an
 image, a PDF — opens it in its app; a link to an app or a script only shows
-it in Finder.
+it in Finder. The one request Galley makes is a check for updates, once a
+day, and only after you say yes to it (**Settings → General**).
 
 ---
 
