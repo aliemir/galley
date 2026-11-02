@@ -1,6 +1,7 @@
 # Plan — v1: the reading experience
 
-Focus (see `decisions.md`): reading and ease of use. No agent integration yet.
+Focus (see `decisions.md`): reading and ease of use first; the agent loop —
+notes on highlights, the `galley` command and its skill — came after.
 
 ## Look
 
@@ -28,7 +29,7 @@ each shows or hides on its own (⌘1 / ⌘2 / ⌘3, the View menu; ⌘\ for all)
 
 - Two-finger horizontal swipe, **interactive** — the column follows the
   fingers and snaps on release (fingers right = reveal, left = hide). Which
-  column comes next is the reader's order (Settings → Reading → Columns,
+  column comes next is the reader's order (Settings → General → Columns,
   drag to reorder; a column switched off there is passed over). The default
   order is Files, Contents, Workspaces.
 - `⌘]` / `⌘[` do what a swipe does.
@@ -72,19 +73,22 @@ lights up.
 10. ✅ Full-text search (⇧⌘F; ⌘K falls back to it when no name matches; Tab switches)
 11. ✅ Tabs in the page column (Safari-style; see `decisions.md`)
 12. ✅ Single files: Open With, the Dock, ⌘O, drops → Opened Files
+13. ✅ Settings as panes: themes gallery, typefaces, customizable shortcuts, icon colours
+14. ✅ The agent loop: the `galley` command and its skill, Settings → Agents
+15. ✅ The guide in the app, and the website (landing, privacy, support)
+16. ✅ The palette's actions mode (`>` or ⇧⌘P)
+17. ✅ Distribution: no sandbox, Developer ID, `tools/release.sh`
 
 ## Next
 
-- **Sample workspace on the welcome screen** — "Look at a sample" opening a
-  bundled read-only set (needs a folder reference so the tree survives the
-  bundle's flattening).
+- **The first release** — a Developer ID Application certificate, then
+  `tools/release.sh 1.0.0`; test it on macOS 15 first (a virtual machine is
+  enough), and put the real repository in the website's GitHub links.
+- **Updates** — Sparkle, with its feed published alongside each release.
+- **The real name and icon** — Galley is a placeholder.
 - **Quick Look preview** — Space in Finder showing the page typeset.
   Deferred on purpose: it is a separate extension target (its own sandbox,
-  WebKit's network entitlement again, the renderer and web assets shared
-  into it), and its use is browsing files in Finder, which double-click into
-  Galley now covers. Worth it when the app goes public — competitors list it,
-  and it puts the typography in front of people who have not opened Galley.
-- **Distribution** — Developer ID + notarization path; decide whether to keep
-  the sandbox.
-- **Store/site media** — the screenshot script on top of `DebugAutomation`.
-- **The agent CLI** — later, see `decisions.md`.
+  WebKit's network entitlement, the renderer and web assets shared into it),
+  and its use is browsing files in Finder, which double-click into Galley now
+  covers. Worth it once the app is public: it puts the typography in front of
+  people who have not opened Galley.

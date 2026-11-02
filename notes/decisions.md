@@ -1,12 +1,13 @@
 # Decisions
 
-What was chosen and why, with the options turned down. Newest first.
+What was chosen and why, with the options turned down. Each entry is dated;
+a later one says when it replaces an earlier one.
 
 ## 2026-10-31 — Native macOS only
 
 **Chosen:** a single macOS target (SwiftUI + AppKit), macOS 26.0 minimum (lowered to 15.0 on 2026-11-02, see below),
-built with the macOS SDK. The repo started from the iOS app template; the
-Xcode project, preflight, release skill and store-media docs were retargeted.
+built with the macOS SDK. The repo started from an iOS app template, retargeted
+to the Mac.
 
 **Why:** the idea is a Mac reader for files agents write on that same Mac —
 folder watching (FSEvents), trackpad swipes, multiple windows, keyboard-first.
@@ -30,10 +31,7 @@ hardened runtime on, category `public.app-category.productivity`.
 required for the Mac App Store. Productivity rather than Developer Tools
 because the app is meant to feel calm, not like a dev tool.
 
-**Consequence:** workspaces must be reopened through security-scoped bookmarks;
-"pipe a highlight to `claude -p`" from *Maybe later* cannot spawn a process
-from a sandboxed app and would need another shape (copy to clipboard, a URL
-scheme, or an MCP server the agent connects to).
+**Consequence:** workspaces must be reopened through security-scoped bookmarks.
 
 ## 2026-11-01 — Distribution: free, on GitHub, no App Store, no sandbox
 
@@ -63,18 +61,18 @@ copy remains if anything goes wrong.
 an app-group container to share data with it — all cost, no benefit for a free
 GitHub release).
 
-**Later:** an update mechanism (Sparkle, its feed on GitHub), the release
-script (archive → sign → notarize → DMG → GitHub release).
+**Later:** an update mechanism (Sparkle, its feed on GitHub). The release
+script came on 2026-11-02 (`tools/release.sh`).
 
-## 2026-10-31 — Focus: reading experience first
+## 2026-10-31 — Focus: reading experience first (the agent loop followed on 2026-11-01)
 
 **Chosen:** the current phase is the reading experience and ease of use —
 typography, navigation, change tracking, highlights, state restoration.
 Agent integration is out of scope for now; do not build hooks to agents yet.
 
-**Later, replacing "pipe to `claude -p`":** a small CLI that ships with the
-app, plus a skill for it, so agents run the CLI to pull the user's highlights
-and comments. The app stays passive; agents come to it.
+**Later:** a small CLI that ships with the app, plus a skill for it, so
+agents run the CLI to pull the reader's highlights and notes. The app stays
+passive; agents come to it. (Built on 2026-11-01: the `galley` command.)
 
 ## 2026-10-31 — Placeholder name: Galley
 
@@ -83,9 +81,8 @@ proof is the printed copy of a text you read and mark up but never rewrite —
 the app's whole premise. The real name is still to be decided.
 
 **Renaming later** is a find-and-replace of `Galley` / `galley` across the repo
-plus `git mv` of `app/Galley*` — `rename.sh` is one-shot and has been deleted.
-Changing the bundle id resets the sandbox container (saved workspaces, read
-state, highlights), which costs nothing before the first release.
+plus `git mv` of `app/Galley*`. Changing the bundle id and the library folder
+starts every reader afresh, which costs nothing before the first release.
 
 ## 2026-11-01 — Rendering: Swift parses, WebKit draws
 
@@ -117,25 +114,12 @@ document actually contains a diagram, math or code. The reader's own script
 has no dependencies. `gemoji` is data only (shortcode → emoji JSON). Licenses
 are bundled in `Reader/Web/vendor/Acknowledgements.txt`.
 
-## 2026-11-01 — Outgoing-network entitlement, with a page that has no network (moot without the sandbox)
+## 2026-11-01 — Debug-only automation
 
-**Chosen:** `ENABLE_OUTGOING_NETWORK_CONNECTIONS = YES`
-(`com.apple.security.network.client`).
-
-**Why:** in a sandboxed app WebKit's helper processes do not start without
-it — the reader page sat at 10% loading and never reached the `galley://`
-scheme handler. The app itself makes no requests, and the page cannot either:
-its content security policy is `default-src 'none'` with only `galley:` and
-`data:` allowed, and remote images render as a link chip instead of loading.
-The privacy policy can still say the app sends nothing anywhere.
-
-## 2026-11-01 — Debug-only automation and entitlements
-
-Debug builds carry `app/Galley-Debug.entitlements` (read `/`, write
-`/private/tmp/galley-debug/`) and `DebugAutomation`, driven by
-`tools/galley-debug.swift`. They exist so development and the store-media
-script can open fixture folders without the open panel and snapshot the
-window without Screen Recording permission. Release builds have neither.
+Debug builds carry `DebugAutomation`, driven by `tools/galley-debug.swift`, so
+development and the capture script can open fixture folders, drive the app
+and snapshot the window. A debug copy on a throwaway library keeps its own
+settings and home. Release builds have none of it.
 
 ## 2026-11-01 — Panels resize the page live; the text re-wraps as they move
 
@@ -144,7 +128,7 @@ wider on every frame and the text re-wraps with it (the original behaviour).
 
 **Rejected:** holding the text column at a fixed width for the duration of
 the motion and re-wrapping once at the end, anchored to the line being
-read. It was built (`3629be0`) and reverted the same day: the frozen column
+read. It was built and reverted the same day: the frozen column
 overflowed narrow windows and showed a horizontal scrollbar, and the single
 re-wrap at the end read as a content shift. The user preferred the live
 re-wrap, scrollbar movement included.
@@ -159,7 +143,7 @@ scrollbar (`scrollbar-width: none`) for the duration of the motion.
 keeps its fixed place (Workspaces · Files · Contents · page) and toggles on
 its own — ⌘1 / ⌘2 / ⌘3, numbered by place, also in the View menu with
 checkmarks; ⌘\ hides them all and brings the same set back. The order in
-Settings → Reading → Columns only drives swipes and ⌘] / ⌘[: a swipe right
+Settings → General → Columns only drives swipes and ⌘] / ⌘[: a swipe right
 brings in the first hidden column in the order, a swipe left takes away the
 last showing one. A column switched off there is passed over by swipes but
 still has its shortcut. On narrow windows the columns latest in the order
@@ -200,7 +184,7 @@ bar. A file is open in at most one tab: going to it goes to that tab. The
 bar is not drawn until there are two tabs, so someone who never asks for one
 sees the page exactly as before.
 
-**Rejected:** the preview tab planned in `plan-v1.md` (single click reuses a
+**Rejected:** the preview tab first planned (single click reuses a
 preview tab, double click keeps it, as in VS Code). Finder teaches people to
 double-click files, and every double-click would have left a kept tab behind
 — tabs piling up in a reader meant to be calm. Also rejected: native window
@@ -267,12 +251,12 @@ cannot reach keys handled outside the menus (⌃Tab).
 
 **App icon:** variants are recolours drawn by the same script as the icon,
 so the set regenerates when the real icon replaces the placeholder. The
-choice sets the Dock icon while Galley runs; a sandboxed app cannot change
-the icon Finder shows (Bear behaves the same).
+choice sets the Dock icon while Galley runs; Finder keeps the standard icon
+(Bear behaves the same).
 
 ## 2026-11-01 — The website reads like the guide
 
-**Chosen (not built yet):** the website looks like Galley's own page — the
+**Chosen:** the website looks like Galley's own page — the
 guide's content and typography on the Paper theme — with GitHub and Download
 buttons added. One look across app, guide and site.
 
@@ -352,17 +336,14 @@ list (nineteen rows of noise).
 
 ## 2026-11-02 — The repo holds the app and its site, nothing else
 
-**Chosen:** remove the template scaffolding Galley never used — `backend/`
-(no server), `screenshot-generator/` and `store-metadata/` (no App Store),
-`privacy-policy-template/`, `check.sh`, `rename.sh`, the App Store, image and
-Workers skills, `tools/window-id.swift` — from the files
-and from every commit (`git filter-repo`). Releases are DMGs on GitHub Releases, built by
-`tools/release.sh`; Sparkle comes later.
+**Chosen:** remove the template scaffolding Galley never used — the server
+Worker, the App Store pipeline and its media generator and metadata, the
+preflight and rename scripts, and the skills and tools that served them.
+Releases are DMGs on GitHub Releases, built by `tools/release.sh`; Sparkle
+comes later.
 
 **Why:** distribution is GitHub, not the App Store (see above), so the store
-pipeline, its preflight and its media generator had nothing to do; a public
-repo should not carry dead scaffolding.
+pipeline had nothing to do, and a public repo should not carry dead
+scaffolding.
 
-**Rejected:** keeping the scaffolding "ready" (the template's own rule — it was
-never touched); deleting it only from the latest commit (it would stay in the
-history of a public repo).
+**Rejected:** keeping the scaffolding "ready" — it was never touched.

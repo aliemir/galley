@@ -1,7 +1,7 @@
 # Idea: A printed copy of what your agent wrote
 
-A minimal, read-only, typography-first Mac reader for the markdown files AI agents produce.
-Think **Macaroni + Bear**: Macaroni's "what changed" awareness with Bear's calm layout and swipe navigation.
+A minimal, read-only, typography-first Mac reader for the markdown files AI agents produce:
+an eye for what changed since you last read, in a calm layout with swipe navigation.
 
 > It should feel like a printed copy of the file from your agent. You read it, mark it up with a highlighter, and notice the new pages on your desk. You never edit paper.
 
@@ -74,15 +74,15 @@ Every action has a shortcut, and the shortcuts mirror the swipe model.
 - Print-like reading: real margins, comfortable line length, good vertical rhythm.
 - A few curated themes, Bear-style, rather than an endless theme editor.
 
+### Feedback for agents
+Notes on highlights go back to the agent: copied as Markdown, or read by the
+agent itself through the `galley` command bundled with the app and its agent
+skill. The app stays passive; agents come to it.
+
 ---
 
-## Maybe later
-- Let agents read your highlights and comments:
-  - a CLI bundled with the app, plus an agent skill for it, so the agent runs
-    the CLI to pull "what the user highlighted / commented" (preferred over
-    piping to `claude -p` — the app stays passive, agents come to it),
-  - copy a selection as an agent-ready reference (`@path/file.md` + quoted text),
-  - or a small MCP server exposing the same data.
+## Later
+- A small MCP server exposing the same feedback the `galley` command reads.
 - Optional git integration for history.
 - Export highlights as notes.
 
@@ -92,29 +92,5 @@ Every action has a shortcut, and the shortcuts mirror the swipe model.
 - Plugins, power-user configuration
 
 ## Business
-- Free. Polish the landing page and onboarding as much as the app.
+- Free and open source. The landing page and onboarding get as much polish as the app.
 
----
-
-## Similar apps
-
-### Readers / viewers
-| App | Notes | Price |
-|---|---|---|
-| [Macaroni](https://macaroni.noodledragon.studio/) | Read-only, watches a folder, "What Changed" view. Closest to this idea. | Paid |
-| [Marked](https://markedapp.com/) | Classic live-preview reader for any editor. | Paid |
-| [MacMD Viewer](https://macmdviewer.com/) | Native viewer for AI agent output, Quick Look, Mermaid. | Paid |
-| [MarkViewer](https://markviewer.com/) | Free, change detection with diff, AI review loop; little theming, has a built-in terminal. | Free |
-| [QuickMD](https://github.com/b451c/quickmd) | Free, open source, native; best theming among free options (JSON themes, fonts). | Free |
-| [MDViewer](https://masakai.github.io/mdviewer/) | Free, open source, notarized; light/dark only. | Free |
-| [MDHero](https://mdhero.app/) | Free, open source, Tauri; reads Claude Code plans. | Free |
-| [QLMarkdown](https://github.com/sbarex/QLMarkdown) | Quick Look extension with custom CSS themes. | Free |
-| [Glow](https://github.com/charmbracelet/glow) | Terminal markdown renderer. | Free |
-
-### Editors / writing apps (for inspiration)
-| App | Notes | Price |
-|---|---|---|
-| [Bear](https://bear.app/) | The layout and swipe navigation reference. | Freemium |
-| [Typora](https://typora.io/) | Seamless WYSIWYG markdown. | Paid |
-| [iA Writer](https://ia.net/writer) | Typography-first writing. | Paid |
-| [Obsidian](https://obsidian.md/) | Powerful, but an editor/PKM tool rather than a calm reader. | Free |
