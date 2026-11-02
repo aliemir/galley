@@ -358,6 +358,31 @@ ins.g-ins { text-decoration: none; background: var(--insert); border-radius: 2px
   position: absolute; left: calc(var(--gutter) - 17px); width: 3px; border-radius: 2px;
   background: var(--change); opacity: .9;
 }
+#gutter .bar.leaving { opacity: 0; transition: opacity .24s ease; }
+.chg-leaving, .chg-leaving ins.g-ins {
+  background-color: transparent !important; box-shadow: 0 0 0 .32em transparent !important;
+  transition: background-color .24s ease, box-shadow .24s ease;
+}
+/* The tick that marks one change read: its own column, out past the fold
+   buttons, as tall as the bar so the pointer can find it anywhere beside
+   the change. */
+#gutter .seen-lane {
+  position: absolute; left: calc(var(--gutter) - 58px); width: 26px;
+  pointer-events: auto;
+}
+#gutter button.seen {
+  position: absolute; top: 1px; left: 3px; width: 20px; height: 20px; padding: 0;
+  border: 1.5px solid var(--change); border-radius: 50%;
+  background: var(--paper); color: var(--change); cursor: pointer;
+  opacity: 0; transform: scale(.85); transition: opacity .14s ease, transform .14s ease, background .12s, color .12s;
+}
+#gutter button.seen::before {
+  content: ""; position: absolute; left: 6.2px; top: 3.4px; width: 4px; height: 7.5px;
+  border: solid currentColor; border-width: 0 1.7px 1.7px 0; transform: rotate(45deg);
+}
+#gutter .seen-lane.show button.seen, #gutter .seen-lane:hover button.seen { opacity: 1; transform: none; }
+#gutter button.seen:hover { background: var(--change); color: var(--paper); }
+@media (max-width: 560px) { #gutter .seen-lane { display: none; } }
 :root.hide-changes .chg-added { background: none; box-shadow: none; }
 :root.hide-changes tr.chg-added > td { background: none; }
 :root.hide-changes ins.g-ins { background: none; }

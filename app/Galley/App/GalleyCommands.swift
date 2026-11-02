@@ -156,6 +156,9 @@ struct GalleyCommands: Commands {
                 .shortcut(.nextChange)
             Button("Previous Change") { model.jumpToChange(-1) }
                 .shortcut(.previousChange)
+            Button("Mark Change as Read") { model.markChangeRead() }
+                .shortcut(.markChangeRead)
+                .disabled(model.current?.changes.isEmpty != false)
         }
 
         CommandMenu("Document") {

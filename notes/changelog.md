@@ -10,6 +10,11 @@ Typo fixes and formatting do not need an entry.
 
 ## 2026-11-02
 
+- Changes can be read one at a time: a tick beside each change bar (shown
+  while the pointer is on the change) takes its marks off, and Go → Mark
+  Change as Read (⌥⌘J) ticks the change at the top of the view. A file
+  whose changes are being ticked is not marked read just by leaving it; the
+  last tick makes it read
 - The repository is public at github.com/aliemir/galley (MIT), with a README
   that introduces Galley and explains building and signing it; the site's
   Download buttons serve the 1.0.0 DMG

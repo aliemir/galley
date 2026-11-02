@@ -73,7 +73,7 @@ enum ShortcutAction: String, CaseIterable, Identifiable {
     case toggleWorkspaces, toggleFiles, toggleContents, togglePanels, showNextPanel, hideLastPanel, workspacesAsIcons
     case biggerText, smallerText, actualSize, markChanges, showComments
     case nextTab, previousTab
-    case nextDocument, previousDocument, nextUnread, nextChange, previousChange
+    case nextDocument, previousDocument, nextUnread, nextChange, previousChange, markChangeRead
     case toggleRead, togglePin, markAllRead, highlight, addNote, copyFeedback, foldAll, unfoldAll
 
     var id: String { rawValue }
@@ -114,6 +114,7 @@ enum ShortcutAction: String, CaseIterable, Identifiable {
         case .nextUnread: "Next Unread"
         case .nextChange: "Next Change"
         case .previousChange: "Previous Change"
+        case .markChangeRead: "Mark Change as Read"
         case .toggleRead: "Mark as Read / Unread"
         case .togglePin: "Pin / Unpin"
         case .markAllRead: "Mark All as Read"
@@ -133,7 +134,7 @@ enum ShortcutAction: String, CaseIterable, Identifiable {
         case .toggleWorkspaces, .toggleFiles, .toggleContents, .togglePanels, .showNextPanel, .hideLastPanel, .workspacesAsIcons,
              .biggerText, .smallerText, .actualSize, .markChanges, .showComments: "View"
         case .nextTab, .previousTab: "Tabs"
-        case .nextDocument, .previousDocument, .nextUnread, .nextChange, .previousChange: "Go"
+        case .nextDocument, .previousDocument, .nextUnread, .nextChange, .previousChange, .markChangeRead: "Go"
         case .toggleRead, .togglePin, .markAllRead, .highlight, .addNote, .copyFeedback, .foldAll, .unfoldAll: "Document"
         }
     }
@@ -176,6 +177,7 @@ enum ShortcutAction: String, CaseIterable, Identifiable {
         case .nextUnread: KeyShortcut("u", [.command, .option])
         case .nextChange: KeyShortcut("j")
         case .previousChange: KeyShortcut("j", [.command, .shift])
+        case .markChangeRead: KeyShortcut("j", [.command, .option])
         case .toggleRead: KeyShortcut("u", [.command, .shift])
         case .togglePin: KeyShortcut("p", [.command, .option])
         case .markAllRead: KeyShortcut("u", [.command, .option, .shift])

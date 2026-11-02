@@ -114,6 +114,7 @@ extension AppModel {
         let hasChanges = current?.changes.isEmpty == false
         add("Next Change", "Go", "arrow.down.to.line.compact", .nextChange, when: hasChanges) { self.jumpToChange(1) }
         add("Previous Change", "Go", "arrow.up.to.line.compact", .previousChange, when: hasChanges) { self.jumpToChange(-1) }
+        add("Mark Change as Read", "Go", "checkmark.circle", .markChangeRead, when: hasChanges) { self.markChangeRead() }
 
         add(current?.status == .read ? "Mark as Unread" : "Mark as Read", "Document", "checkmark.circle", .toggleRead, when: hasFile) {
             self.toggleRead()

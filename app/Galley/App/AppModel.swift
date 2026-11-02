@@ -629,6 +629,13 @@ final class AppModel {
            let old = library.snapshot(workspace: workspace.id, path: file.id) {
             let oldRendered = MarkdownRenderer(baseURL: file.url.deletingLastPathComponent()).render(old)
             changes = BlockDiff.changes(from: oldRendered.units, to: rendered.units)
+            // Blocks the reader already ticked, as long as they still read the same.
+            if let seen = record?.seenChanges, !seen.isEmpty {
+                let seen = Set(seen)
+                changes.units = changes.units.filter { index, _ in
+                    index >= rendered.units.count || !seen.contains(WorkspaceScanner.hash(rendered.units[index].key))
+                }
+            }
         }
 
         let isUpdate = transition == nil && current?.file.id == file.id
@@ -705,23 +712,7 @@ final class AppModel {
         meta.append(Self.relativeDate(document.file.modified))
         meta.append("\(document.rendered.readingMinutes) min read")
 
-        var badge: String?
-        var badgeKind: String?
-        let isGone = workspace.hasScanned && workspace.file(document.file.id) == nil
-        switch document.status {
-        case .unread:
-            let record = workspace.record?.files[document.file.id]
-            badge = record?.markedUnread == true ? "Unread" : "New"
-            badgeKind = "new"
-        case .changed:
-            badge = Self.changeSummary(document.changes)
-        case .read:
-            break
-        }
-        if isGone {
-            badge = "No longer on disk"
-            badgeKind = nil
-        }
+        let (badge, badgeKind) = self.badge(for: document, in: workspace)
 
         var changes: [String: PagePayload.Change] = [:]
         for (index, change) in document.changes.units {
@@ -768,6 +759,20 @@ final class AppModel {
         )
     }
 
+    /// The header's badge: new, unread, what changed, or gone from disk.
+    private func badge(for document: OpenDocument, in workspace: Workspace) -> (String?, String?) {
+        if workspace.hasScanned && workspace.file(document.file.id) == nil { return ("No longer on disk", nil) }
+        switch document.status {
+        case .unread:
+            let record = workspace.record?.files[document.file.id]
+            return (record?.markedUnread == true ? "Unread" : "New", "new")
+        case .changed:
+            return (Self.changeSummary(document.changes), nil)
+        case .read:
+            return (nil, nil)
+        }
+    }
+
     static func changeSummary(_ changes: DocumentChanges) -> String {
         var parts: [String] = []
         if changes.added > 0 { parts.append("\(changes.added) new") }
@@ -794,7 +799,10 @@ final class AppModel {
         // A real look: reached the end, or stayed long enough to read some.
         // "Mark as Unread" pushes `openedAt` into the future to opt out.
         let lookedAtIt = current.reachedEnd || Date().timeIntervalSince(current.openedAt) > 2.5
-        if markingRead ?? lookedAtIt, workspace.file(current.file.id) != nil {
+        // Ticking changes one by one says the reader is going through them
+        // themselves: the ones left are not read just by leaving.
+        let ticking = workspace.record?.files[current.file.id]?.seenChanges?.isEmpty == false && !current.changes.isEmpty
+        if markingRead ?? (lookedAtIt && !ticking), workspace.file(current.file.id) != nil {
             workspace.markRead(current.file.id, text: current.source)
         }
         library.updateWorkspace(workspace.id) { record in
@@ -1283,6 +1291,8 @@ final class AppModel {
             removeHighlight(id)
         case .orphans(let ids):
             if current?.orphans != Set(ids) { current?.orphans = Set(ids) }
+        case .seen(let units):
+            markChangesSeen(units)
         }
     }
 
@@ -1311,6 +1321,33 @@ final class AppModel {
     func jumpToChange(_ direction: Int) {
         Task {
             if await !reader.jumpToChange(direction) { NSSound.beep() }
+        }
+    }
+
+    /// The changes the reader ticked on the page (it has taken their marks
+    /// off already). The last one ticked makes the file read.
+    private func markChangesSeen(_ units: [Int]) {
+        guard var document = current, let workspace = currentWorkspace else { return }
+        let hashes = units.filter { $0 >= 0 && $0 < document.rendered.units.count }
+            .map { WorkspaceScanner.hash(document.rendered.units[$0].key) }
+        for unit in units { document.changes.units[unit] = nil }
+        if document.changes.units.isEmpty {
+            // What was removed has nothing on the page to tick: it goes with the rest.
+            workspace.markRead(document.file.id, text: document.source)
+            document.changes = .none
+            document.status = workspace.status(of: document.file)
+        } else {
+            workspace.markChangesSeen(document.file.id, units: hashes)
+        }
+        current = document
+        let (badge, kind) = self.badge(for: document, in: workspace)
+        reader.setBadge(badge, kind: kind)
+    }
+
+    /// Marks read the change at the top of the view.
+    func markChangeRead() {
+        Task {
+            if await !reader.markChangeSeen() { NSSound.beep() }
         }
     }
 

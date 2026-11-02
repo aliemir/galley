@@ -87,6 +87,8 @@ enum ReaderEvent {
     case note(id: String, text: String)
     case unhighlight(String)
     case orphans([String])
+    /// Changed blocks, by unit index, the reader marked read one by one.
+    case seen([Int])
 }
 
 // MARK: - Controller
@@ -164,6 +166,14 @@ final class ReaderController: NSObject {
     func endFind() { run("Reader.endFind()") }
     func setHighlights(_ highlights: [Highlight]) { call("setHighlights", highlights) }
     func scrollToHighlight(_ id: String) { run("Reader.scrollToHighlight(\(Self.json(id)))") }
+    func setBadge(_ badge: String?, kind: String?) {
+        run("Reader.setBadge(\(badge.map(Self.json) ?? "null"), \(kind.map(Self.json) ?? "null"))")
+    }
+
+    /// Marks read the change at the top of the view; false when none is.
+    func markChangeSeen() async -> Bool {
+        (try? await webView.callAsyncJavaScript("return Reader.markChangeSeen()", contentWorld: .page) as? Bool) ?? false
+    }
     func editNote(_ id: String) { run("Reader.editNote(\(Self.json(id)))") }
 
     /// Highlights the selection and opens its note; false without a selection.
@@ -287,6 +297,8 @@ final class ReaderController: NSObject {
             if let id = message["id"] as? String { onEvent(.unhighlight(id)) }
         case "orphans":
             onEvent(.orphans((message["ids"] as? [String]) ?? []))
+        case "seen":
+            onEvent(.seen((message["units"] as? [Int]) ?? []))
         case "log":
             #if DEBUG
             debugLog("[page] \(message["message"] ?? "")")

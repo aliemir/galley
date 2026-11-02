@@ -23,6 +23,10 @@ nonisolated struct FileRecord: Codable, Hashable, Sendable {
     var scroll: ScrollAnchor?
     var folded: [String]?
     var highlights: [Highlight]?
+    /// Changes the reader marked read one at a time, since `readHash`: the
+    /// hashes of those blocks as they read now. Cleared when the whole
+    /// file is read.
+    var seenChanges: [String]?
 }
 
 nonisolated struct WorkspaceRecord: Codable, Identifiable, Sendable {

@@ -359,8 +359,18 @@ final class Workspace: Identifiable {
             record.files[path, default: FileRecord()].readHash = hash
             record.files[path, default: FileRecord()].readAt = Date()
             record.files[path, default: FileRecord()].markedUnread = nil
+            record.files[path, default: FileRecord()].seenChanges = nil
         }
         recomputeStatuses()
+    }
+
+    /// Marks single changed blocks read, by the hashes of their text.
+    func markChangesSeen(_ path: String, units: [String]) {
+        library.updateWorkspace(id) { record in
+            var seen = record.files[path, default: FileRecord()].seenChanges ?? []
+            seen += units.filter { !seen.contains($0) }
+            record.files[path, default: FileRecord()].seenChanges = seen
+        }
     }
 
     func markUnread(_ path: String) {

@@ -18,7 +18,7 @@ final class DebugAutomation {
         "snapshot", "probe", "reload", "reset", "palette", "palette.close", "palette.frame", "search", "type.plan", "type.token", "type.feedback", "type.selection", "type.find", "type.name", "type.sort", "type.agents", "names.#", "highlight", "next", "previous", "fold", "unfold", "change", "find", "find.close", "resize.small", "resize.large",
         "scroll.top", "scroll.bottom", "dark", "light", "system",
         "appearance", "appearance.close", "settings", "settings.close", "settings.general", "settings.reading", "settings.themes", "settings.shortcuts", "settings.icon", "settings.agents", "agents", "agents.close",
-        "js", "searchopen", "search.token", "search.rate limits", "names.rate", "names.auth", "note", "feedback.copy", "feedback.copyall", "feedback.clear", "feedback.alert", "pin", "movepin", "movews", "divider.narrow", "divider.wide", "toggle.outline", "toggle.files", "toggle.workspaces", "focusfiles", "focuspage", "type.api", "type.rate", "type.s", "type.sta", "key.return", "key.escape", "key.down", "key.ctrltab", "key.ctrlshifttab", "key.cmdw", "key.cmdt", "key.cmdreturn", "key.backspace", "key.cmdbackspace", "key.tab", "type.#", "type.>", "type.nord", "type.fold", "type.feed", "actions", "tab.new", "tab.newnext", "tab.next", "tab.close", "tab.others", "tab.state", "tab.move", "menus", "opened.remove", "highlight.note", "guide", "dress", "shortcut.test", "shortcut.reset", "key.cmdy", "key.cmdf", "key.cmdshiftbracket", "columns.reset", "columns.filesfirst", "columns.nocontents", "rail", "rail.off", "identity", "identity.close", "icon.test", "icon.reset", "swipe.right", "swipe.left", "swipe.slowright", "swipe.slowleft", "pull.slow", "swipe.hold", "swipe.release", "swipe.wobble", "pull.hold", "pull.half", "pull.back", "pull.backhalf", "pull.release",
+        "js", "seen", "searchopen", "search.token", "search.rate limits", "names.rate", "names.auth", "note", "feedback.copy", "feedback.copyall", "feedback.clear", "feedback.alert", "pin", "movepin", "movews", "divider.narrow", "divider.wide", "toggle.outline", "toggle.files", "toggle.workspaces", "focusfiles", "focuspage", "type.api", "type.rate", "type.s", "type.sta", "key.return", "key.escape", "key.down", "key.ctrltab", "key.ctrlshifttab", "key.cmdw", "key.cmdt", "key.cmdreturn", "key.backspace", "key.cmdbackspace", "key.tab", "type.#", "type.>", "type.nord", "type.fold", "type.feed", "actions", "tab.new", "tab.newnext", "tab.next", "tab.close", "tab.others", "tab.state", "tab.move", "menus", "opened.remove", "highlight.note", "guide", "dress", "shortcut.test", "shortcut.reset", "key.cmdy", "key.cmdf", "key.cmdshiftbracket", "columns.reset", "columns.filesfirst", "columns.nocontents", "rail", "rail.off", "identity", "identity.close", "icon.test", "icon.reset", "swipe.right", "swipe.left", "swipe.slowright", "swipe.slowleft", "pull.slow", "swipe.hold", "swipe.release", "swipe.wobble", "pull.hold", "pull.half", "pull.back", "pull.backhalf", "pull.release",
     ] + (1...4).map { "level.\($0)" }
         + (0..<6).map { "ws.\($0)" }
         + Theme.all.map { "theme.\($0.id)" }
@@ -278,6 +278,10 @@ final class DebugAutomation {
                 model.settings.columnOrder = PanelColumn.defaultOrder
                 model.settings.swipeSkips = []
             }
+        case "seen":
+            // Marks the change at the top of the view read.
+            model.markChangeRead()
+            debugLog("[seen] \(model.current?.changes.units.keys.sorted() ?? [])")
         case "js":
             // Runs /private/tmp/galley-debug/eval.js in the page and logs the result.
             let path = "/private/tmp/galley-debug/eval.js"

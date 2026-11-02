@@ -241,11 +241,18 @@
 
   // — Gutter: change bars beside changed blocks ——————————————————————
 
+  // Each bar covers a run of changed blocks close together; the blocks of
+  // run i are `gutterRuns[i]`. Beside each bar, out past the fold buttons,
+  // a tick marks just that run read — shown while the pointer is on it.
+  let gutterRuns = [];
+  const runOf = new WeakMap();
+
   function layoutGutter() {
     const gutter = $('#gutter');
     if (!gutter) return;
     const pageTop = $('#page').getBoundingClientRect().top;
     const spans = [];
+    gutterRuns = [];
     for (const el of $$('#content .chg')) {
       if (!el.offsetParent) continue; // folded away
       if (el.parentElement.closest('.chg')) continue; // the outer block already has a bar
@@ -253,10 +260,67 @@
       if (!rect.height) continue;
       const top = rect.top - pageTop, bottom = top + rect.height;
       const last = spans[spans.length - 1];
-      if (last && top - last[1] < 14) last[1] = Math.max(last[1], bottom);
-      else spans.push([top, bottom]);
+      if (last && top - last[1] < 14) {
+        last[1] = Math.max(last[1], bottom);
+        gutterRuns[gutterRuns.length - 1].push(el);
+      } else {
+        spans.push([top, bottom]);
+        gutterRuns.push([el]);
+      }
+      runOf.set(el, gutterRuns.length - 1);
     }
-    gutter.innerHTML = spans.map(([t, b]) => `<div class="bar" style="top:${t - 2}px;height:${b - t + 4}px"></div>`).join('');
+    gutter.innerHTML = spans.map(([t, b], i) =>
+      `<div class="bar" data-run="${i}" style="top:${t - 2}px;height:${b - t + 4}px"></div>` +
+      `<div class="seen-lane" data-run="${i}" style="top:${t - 2}px;height:${Math.max(b - t + 4, 24)}px">` +
+      `<button type="button" class="seen" title="Mark as read" aria-label="Mark this change as read"></button></div>`).join('');
+  }
+
+  /// The outermost changed block `el` is in, which is what has a bar.
+  function outerChange(el) {
+    let block = el.closest('#content .chg');
+    while (block && block.parentElement.closest('.chg')) block = block.parentElement.closest('.chg');
+    return block;
+  }
+
+  function showTick(run) {
+    for (const lane of $$('#gutter .seen-lane')) lane.classList.toggle('show', Number(lane.dataset.run) === run);
+  }
+
+  document.addEventListener('mouseover', (event) => {
+    const target = event.target;
+    if (!(target instanceof Element)) return;
+    const lane = target.closest('#gutter .seen-lane');
+    if (lane) { showTick(Number(lane.dataset.run)); return; }
+    const block = outerChange(target);
+    showTick(block && runOf.has(block) ? runOf.get(block) : -1);
+  });
+
+  /// Takes the change marks off one run of blocks — the wash fades, the bar
+  /// goes — and tells the app which units the reader has now read.
+  function markRunSeen(run) {
+    const blocks = gutterRuns[run];
+    if (!blocks) return;
+    const all = blocks.flatMap((el) => [el, ...$$('.chg', el)]);
+    const units = [...new Set(all.map((el) => Number(el.dataset.b)).filter((n) => Number.isInteger(n)))];
+    $(`#gutter .bar[data-run="${run}"]`)?.classList.add('leaving');
+    $(`#gutter .seen-lane[data-run="${run}"]`)?.remove();
+    for (const el of all) el.classList.add('chg-leaving');
+    post({ type: 'seen', units });
+    setTimeout(() => {
+      for (const el of all) {
+        el.classList.remove('chg', 'chg-added', 'chg-modified', 'chg-leaving', 'flash');
+        for (const ins of $$('ins.g-ins', el)) {
+          const parent = ins.parentNode;
+          while (ins.firstChild) parent.insertBefore(ins.firstChild, ins);
+          parent.removeChild(ins);
+          parent.normalize();
+        }
+      }
+      for (const sec of $$('#content .sec.has-change')) {
+        if (!$('.chg', sec)) sec.classList.remove('has-change');
+      }
+      layoutGutter();
+    }, 260);
   }
 
   // — Sections ——————————————————————————————————————————————————————
@@ -947,6 +1011,12 @@
   // — Input ———————————————————————————————————————————————————————
 
   document.addEventListener('click', (event) => {
+    const seen = event.target.closest('#gutter button.seen');
+    if (seen) {
+      event.preventDefault();
+      markRunSeen(Number(seen.parentElement.dataset.run));
+      return;
+    }
     const fold = event.target.closest('button.fold');
     if (fold) {
       event.preventDefault();
@@ -1116,6 +1186,30 @@
       window.scrollTo({ top: Math.max(0, top), behavior: 'smooth' });
       target.classList.remove('flash'); void target.offsetWidth; target.classList.add('flash');
       return true;
+    },
+    /// Marks read the change at the top of the view (the first one still
+    /// on screen); false when none is.
+    markChangeSeen() {
+      const line = TOP_LINE();
+      const run = gutterRuns.findIndex((blocks) => blocks[blocks.length - 1].getBoundingClientRect().bottom > line);
+      if (run < 0 || gutterRuns[run][0].getBoundingClientRect().top > window.innerHeight) return false;
+      markRunSeen(run);
+      return true;
+    },
+    /// The header's badge, after changes were marked read one by one.
+    setBadge(badge, kind) {
+      const meta = $('.doc-header .doc-meta');
+      if (!meta) return;
+      const old = $('.badge', meta);
+      if (old) { old.previousElementSibling?.classList.contains('sep') && old.previousElementSibling.remove(); old.remove(); }
+      if (!badge) return;
+      const span = document.createElement('span');
+      span.className = `badge${kind === 'new' ? ' new' : ''}`;
+      span.textContent = badge;
+      const sep = document.createElement('span');
+      sep.className = 'sep';
+      sep.textContent = '·';
+      meta.append(sep, span);
     },
     find(query, direction) { return find(query, direction); },
     setHighlights(list) { highlights = list || []; applyHighlights(); },
