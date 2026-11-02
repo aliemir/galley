@@ -10,6 +10,9 @@ Typo fixes and formatting do not need an entry.
 
 ## 2026-11-02
 
+- The site covers 1.1: ticking changes, drafts and Save Feedback (with a
+  dashed draft mark in the text), `--watch` / `--wait` in the agents
+  section, and ⌘S and ⌥⌘J in the keymap
 - Released Galley 1.1.0 (build 144): drafts and Save Feedback, `--wait` and
   `--watch`, changes ticked one at a time, and Sparkle updates. The feed at
   `releases/latest/download/appcast.xml` verifies against the DMG

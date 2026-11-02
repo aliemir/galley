@@ -48,9 +48,9 @@
     </div>
 
     <ul class="features" aria-label="What Galley does">
-      <li class="change"><a href="#changes"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 3v10" stroke-width="2.4"/><path d="M6.5 4.5h7M6.5 8h7M6.5 11.5h4.5"/></svg><strong>Tracks changes</strong><span>What an agent changed since you last read, marked in the margin.</span></a></li>
-      <li class="hl"><a href="#feedback"><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="1.5" y="4.25" width="13" height="7.5" rx="2" fill="currentColor" stroke="none" opacity=".3"/><path d="M4 8h8"/></svg><strong>Closes the loop</strong><span>Highlight, add a note, and hand it back as feedback.</span></a></li>
-      <li><a href="#agents"><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="1.75" y="2.75" width="12.5" height="10.5" rx="2"/><path d="m4.75 6 2 2-2 2M8.75 10.25h2.75"/></svg><strong>Agent-ready</strong><span>A CLI and a skill let agents read your feedback, then clear it.</span></a></li>
+      <li class="change"><a href="#changes"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 3v10" stroke-width="2.4"/><path d="M6.5 4.5h7M6.5 8h7M6.5 11.5h4.5"/></svg><strong>Tracks changes</strong><span>What an agent changed since you last read, marked in the margin. Tick them off one by one.</span></a></li>
+      <li class="hl"><a href="#feedback"><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="1.5" y="4.25" width="13" height="7.5" rx="2" fill="currentColor" stroke="none" opacity=".3"/><path d="M4 8h8"/></svg><strong>Closes the loop</strong><span>Highlight, add a note, and save the round when it is ready.</span></a></li>
+      <li><a href="#agents"><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="1.75" y="2.75" width="12.5" height="10.5" rx="2"/><path d="m4.75 6 2 2-2 2M8.75 10.25h2.75"/></svg><strong>Agent-ready</strong><span>A CLI and a skill let agents read your feedback, or wait for your next round.</span></a></li>
       <li><a href="#themes"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 3.5h10M8 3.5V13M6 13h4"/></svg><strong>Beautiful to read</strong><span>Book typography, six typefaces and nineteen themes.</span></a></li>
       <li><a href="#folders"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4.25 2.5h7.5v11L8 10.75 4.25 13.5z"/></svg><strong>Remembers your place</strong><span>Where you stopped in every file, and what you have read.</span></a></li>
       <li><a href="#folders"><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="2" y="2" width="5" height="5" rx="1.5"/><rect x="9" y="2" width="5" height="5" rx="1.5"/><rect x="2" y="9" width="5" height="5" rx="1.5"/><rect x="9" y="9" width="5" height="5" rx="1.5"/></svg><strong>All your projects</strong><span>A workspace for each, watched live. Files open in tabs.</span></a></li>
@@ -81,6 +81,7 @@
         <p>Agents rewrite files while you are away. Galley keeps a copy of each file as you last read it, and when you come back it shows what is new — in the page itself, not in a diff.</p>
         <p class="changed">A paragraph the agent added carries a bar in the margin and a wash, like this one. In a paragraph it <ins>only edited</ins>, the words that came in are marked.</p>
         <p>Removals stay out of your way. New files get a blue dot and changed ones an amber one, in the file list, on the workspace and on the Dock icon. <span class="keys">⌘J</span> jumps to the next change.</p>
+        <p>Going through a long rewrite? Tick changes off one at a time — the tick beside each bar, or <span class="keys">⌥⌘J</span> — and Galley remembers where you got to. The last tick marks the file read.</p>
       </section>
     </div>
 
@@ -93,7 +94,8 @@
         <h2>Mark it up, hand it back</h2>
         <p>Reading a plan, you will disagree with something. Select it and <mark class="hl">highlight it, or add a note to say what you want</mark> — the way you would mark up a printout.</p>
         <div class="note">Like this: a note sits under the passage it is about.</div>
-        <p>Your marks are purple, so they never look like the agent's changes. When you are done, <strong>Copy File Feedback</strong> puts every passage and note on the clipboard, with the file and section each one is in, ready to paste to the agent.</p>
+        <p>Your marks are purple, so they never look like the agent's changes. They start as <mark class="hl draft">drafts, dashed like this</mark>, that only you see. When the round is ready, <strong>Save Feedback</strong> (<span class="keys">⌘S</span>) saves them all at once, and they fill in.</p>
+        <p>Or skip the agent's tools: <strong>Copy File Feedback</strong> puts every passage and note on the clipboard, with the file and section each one is in, ready to paste.</p>
       </section>
     </div>
 
@@ -115,7 +117,15 @@
 
 <span class="prompt">$ </span>galley feedback clear plans/auth.md
 Cleared 1 highlight on 1 file.</pre>
-        <p>The skill works with Claude Code, Codex, Cursor and other agents that read skills. Passages an agent rewrote drop out of the feedback by themselves.</p>
+        <p>Or tell it to <em>keep watching for my feedback</em>. It waits in the background, and every time you save a round, it gets to work — no copying, no prompting.</p>
+<pre><span class="prompt">$ </span>galley feedback --watch
+<span class="comment">## /Users/you/project/plans/auth.md</span>
+
+1. Marked in Rollout:
+   &gt; Dual-write for two weeks, then cut over.
+
+   One week is enough — we have the metrics.</pre>
+        <p><code>--watch</code> prints each round as you save it; <code>--wait</code> waits for just the next one. Drafts stay yours until you save them. The skill works with Claude Code, Codex, Cursor and other agents that read skills, and passages an agent rewrote drop out of the feedback by themselves.</p>
       </section>
 
       <section id="find">
@@ -179,6 +189,7 @@ Cleared 1 highlight on 1 file.</pre>
           <dt>Next unread</dt><dd><kbd>⌥⌘U</kbd></dd>
           <dt>Next change</dt><dd><kbd>⌘J</kbd></dd>
           <dt>Previous change</dt><dd><kbd>⇧⌘J</kbd></dd>
+          <dt>Mark change read</dt><dd><kbd>⌥⌘J</kbd></dd>
           <dt>Next tab</dt><dd><kbd>⌃⇥</kbd></dd>
           <dt>Previous tab</dt><dd><kbd>⌃⇧⇥</kbd></dd>
           <dt>Find on the page</dt><dd><kbd>⌘F</kbd></dd>
@@ -190,6 +201,7 @@ Cleared 1 highlight on 1 file.</pre>
         <dl>
           <dt>Highlight selection</dt><dd><kbd>⌃⌘H</kbd></dd>
           <dt>Add a note</dt><dd><kbd>⌃⌘N</kbd></dd>
+          <dt>Save feedback</dt><dd><kbd>⌘S</kbd></dd>
           <dt>Copy feedback</dt><dd><kbd>⇧⌘C</kbd></dd>
           <dt>Read / unread</dt><dd><kbd>⇧⌘U</kbd></dd>
           <dt>Mark all read</dt><dd><kbd>⌥⇧⌘U</kbd></dd>

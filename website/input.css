@@ -206,6 +206,12 @@ mark.hl {
   content: ""; position: absolute; top: -6px; left: 1.2em;
   border: 6px solid transparent; border-top: 0; border-bottom-color: var(--note);
 }
+/* A draft, as the app draws one: a lighter wash on a dashed line. */
+mark.hl.draft {
+  --hl-draft: color-mix(in srgb, var(--hl) 55%, transparent);
+  background: linear-gradient(to bottom, transparent 8%, var(--hl-draft) 8%, var(--hl-draft) 94%, transparent 94%);
+  border-bottom: 1.5px dashed var(--hl-ink);
+}
 
 /* — The palette's four modes, and the keys ———————————————— */
 
