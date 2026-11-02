@@ -10,6 +10,9 @@ Typo fixes and formatting do not need an entry.
 
 ## 2026-11-02
 
+- The repository is public at github.com/aliemir/galley (MIT), with a README
+  that introduces Galley and explains building and signing it; the site's
+  Download buttons serve the 1.0.0 DMG
 - Released Galley 1.0.0 (build 131) on GitHub: signed with the Developer ID,
   notarized and stapled, `Galley.dmg` 12 MB; notes in
   `notes/release-notes/1.0.0.md`. The site is live at galley.aliemir.dev
