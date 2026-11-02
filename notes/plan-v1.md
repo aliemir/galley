@@ -84,7 +84,21 @@ lights up.
 
 - **Test on macOS 15** — the minimum, which 1.0.0 shipped without being run
   on; a virtual machine is enough.
-- **Updates** — Sparkle, with its feed published alongside each release.
+- **Agents answer back** — `galley feedback reply <item> "…"` (items get
+  stable ids in the output), shown under the reader's note in Galley, and an
+  item marked done instead of only vanishing when its passage is rewritten.
+  The loop closes where the reader is looking, not in a terminal.
+- **Hooks** — `galley hook install` for Claude Code (and the agents that
+  have hooks): a prompt-submit hook that adds the saved, unaddressed
+  feedback under the current folder to the next prompt, so a saved round
+  reaches the agent without being asked for.
+- **Someone is watching** — `--watch` and `--wait` leave a heartbeat in the
+  library folder; the Save Feedback button says when an agent is waiting
+  for the round ("Save Feedback — an agent is watching").
+- **Tell me when it is done** — a notification when a file the reader
+  saved feedback on is rewritten (the agent finished), optional.
+- **Older versions** — keep more than the last-read snapshot, so a file's
+  changes can be compared against any earlier read.
 - **Quick Look preview** — Space in Finder showing the page typeset.
   Deferred on purpose: it is a separate extension target (its own sandbox,
   WebKit's network entitlement, the renderer and web assets shared into it),
