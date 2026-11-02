@@ -38,6 +38,9 @@ DMG=$OUT/Galley.dmg
 PROJECT=app/Galley.xcodeproj
 
 DEVELOPER_ID=$(security find-identity -v -p codesigning | sed -n 's/.*"\(Developer ID Application: [^"]*\)".*/\1/p' | head -1)
+# codesign is given the certificate's SHA-1, not its name: a name with
+# letters outside ASCII ("Şen") reaches it mangled and matches nothing.
+DEVELOPER_ID_HASH=$(security find-identity -v -p codesigning | awk '/"Developer ID Application: /{print $2; exit}')
 
 # — Preflight ——————————————————————————————————————————————————————————
 step "Checking"
@@ -134,7 +137,7 @@ ln -s /Applications $STAGE/Applications
 hdiutil create -quiet -volname Galley -srcfolder $STAGE -fs HFS+ -format UDZO -ov $DMG
 rm -rf $STAGE
 if [[ -n $DEVELOPER_ID ]]; then
-  codesign --sign $DEVELOPER_ID --timestamp $DMG
+  codesign --sign $DEVELOPER_ID_HASH --timestamp $DMG
 fi
 
 if [[ $LOCAL == true ]]; then
