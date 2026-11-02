@@ -26,6 +26,9 @@ otherwise have to re-derive. Not worth one: typo fixes and formatting.
 
 ## 2026-11-02
 
+- Website hero lists the features as pills under the lede — what changed,
+  highlights and notes, feedback for agents, live folders, tabs and ⌘K, 19
+  themes, read-only — each a link to its section
 - Website pictures are sharp on Retina: full-resolution screenshots, each
   shown at no more than half its pixel width, and the two animations as
   H.264 videos (1600 px) instead of GIFs; the theme picture is smaller.

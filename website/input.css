@@ -16,6 +16,7 @@
   --change-wash: rgba(237, 178, 72, 0.13);
   --insert: rgba(237, 178, 72, 0.34);
   --hl: rgba(146, 98, 222, 0.26);
+  --hl-ink: #8a5cd6;
   --note: color-mix(in srgb, var(--hl) 55%, var(--paper));
   --shadow: 0 0 0 1px rgba(30, 29, 26, 0.09), 0 18px 50px -12px rgba(30, 29, 26, 0.22);
 
@@ -40,6 +41,7 @@
     --change-wash: rgba(227, 166, 78, 0.1);
     --insert: rgba(227, 166, 78, 0.28);
     --hl: rgba(184, 153, 242, 0.34);
+    --hl-ink: #b899f2;
     --shadow: 0 0 0 1px rgba(255, 255, 255, 0.08), 0 18px 50px -12px rgba(0, 0, 0, 0.6);
   }
 }
@@ -111,6 +113,32 @@ main { padding: 0 24px 96px; }
   letter-spacing: -0.022em; margin: 0 0 22px; text-wrap: balance;
 }
 .lede { font-size: 1.16em; color: var(--ink-2); margin: 0 0 30px; text-wrap: pretty; }
+
+/* What Galley does, at a glance; each pill goes to its section. */
+.features { list-style: none; display: flex; flex-wrap: wrap; gap: 8px; margin: -6px 0 32px; padding: 0; }
+.features a {
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 6px 12px 6px 10px; border-radius: 999px;
+  border: 1px solid var(--rule); background: color-mix(in srgb, var(--paper-2) 55%, var(--paper));
+  color: var(--ink-2); font: 500 13.5px/1.25 var(--font-ui); text-decoration: none; white-space: nowrap;
+  transition: color 0.15s, border-color 0.15s, background 0.15s;
+}
+.features a:hover { color: var(--ink); border-color: color-mix(in srgb, var(--ink) 20%, transparent); background: var(--paper-2); }
+.features svg {
+  width: 15px; height: 15px; flex: none; color: var(--ink-3);
+  fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round;
+}
+.features .change svg { color: var(--change); }
+.features .hl svg { color: var(--hl-ink); }
+.features .keys { font-size: 1em; }
+@media (max-width: 520px) {
+  .features { gap: 6px; }
+  .features a { padding: 5px 10px 5px 8px; font-size: 13px; gap: 6px; }
+}
+
+html { scroll-behavior: smooth; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+section[id] { scroll-margin-top: 76px; }
 .actions { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 18px; }
 .actions small { font: 400 13px/1.4 var(--font-ui); color: var(--ink-3); }
 

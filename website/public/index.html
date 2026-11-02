@@ -32,6 +32,15 @@
       <p class="meta"><span>Free</span><span>Open source</span><span>For Mac</span></p>
       <h1>Read what your agents write.</h1>
       <p class="lede">Galley is a calm reader for the Markdown your AI agents write. Every file reads like a typeset page. What an agent changed after you read it is marked in the margin. What you have to say goes back as feedback.</p>
+      <ul class="features" aria-label="Features">
+        <li class="change"><a href="#changes"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 3v10" stroke-width="2.4"/><path d="M6.5 4.5h7M6.5 8h7M6.5 11.5h4.5"/></svg>What changed, marked</a></li>
+        <li class="hl"><a href="#feedback"><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="1.5" y="4.25" width="13" height="7.5" rx="2" fill="currentColor" stroke="none" opacity=".3"/><path d="M4 8h8"/></svg>Highlights and notes</a></li>
+        <li><a href="#agents"><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="1.75" y="2.75" width="12.5" height="10.5" rx="2"/><path d="m4.75 6 2 2-2 2M8.75 10.25h2.75"/></svg>Feedback for agents</a></li>
+        <li><a href="#folders"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M1.75 4.5c0-.7.56-1.25 1.25-1.25h3l1.5 1.5H13c.7 0 1.25.56 1.25 1.25v5.75c0 .7-.56 1.25-1.25 1.25H3c-.7 0-1.25-.56-1.25-1.25z"/></svg>Live folders</a></li>
+        <li><a href="#find"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="7" cy="7" r="4.5"/><path d="m10.4 10.4 3.6 3.6"/></svg><span>Tabs and <span class="keys">⌘K</span></span></a></li>
+        <li><a href="#themes"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6"/><path d="M8 2a6 6 0 0 1 0 12z" fill="currentColor" stroke="none"/></svg>19 themes</a></li>
+        <li><a href="#paper"><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="3" y="7" width="10" height="7" rx="1.75"/><path d="M5.25 7V5.25a2.75 2.75 0 0 1 5.5 0V7"/></svg>Read-only, offline</a></li>
+      </ul>
       <div class="actions">
         <a class="button primary large" href="https://github.com/OWNER/REPO/releases/latest">
           <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 11.5 3.5 7l1.06-1.06L7.25 8.63V1h1.5v7.63l2.69-2.69L12.5 7 8 11.5ZM2 13.5h12V15H2v-1.5Z"/></svg>
@@ -46,7 +55,7 @@
     </figure>
 
     <div class="column">
-      <section>
+      <section id="folders">
         <h2>Point it at a folder</h2>
         <p>Open the folder your agents write into, and Galley lists its Markdown files, watches them, and shows new ones the moment they appear. Keep as many folders as you have projects; each sits in the rail with an icon and colour of its own. A single file opens too, straight from Finder.</p>
         <p>Then read. Scroll to the end of a page and keep pulling: the next file slides in. Galley remembers where you stopped in every file, and which ones you have read.</p>
@@ -59,7 +68,7 @@
     </figure>
 
     <div class="column">
-      <section>
+      <section id="changes">
         <h2>See what changed</h2>
         <p>Agents rewrite files while you are away. Galley keeps a copy of each file as you last read it, and when you come back it shows what is new — in the page itself, not in a diff.</p>
         <p class="changed">A paragraph the agent added carries a bar in the margin and a wash, like this one. In a paragraph it <ins>only edited</ins>, the words that came in are marked.</p>
@@ -72,7 +81,7 @@
     </figure>
 
     <div class="column">
-      <section>
+      <section id="feedback">
         <h2>Mark it up, hand it back</h2>
         <p>Reading a plan, you will disagree with something. Select it and <mark class="hl">highlight it, or add a note to say what you want</mark> — the way you would mark up a printout.</p>
         <div class="note">Like this: a note sits under the passage it is about.</div>
@@ -85,7 +94,7 @@
     </figure>
 
     <div class="column">
-      <section>
+      <section id="agents">
         <h2>Or let the agent read it</h2>
         <p>Install the <code>galley</code> command and its skill — one click each, from the app — and tell your agent to <em>address my feedback in Galley</em>. It reads what you marked, makes the changes, and clears what it finished.</p>
 <pre><span class="prompt">$ </span>galley feedback plans/auth.md
@@ -101,7 +110,7 @@ Cleared 1 highlight on 1 file.</pre>
         <p>The skill works with Claude Code, Codex, Cursor and other agents that read skills. Passages an agent rewrote drop out of the feedback by themselves.</p>
       </section>
 
-      <section>
+      <section id="find">
         <h2>Find anything</h2>
         <table>
           <thead><tr><th>Keys</th><th>&nbsp;</th></tr></thead>
@@ -122,7 +131,7 @@ Cleared 1 highlight on 1 file.</pre>
     </figure>
 
     <div class="column">
-      <section>
+      <section id="themes">
         <h2>Make it yours</h2>
         <p>Nineteen themes, light and dark — Galley's own Paper, Sepia, Graphite and Ink, and Solarized, Nord, Dracula, Rosé Pine, Catppuccin, Tokyo Night, Gruvbox and GitHub. Six typefaces, and the size, spacing and width of the text. The Dock icon comes in ten colours.</p>
       </section>
@@ -133,7 +142,7 @@ Cleared 1 highlight on 1 file.</pre>
     </figure>
 
     <div class="column">
-      <section>
+      <section id="paper">
         <h2>Paper, not an editor</h2>
         <ul class="plain">
           <li><strong>Read-only.</strong> Galley never writes to a Markdown file.</li>
