@@ -1,27 +1,30 @@
 # Galley
 
-| | |
-|---|---|
-| Bundle id | `com.aliemir.galley` |
-| Xcode target | `Galley` |
-| Backend Worker | `galley-api` |
-| Website Worker | `galley-website` |
+A calm Mac reader for the Markdown your AI agents write. It marks what changed
+since you last read a file, lets you highlight and note passages, and hands that
+feedback back to your agent — by copying it, or through the `galley` command
+and its agent skill.
+
+Free and open source. macOS 15 or later.
 
 ## Layout
 
 - `app/` — the macOS app (`app/Galley.xcodeproj`)
-- `backend/` — API Cloudflare Worker (`npm run dev` / `npm run deploy`)
-- `website/` — marketing / privacy / support site, Worker + Tailwind (`npm run dev`)
-- `screenshot-generator/` — Remotion project for App Store screenshots and app previews (`npm run dev`)
-- `store-metadata/` — App Store copy, keywords, screenshots
-- `privacy-policy-template/` — source template for the privacy policy served by `website/`
-- `notes/` — project notes, decisions, scratch
-- `.env` — App Store Connect ids (git-ignored; the `.p8` lives in `~/.appstoreconnect/private_keys/`)
+- `website/` — the landing, privacy and support pages (Cloudflare Worker + Tailwind)
+- `tools/` — release, captures, debug drivers
+- `notes/` — idea, decisions, changelog
 
-## Setup
+## Build
 
 ```sh
-cp .env.example .env      # fill in App Store Connect issuer + key id
-./check.sh                # verify toolchain, signing key and .env
 open app/Galley.xcodeproj
+xcodebuild -project app/Galley.xcodeproj -scheme Galley -destination 'platform=macOS' build
+```
+
+## Release
+
+```sh
+cp .env.example .env          # notarization key ids and team id
+tools/release.sh 1.0.0 --local   # a signed DMG, nothing published
+tools/release.sh 1.0.0           # notarized and published on GitHub Releases
 ```

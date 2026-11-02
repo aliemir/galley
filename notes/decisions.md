@@ -349,3 +349,20 @@ model call its menu item does.
 shortcut for the Appearance panel (it is all in Settings → Reading and Themes,
 and the reader said it was not needed); listing every theme in the opening
 list (nineteen rows of noise).
+
+## 2026-11-02 — The repo holds the app and its site, nothing else
+
+**Chosen:** remove the template scaffolding Galley never used — `backend/`
+(no server), `screenshot-generator/` and `store-metadata/` (no App Store),
+`privacy-policy-template/`, `check.sh`, `rename.sh`, the App Store, image and
+Workers skills, `tools/window-id.swift` — from the files
+and from every commit (`git filter-repo`). Releases are DMGs on GitHub Releases, built by
+`tools/release.sh`; Sparkle comes later.
+
+**Why:** distribution is GitHub, not the App Store (see above), so the store
+pipeline, its preflight and its media generator had nothing to do; a public
+repo should not carry dead scaffolding.
+
+**Rejected:** keeping the scaffolding "ready" (the template's own rule — it was
+never touched); deleting it only from the latest commit (it would stay in the
+history of a public repo).

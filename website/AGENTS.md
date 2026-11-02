@@ -8,13 +8,13 @@ releases, not the App Store. A Cloudflare Worker serving static assets out of
 
 **Before deploying:** the GitHub links are a placeholder,
 `https://github.com/OWNER/REPO` (and `…/releases/latest` for Download) — put
-the real repository in all three pages.
+the real repository in all three pages. `tools/release.sh` attaches the build
+as `Galley.dmg`, so `…/releases/latest/download/Galley.dmg` downloads it
+directly.
 
-`public/images/guide-*` are the guide's pictures, copied here by
-`tools/capture-guide.sh` — recapture there, not by hand.
-
-Separate from `backend/` on purpose — this is public, cacheable, and has no
-secrets or bindings. Backend API work belongs in `backend/`, not here.
+`public/images/guide-*` and `palette-*` come from `tools/capture-guide.sh` —
+recapture there, not by hand. No secrets or bindings: it is public and
+cacheable.
 
 ## Layout
 
@@ -40,20 +40,15 @@ broken page rather than an error. Use the npm scripts.
 
 ## Content
 
-- The privacy policy text comes from `privacy-policy-template/` at the repo
-  root. Fill in the bracketed placeholders there, then render it into
-  `public/privacy.html`.
-- Whatever URLs end up live must be written back into
-  `store-metadata/listing.json` under `urls.support` and `urls.privacyPolicy`.
-  App Review checks that they load.
+- `public/privacy.html` is written for Galley as it is: nothing leaves the
+  Mac, no account, no analytics. Change it when that changes.
 - No build step beyond Tailwind. These are hand-written HTML files, not a
   framework — keep it that way unless there is a reason.
 
 ## Naming
 
-`wrangler.jsonc` and `package.json` both carry `"name": "website"`. That is the
-template placeholder; `./rename.sh` at the repo root rewrites it to
-`<slug>-website`. Do not hardcode a real app name here.
+`wrangler.jsonc` names the Worker `galley-website`, after the placeholder app
+name; rename it with the app.
 
 ---
 

@@ -26,6 +26,11 @@ otherwise have to re-derive. Not worth one: typo fixes and formatting.
 
 ## 2026-11-02
 
+- Repo trimmed to the app and the site, in the files and the whole history:
+  the template's backend, Remotion screenshot generator, App Store metadata,
+  privacy template, preflight and rename scripts, the App Store
+  skills, and unused tools. AGENTS.md, README and
+  `.env.example` describe Galley as it ships
 - `galley feedback` and `feedback clear` match paths with symlinks resolved,
   so a workspace added through a symlink meets a command run from the real
   folder, and the other way round
