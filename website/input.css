@@ -114,26 +114,35 @@ main { padding: 0 24px 96px; }
 }
 .lede { font-size: 1.16em; color: var(--ink-2); margin: 0 0 30px; text-wrap: pretty; }
 
-/* What Galley does, at a glance; each pill goes to its section. */
-.features { list-style: none; display: flex; flex-wrap: wrap; gap: 8px; margin: -6px 0 32px; padding: 0; }
-.features a {
-  display: inline-flex; align-items: center; gap: 7px;
-  padding: 6px 12px 6px 10px; border-radius: 999px;
-  border: 1px solid var(--rule); background: color-mix(in srgb, var(--paper-2) 55%, var(--paper));
-  color: var(--ink-2); font: 500 13.5px/1.25 var(--font-ui); text-decoration: none; white-space: nowrap;
-  transition: color 0.15s, border-color 0.15s, background 0.15s;
+/* What Galley does, at a glance: a card each, linking to its section. */
+.features {
+  list-style: none; margin: 56px auto 0; padding: 0; max-width: 1100px;
+  display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px;
 }
-.features a:hover { color: var(--ink); border-color: color-mix(in srgb, var(--ink) 20%, transparent); background: var(--paper-2); }
+.features a {
+  display: grid; grid-template-columns: auto 1fr; column-gap: 10px; row-gap: 5px; align-items: center;
+  height: 100%; box-sizing: border-box; padding: 18px 20px 19px; border-radius: 12px;
+  border: 1px solid var(--rule); background: color-mix(in srgb, var(--paper-2) 45%, var(--paper));
+  color: var(--ink); text-decoration: none;
+  transition: border-color 0.15s, background 0.15s;
+}
+.features a:hover { border-color: color-mix(in srgb, var(--ink) 18%, transparent); background: var(--paper-2); }
 .features svg {
-  width: 15px; height: 15px; flex: none; color: var(--ink-3);
+  width: 17px; height: 17px; color: var(--ink-2);
   fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round;
 }
+.features strong { font: 650 15.5px/1.25 var(--font-ui); letter-spacing: -0.005em; }
+.features span { grid-column: 1 / -1; font: 400 14px/1.45 var(--font-ui); color: var(--ink-2); text-wrap: pretty; }
 .features .change svg { color: var(--change); }
 .features .hl svg { color: var(--hl-ink); }
-.features .keys { font-size: 1em; }
+
+@media (max-width: 960px) { .features { grid-template-columns: repeat(2, minmax(0, 1fr)); max-width: 640px; } }
+/* A phone has room for one card a row: the icon beside the text. */
 @media (max-width: 520px) {
-  .features { gap: 6px; }
-  .features a { padding: 5px 10px 5px 8px; font-size: 13px; gap: 6px; }
+  .features { grid-template-columns: 1fr; gap: 8px; margin-top: 40px; }
+  .features a { column-gap: 12px; row-gap: 2px; align-items: start; padding: 13px 16px 14px; }
+  .features svg { grid-row: 1 / 3; margin-top: 2px; }
+  .features span { grid-column: 2; font-size: 13.5px; }
 }
 
 html { scroll-behavior: smooth; }
