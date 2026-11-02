@@ -14,12 +14,22 @@ Free and open source. macOS 15 or later.
 - `tools/` — release, captures, debug drivers
 - `notes/` — idea, decisions, changelog
 
-## Build
+## Build it yourself
+
+You need a Mac with Xcode (macOS 15 or later to run it). Swift packages
+resolve on the first build; everything else is in the repo.
+
+1. Open `app/Galley.xcodeproj`.
+2. In the Galley target's **Signing & Capabilities**, pick your own team — or
+   *Sign to Run Locally* — and, if you like, your own bundle identifier.
+3. Build and run (⌘R), or from the terminal:
 
 ```sh
-open app/Galley.xcodeproj
 xcodebuild -project app/Galley.xcodeproj -scheme Galley -destination 'platform=macOS' build
 ```
+
+A build of your own keeps its library in `~/Library/Application Support/Galley`,
+the same place as the released app, so use one or the other at a time.
 
 ## Release
 

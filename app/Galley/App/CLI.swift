@@ -148,7 +148,11 @@ nonisolated enum CLI {
         return 0
     }
 
-    static let bundleIdentifier = "com.aliemir.galley"
+    /// The app's own identifier, read from its bundle, so a build under
+    /// another identifier (someone's own team) still finds itself running.
+    static var bundleIdentifier: String {
+        Bundle(url: appURL)?.bundleIdentifier ?? "com.aliemir.galley"
+    }
 
     // MARK: Install
 
