@@ -47,8 +47,7 @@ broken page rather than an error. Use the npm scripts.
 
 ## Naming
 
-`wrangler.jsonc` names the Worker `galley-website`, after the placeholder app
-name; rename it with the app.
+`wrangler.jsonc` names the Worker `galley-website`.
 
 ---
 

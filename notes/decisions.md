@@ -74,15 +74,13 @@ Agent integration is out of scope for now; do not build hooks to agents yet.
 agents run the CLI to pull the reader's highlights and notes. The app stays
 passive; agents come to it. (Built on 2026-11-01: the `galley` command.)
 
-## 2026-10-31 — Placeholder name: Galley
+## 2026-10-31 — The name: Galley (settled 2026-11-02)
 
-**Chosen (placeholder):** *Galley*, bundle id `com.aliemir.galley`. A galley
-proof is the printed copy of a text you read and mark up but never rewrite —
-the app's whole premise. The real name is still to be decided.
-
-**Renaming later** is a find-and-replace of `Galley` / `galley` across the repo
-plus `git mv` of `app/Galley*`. Changing the bundle id and the library folder
-starts every reader afresh, which costs nothing before the first release.
+**Chosen:** *Galley*, bundle id `com.aliemir.galley`. A galley proof is the
+printed copy of a text you read and mark up but never rewrite — the app's
+whole premise. It began as a placeholder and is now the name, with the icon
+`tools/make-icon.swift` draws: a sheet of paper with a change bar in its
+margin.
 
 ## 2026-11-01 — Rendering: Swift parses, WebKit draws
 
@@ -250,7 +248,7 @@ it to System Settings → Keyboard → App Shortcuts, which few find and which
 cannot reach keys handled outside the menus (⌃Tab).
 
 **App icon:** variants are recolours drawn by the same script as the icon,
-so the set regenerates when the real icon replaces the placeholder. The
+so the whole set regenerates whenever the icon is redrawn. The
 choice sets the Dock icon while Galley runs; Finder keeps the standard icon
 (Bear behaves the same).
 

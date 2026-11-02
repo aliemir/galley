@@ -1,4 +1,4 @@
-// Draws Galley's placeholder app icon — a sheet of paper with ruled lines,
+// Draws Galley's app icon — a sheet of paper with ruled lines,
 // one of them washed and flagged by a change bar in the margin — and writes
 // every size the macOS asset catalog needs.
 // Usage: swift tools/make-icon.swift app/Galley/Assets.xcassets/AppIcon.appiconset

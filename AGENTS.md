@@ -112,7 +112,7 @@ screencapture -x -o -l <id> shot.png
 app/…/Debug/Galley.app/Contents/MacOS/Galley --cli help
 app/…/Debug/Galley.app/Contents/MacOS/Galley --cli feedback app/Fixtures/Showcase
 
-# regenerate the placeholder app icon
+# redraw the app icon (and its colour variants with --variants)
 swift tools/make-icon.swift app/Galley/Assets.xcassets/AppIcon.appiconset
 
 # website — landing, privacy, support

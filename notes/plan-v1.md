@@ -85,7 +85,6 @@ lights up.
   `tools/release.sh 1.0.0`; test it on macOS 15 first (a virtual machine is
   enough), and put the real repository in the website's GitHub links.
 - **Updates** — Sparkle, with its feed published alongside each release.
-- **The real name and icon** — Galley is a placeholder.
 - **Quick Look preview** — Space in Finder showing the page typeset.
   Deferred on purpose: it is a separate extension target (its own sandbox,
   WebKit's network entitlement, the renderer and web assets shared into it),
