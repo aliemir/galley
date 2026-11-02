@@ -63,7 +63,11 @@ if [[ $LOCAL == false ]]; then
   [[ -x $SPARKLE_BIN/sign_update ]] || die "Sparkle's sign_update not found — build the app once so Xcode fetches Sparkle"
   "$SPARKLE_BIN/generate_keys" -p >/dev/null 2>&1 || die "no Sparkle key in the keychain — run Sparkle's generate_keys"
   [[ $(git branch --show-current) == main ]] || die "not on main"
-  [[ -z $(git status --porcelain) ]] || die "the tree has uncommitted changes"
+  # Tracked changes anywhere, and untracked files where they would be built
+  # in (app/ is synchronized: anything in it is bundled). Elsewhere, a
+  # stray file — a skill installed into this checkout — changes nothing.
+  [[ -z $(git status --porcelain --untracked-files=no) ]] || die "the tree has uncommitted changes"
+  [[ -z $(git status --porcelain -- app) ]] || die "app/ has untracked files, which would be bundled"
   git rev-parse -q --verify "refs/tags/$TAG" >/dev/null && die "$TAG already exists"
   git ls-remote --exit-code --tags origin "$TAG" >/dev/null 2>&1 && die "$TAG already exists on origin"
 fi
