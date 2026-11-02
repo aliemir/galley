@@ -26,6 +26,8 @@ otherwise have to re-derive. Not worth one: typo fixes and formatting.
 
 ## 2026-11-02
 
+- The palette's actions include Find Next (⌘G) and Find Previous (⇧⌘G) once
+  there is something to find on the page
 - Fuzzy matching tries every starting place, so a query that names a whole
   word finds it rather than letters of an earlier one ("feedback" ranks Copy
   File Feedback first)

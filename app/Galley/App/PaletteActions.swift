@@ -45,6 +45,10 @@ extension AppModel {
             self.showFind()
             self.findFocusRequest += 1
         }
+        // Once there is something to find, as in the menu.
+        let hasFindQuery = hasFile && !findQuery.isEmpty
+        add("Find Next", "Find", "chevron.down", .findNext, when: hasFindQuery) { Task { await self.runFind(direction: 1) } }
+        add("Find Previous", "Find", "chevron.up", .findPrevious, when: hasFindQuery) { Task { await self.runFind(direction: -1) } }
 
         for column in PanelColumn.arrangement {
             let showing = isShowing(column)
