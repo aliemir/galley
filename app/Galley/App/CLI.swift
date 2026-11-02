@@ -106,7 +106,7 @@ nonisolated enum CLI {
                 guard let highlights = record.highlights, !highlights.isEmpty else { continue }
                 // Opened files are keyed by their absolute path.
                 let path = workspace.kind == "files" ? id : URL(fileURLWithPath: workspace.path).appendingPathComponent(id).standardizedFileURL.path
-                guard path == prefix || path.hasPrefix(prefix.hasSuffix("/") ? prefix : prefix + "/") else { continue }
+                guard FeedbackClearing.matches(path, [prefix]) else { continue }
                 let source = WorkspaceScanner.read(URL(fileURLWithPath: path)) ?? ""
                 let items = Feedback.items(highlights, in: source)
                 if !items.isEmpty { files.append(Feedback.File(path: path, items: items)) }

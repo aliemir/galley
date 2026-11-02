@@ -243,10 +243,18 @@ nonisolated enum FeedbackClearing {
         workspace.kind == "files" ? id : URL(fileURLWithPath: workspace.path).appendingPathComponent(id).standardizedFileURL.path
     }
 
+    /// Whether `path` is one of `targets` or under one. Both sides with
+    /// their symlinks resolved, so a workspace added through a symlink and
+    /// a command run from the real folder (or the other way round) meet.
     static func matches(_ path: String, _ targets: [String]) -> Bool {
-        targets.contains { target in
+        let path = resolved(path)
+        return targets.map(resolved).contains { target in
             path == target || path.hasPrefix(target.hasSuffix("/") ? target : target + "/")
         }
+    }
+
+    static func resolved(_ path: String) -> String {
+        URL(fileURLWithPath: path).resolvingSymlinksInPath().path
     }
 
     @discardableResult

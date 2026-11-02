@@ -565,6 +565,23 @@ struct FeedbackClearingTests {
         #expect(library.workspaces[0].files["plans/b.md"]?.highlights?.map(\.text) == ["beta"])
     }
 
+    /// A workspace added through a symlink, cleared from the real folder,
+    /// and the other way round.
+    @Test func matchesThroughSymlinks() throws {
+        let folder = FileManager.default.temporaryDirectory.appendingPathComponent("galley-link-\(UUID().uuidString)")
+        let real = folder.appendingPathComponent("real"), link = folder.appendingPathComponent("link")
+        try FileManager.default.createDirectory(at: real.appendingPathComponent("plans"), withIntermediateDirectories: true)
+        try FileManager.default.createSymbolicLink(at: link, withDestinationURL: real)
+        defer { try? FileManager.default.removeItem(at: folder) }
+        try "Alpha.".write(to: real.appendingPathComponent("plans/a.md"), atomically: true, encoding: .utf8)
+
+        var throughLink = state(root: link.path)
+        #expect(FeedbackClearing.apply(to: &throughLink, paths: [real.appendingPathComponent("plans").path], addressedOnly: false) == .init(highlights: 1, files: 1))
+        var throughReal = state(root: real.path)
+        #expect(FeedbackClearing.apply(to: &throughReal, paths: [link.appendingPathComponent("plans/a.md").path], addressedOnly: false) == .init(highlights: 1, files: 1))
+        #expect(CLI.collect(state(root: link.path), under: real).map(\.path).contains { $0.hasSuffix("plans/a.md") })
+    }
+
     @Test func runsAsACommandOnlyWhenCalledGalley() {
         #expect(CLI.arguments(["/usr/local/bin/galley", "feedback"]) == ["feedback"])
         #expect(CLI.arguments(["/Applications/Galley.app/Contents/MacOS/Galley", "--cli", "help"]) == ["help"])

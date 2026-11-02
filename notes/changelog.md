@@ -26,6 +26,9 @@ otherwise have to re-derive. Not worth one: typo fixes and formatting.
 
 ## 2026-11-02
 
+- `galley feedback` and `feedback clear` match paths with symlinks resolved,
+  so a workspace added through a symlink meets a command run from the real
+  folder, and the other way round
 - The palette covers the rest of the top bar and the columns' menus: Reveal
   Workspace in Finder, Sort Files by Folder / Recently Changed, Workspace Name
   and Icon…, and for an opened file Add Its Folder as a Workspace… and Remove
