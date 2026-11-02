@@ -10,6 +10,8 @@ Typo fixes and formatting do not need an entry.
 
 ## 2026-11-02
 
+- Released Galley 1.1.1 (build 150): the Save Feedback button restyled. The
+  first release to reach 1.1.0 through Sparkle; its feed verifies
 - The Save button is drawn as the feedback buttons beside it — the purple
   wash, 26 pt, 7 pt corners, ink text — reading "Save Feedback", then "Saved"
 - The site covers 1.1: ticking changes, drafts and Save Feedback (with a
