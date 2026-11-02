@@ -10,6 +10,8 @@ Typo fixes and formatting do not need an entry.
 
 ## 2026-11-02
 
+- Released Galley 1.2.0 (build 159): the waiting-agent dot on Save
+  Feedback. Its feed verifies, and the notes' italics come through
 - Save Feedback shows a green dot while an agent waits on a folder holding one
   of the workspace's drafts (so saving reaches it), with
   `galley feedback --wait` or `--watch`, and its tooltip names the agent
