@@ -10,6 +10,12 @@ Typo fixes and formatting do not need an entry.
 
 ## 2026-11-02
 
+- Released Galley 1.1.0 (build 144): drafts and Save Feedback, `--wait` and
+  `--watch`, changes ticked one at a time, and Sparkle updates. The feed at
+  `releases/latest/download/appcast.xml` verifies against the DMG
+- The repo carries the `galley` skill as the app writes it, for agents
+  working on Galley itself. `release.sh` adds the checksum to a copy of the
+  release notes, not the file in the repo, and the feed's notes keep italics
 - Galley updates itself with Sparkle 2: Galley → Check for Updates…, the
   palette, and Settings → General (a daily check, asked about first). The
   feed is `appcast.xml` on the newest GitHub release, written and signed by

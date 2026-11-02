@@ -166,9 +166,11 @@ print "  Gatekeeper accepts both"
 
 # — Publish ————————————————————————————————————————————————————————————
 step "Publishing $TAG"
-NOTES=notes/release-notes/$VERSION.md
-if [[ ! -f $NOTES ]]; then
-  NOTES=$OUT/notes.md
+NOTES=$OUT/notes.md
+if [[ -f notes/release-notes/$VERSION.md ]]; then
+  # A copy: the checksum below is added to it, not to the file in the repo.
+  cp notes/release-notes/$VERSION.md $NOTES
+else
   PREVIOUS=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || true)
   {
     print "## What's new\n"
@@ -194,6 +196,7 @@ lines, body, in_list = open(notes).read().split("\n---\n")[0].splitlines(), [], 
 def inline(text):
     text = html.escape(text)
     text = re.sub(r"\*\*(.+?)\*\*", r"<b>\1</b>", text)
+    text = re.sub(r"(?<![\w*])\*([^*\s][^*]*?)\*(?![\w*])", r"<i>\1</i>", text)
     return re.sub(r"`(.+?)`", r"<code>\1</code>", text)
 for line in lines:
     item = re.match(r"\s*[-*] (.*)", line)

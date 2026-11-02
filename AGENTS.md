@@ -242,4 +242,6 @@ simulator ones).
 ## Skills
 
 `xcodebuildmcp-cli` (build/test/run) · `swiftui-pro` (SwiftUI review) ·
-`frontend-design` (the website) · `conventional-commit` · `grilling`
+`frontend-design` (the website) · `conventional-commit` · `grilling` ·
+`galley` (reading the reader's feedback in Galley — this app's own skill,
+as `galley skill print` writes it; refresh it when the skill text changes)
