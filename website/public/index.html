@@ -113,16 +113,96 @@ Cleared 1 highlight on 1 file.</pre>
 
       <section id="find">
         <h2>Find anything</h2>
-        <table>
-          <thead><tr><th>Keys</th><th>&nbsp;</th></tr></thead>
-          <tbody>
-            <tr><td><span class="keys">⌘K</span></td><td>Go to a file by name — or a section, with <code>#</code></td></tr>
-            <tr><td><span class="keys">⇧⌘F</span></td><td>Search the text of every file</td></tr>
-            <tr><td><span class="keys">⌘T</span></td><td>Open a file in a tab of its own</td></tr>
-            <tr><td><span class="keys">⇧⌘H</span></td><td>Show the HTML comments a file hides from you — but not from an agent</td></tr>
-          </tbody>
-        </table>
-        <p>Every shortcut can be changed. Workspaces, files and contents come and go with a two-finger swipe.</p>
+        <p>One palette, four ways in. <span class="keys">⌘K</span> goes to a file by name; type <code>#</code> for a section of the page you are on, or <code>&gt;</code> for anything Galley can do. <span class="keys">⇧⌘F</span> searches the text of every file, and <span class="keys">⇥</span> switches between names and text.</p>
+      </section>
+    </div>
+
+    <div class="bars">
+      <div>
+        <figure>
+          <figcaption><kbd>⌘K</kbd> A file, by name</figcaption>
+          <img src="/images/palette-files.png" width="1120" height="318" loading="lazy" alt="The palette with “plan” typed, listing two files by name.">
+        </figure>
+        <figure>
+          <figcaption><kbd>⇧⌘F</kbd> The text of every file</figcaption>
+          <img src="/images/palette-text.png" width="1120" height="598" loading="lazy" alt="The palette searching “token” in the text, with the matching lines of four files.">
+        </figure>
+      </div>
+      <div>
+        <figure>
+          <figcaption><kbd>⇧⌘K</kbd> A section of this page</figcaption>
+          <img src="/images/palette-sections.png" width="1120" height="638" loading="lazy" alt="The palette listing the headings of the open plan.">
+        </figure>
+        <figure>
+          <figcaption><kbd>⇧⌘P</kbd> Any action, with its keys</figcaption>
+          <img src="/images/palette-actions.png" width="1120" height="392" loading="lazy" alt="The palette’s actions for “feedback”: copy and clear, for the file and the workspace.">
+        </figure>
+      </div>
+    </div>
+
+    <div class="column">
+      <section id="shortcuts">
+        <h2>Keys for everything</h2>
+        <p>Every action has a shortcut, and every shortcut can be changed in Settings. Workspaces, files and contents also come and go with a two-finger swipe.</p>
+      </section>
+    </div>
+
+    <div class="keymap">
+      <section aria-label="File">
+        <h3>File</h3>
+        <dl>
+          <dt>New tab</dt><dd><kbd>⌘T</kbd></dd>
+          <dt>Open folder or file</dt><dd><kbd>⌘O</kbd></dd>
+          <dt>Go to file</dt><dd><kbd>⌘K</kbd></dd>
+          <dt>Go to section</dt><dd><kbd>⇧⌘K</kbd></dd>
+          <dt>Search all files</dt><dd><kbd>⇧⌘F</kbd></dd>
+          <dt>All actions</dt><dd><kbd>⇧⌘P</kbd></dd>
+          <dt>Open in default app</dt><dd><kbd>⌘E</kbd></dd>
+          <dt>Reveal in Finder</dt><dd><kbd>⌥⌘R</kbd></dd>
+          <dt>Copy path</dt><dd><kbd>⌥⇧⌘C</kbd></dd>
+          <dt>Close tab</dt><dd><kbd>⌘W</kbd></dd>
+          <dt>Close other tabs</dt><dd><kbd>⌥⌘W</kbd></dd>
+        </dl>
+      </section>
+      <section aria-label="Go">
+        <h3>Go</h3>
+        <dl>
+          <dt>Next file</dt><dd><kbd>⌥⌘↓</kbd></dd>
+          <dt>Previous file</dt><dd><kbd>⌥⌘↑</kbd></dd>
+          <dt>Next unread</dt><dd><kbd>⌥⌘U</kbd></dd>
+          <dt>Next change</dt><dd><kbd>⌘J</kbd></dd>
+          <dt>Previous change</dt><dd><kbd>⇧⌘J</kbd></dd>
+          <dt>Next tab</dt><dd><kbd>⌃⇥</kbd></dd>
+          <dt>Previous tab</dt><dd><kbd>⌃⇧⇥</kbd></dd>
+          <dt>Find on the page</dt><dd><kbd>⌘F</kbd></dd>
+          <dt>Find next / previous</dt><dd><kbd>⌘G</kbd> <kbd>⇧⌘G</kbd></dd>
+        </dl>
+      </section>
+      <section aria-label="Document">
+        <h3>Document</h3>
+        <dl>
+          <dt>Highlight selection</dt><dd><kbd>⌃⌘H</kbd></dd>
+          <dt>Add a note</dt><dd><kbd>⌃⌘N</kbd></dd>
+          <dt>Copy feedback</dt><dd><kbd>⇧⌘C</kbd></dd>
+          <dt>Read / unread</dt><dd><kbd>⇧⌘U</kbd></dd>
+          <dt>Mark all read</dt><dd><kbd>⌥⇧⌘U</kbd></dd>
+          <dt>Pin</dt><dd><kbd>⌥⌘P</kbd></dd>
+          <dt>Fold / unfold all</dt><dd><kbd>⌥⌘←</kbd> <kbd>⌥⌘→</kbd></dd>
+          <dt>Print</dt><dd><kbd>⌘P</kbd></dd>
+        </dl>
+      </section>
+      <section aria-label="View">
+        <h3>View</h3>
+        <dl>
+          <dt>Each column</dt><dd><kbd>⌘1</kbd> <kbd>⌘2</kbd> <kbd>⌘3</kbd></dd>
+          <dt>Next / last column</dt><dd><kbd>⌘]</kbd> <kbd>⌘[</kbd></dd>
+          <dt>Hide all columns</dt><dd><kbd>⌘\</kbd></dd>
+          <dt>Workspace icons</dt><dd><kbd>⌥⌘4</kbd></dd>
+          <dt>Text size</dt><dd><kbd>⌘+</kbd> <kbd>⌘−</kbd></dd>
+          <dt>Actual size</dt><dd><kbd>⌘0</kbd></dd>
+          <dt>Mark changes</dt><dd><kbd>⇧⌘D</kbd></dd>
+          <dt>Hidden comments</dt><dd><kbd>⇧⌘H</kbd></dd>
+        </dl>
       </section>
     </div>
 

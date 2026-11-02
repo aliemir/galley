@@ -26,6 +26,9 @@ otherwise have to re-derive. Not worth one: typo fixes and formatting.
 
 ## 2026-11-02
 
+- Website: "Find anything" shows the palette's four modes as cut-outs
+  (files, sections, text, actions), captured by `tools/capture-guide.sh`;
+  a new "Keys for everything" section lists every default shortcut by menu
 - The palette has an actions mode: `>` in ⌘K, or ⇧⌘P, lists everything in
   the menus and the top bar with its shortcut (themes and appearances once a
   query asks); actions that would do nothing are left out
