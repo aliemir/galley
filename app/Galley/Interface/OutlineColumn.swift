@@ -61,6 +61,10 @@ private struct OutlineList: View {
     /// Copy or clear the feedback, for this document or the workspace.
     private var feedbackMenu: some View {
         Menu {
+            if model.draftCount > 0 {
+                Button("Save Feedback" + Shortcuts.shared.label(.saveFeedback)) { model.saveFeedback() }
+                Divider()
+            }
             Button("Copy File Feedback" + Shortcuts.shared.label(.copyFeedback)) { model.copyFeedback() }
             Button("Copy Workspace Feedback") { model.copyWorkspaceFeedback() }
             Divider()
@@ -226,9 +230,16 @@ private struct HighlightRow: View {
 
     var body: some View {
         HStack(alignment: .top, spacing: 8) {
-            RoundedRectangle(cornerRadius: 1.5)
-                .fill(isOrphan ? palette.ink3.opacity(0.5) : palette.feedback.opacity(0.75))
-                .frame(width: 3)
+            if highlight.isDraft, !isOrphan {
+                // A draft, not saved yet: dashed, as on the page.
+                Line()
+                    .stroke(palette.feedback.opacity(0.8), style: StrokeStyle(lineWidth: 2, lineCap: .round, dash: [3, 3.5]))
+                    .frame(width: 3)
+            } else {
+                RoundedRectangle(cornerRadius: 1.5)
+                    .fill(isOrphan ? palette.ink3.opacity(0.5) : palette.feedback.opacity(0.75))
+                    .frame(width: 3)
+            }
             VStack(alignment: .leading, spacing: 3) {
                 Text(highlight.text.trimmingCharacters(in: .whitespacesAndNewlines))
                     .font(.system(size: 12, design: .serif))
@@ -288,6 +299,16 @@ private struct NoteLabelStyle: LabelStyle {
         HStack(alignment: .firstTextBaseline, spacing: 5) {
             configuration.icon.font(.system(size: 9.5)).foregroundStyle(.secondary)
             configuration.title
+        }
+    }
+}
+
+/// A vertical line down the middle of its frame, for a dashed bar.
+private struct Line: Shape {
+    func path(in rect: CGRect) -> Path {
+        Path { path in
+            path.move(to: CGPoint(x: rect.midX, y: rect.minY + 1))
+            path.addLine(to: CGPoint(x: rect.midX, y: rect.maxY - 1))
         }
     }
 }

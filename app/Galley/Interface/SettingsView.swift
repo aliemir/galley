@@ -61,6 +61,15 @@ private struct GeneralSettings: View {
             }
 
             Section {
+                Toggle(isOn: $settings.draftFeedback) {
+                    Text("Keep highlights and notes as drafts until I save them")
+                    Text("Agents see your feedback once you save it, with Save Feedback or \(key(.saveFeedback)), so they can wait for it with `galley feedback --wait`. Drafts are dashed on the page. Off, agents see each mark as you make it.")
+                }
+            } header: {
+                Text("Feedback")
+            }
+
+            Section {
                 Toggle("Find", isOn: $settings.showFindButton)
                 Toggle("Appearance", isOn: $settings.showAppearanceButton)
             } header: {

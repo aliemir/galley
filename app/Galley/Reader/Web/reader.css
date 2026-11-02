@@ -422,6 +422,13 @@ mark.hl {
   cursor: pointer;
 }
 mark.hl.flash-hl { animation: flash-hl 1.2s ease; }
+/* A draft — not saved, so no agent sees it yet: a lighter wash on a
+   dashed line. Saved, it fills in. An inline border never moves text. */
+mark.hl.draft {
+  --hl-draft: color-mix(in srgb, var(--hl) 50%, transparent);
+  background: linear-gradient(to bottom, transparent 8%, var(--hl-draft) 8%, var(--hl-draft) 94%, transparent 94%);
+  border-bottom: 1.5px dashed color-mix(in srgb, var(--hl), var(--ink) 32%);
+}
 @keyframes flash-hl { 0%, 35% { box-shadow: 0 0 0 3px var(--hl); } 100% { box-shadow: 0 0 0 0 transparent; } }
 .pill {
   position: absolute; z-index: 10; display: flex;
@@ -459,6 +466,11 @@ li > .hl-note, td > .hl-note, th > .hl-note { margin: .45em 0 .3em; }
   content: ""; position: absolute; top: -6px; left: 1.1em;
   border: 6px solid transparent; border-top: 0; border-bottom-color: var(--note-bg);
 }
+.hl-note.draft {
+  --note-bg: color-mix(in srgb, var(--hl) 26%, var(--paper));
+  outline: 1.5px dashed color-mix(in srgb, var(--hl), var(--ink) 32%); outline-offset: -1.5px;
+}
+.hl-note.draft::before { border-bottom-color: color-mix(in srgb, var(--hl), var(--ink) 32%); }
 .hl-note:hover .hl-note-remove { opacity: 1; }
 .hl-note-remove:hover { background: color-mix(in srgb, var(--ink) 8%, transparent); color: var(--ink); }
 .hl-note.editing { padding-right: .85em; cursor: auto; }

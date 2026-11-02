@@ -812,7 +812,11 @@
     found.length = 0;
     found.push(...placed);
     const marks = wrapRanges(content, found.map((f) => f.range), 'mark', 'hl', skipForText);
-    for (const mark of marks) mark.dataset.id = found[Number(mark.dataset.range)].id;
+    const drafts = new Set(highlights.filter((h) => h.draft).map((h) => h.id));
+    for (const mark of marks) {
+      mark.dataset.id = found[Number(mark.dataset.range)].id;
+      if (drafts.has(mark.dataset.id)) mark.classList.add('draft');
+    }
     renderNotes(found.map((f) => f.id));
     post({ type: 'orphans', ids: orphans });
   }
@@ -860,7 +864,7 @@
 
   function noteCard(h) {
     const card = document.createElement('aside');
-    card.className = 'hl-note';
+    card.className = h.draft ? 'hl-note draft' : 'hl-note';
     card.dataset.id = h.id;
     card.setAttribute('aria-label', 'Note');
     showCardText(card, h.note || '');

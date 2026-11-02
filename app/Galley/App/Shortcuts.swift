@@ -74,7 +74,7 @@ enum ShortcutAction: String, CaseIterable, Identifiable {
     case biggerText, smallerText, actualSize, markChanges, showComments
     case nextTab, previousTab
     case nextDocument, previousDocument, nextUnread, nextChange, previousChange, markChangeRead
-    case toggleRead, togglePin, markAllRead, highlight, addNote, copyFeedback, foldAll, unfoldAll
+    case toggleRead, togglePin, markAllRead, highlight, addNote, saveFeedback, copyFeedback, foldAll, unfoldAll
 
     var id: String { rawValue }
 
@@ -120,6 +120,7 @@ enum ShortcutAction: String, CaseIterable, Identifiable {
         case .markAllRead: "Mark All as Read"
         case .highlight: "Highlight Selection"
         case .addNote: "Add Note to Selection"
+        case .saveFeedback: "Save Feedback"
         case .copyFeedback: "Copy File Feedback"
         case .foldAll: "Fold All Sections"
         case .unfoldAll: "Unfold All Sections"
@@ -135,7 +136,7 @@ enum ShortcutAction: String, CaseIterable, Identifiable {
              .biggerText, .smallerText, .actualSize, .markChanges, .showComments: "View"
         case .nextTab, .previousTab: "Tabs"
         case .nextDocument, .previousDocument, .nextUnread, .nextChange, .previousChange, .markChangeRead: "Go"
-        case .toggleRead, .togglePin, .markAllRead, .highlight, .addNote, .copyFeedback, .foldAll, .unfoldAll: "Document"
+        case .toggleRead, .togglePin, .markAllRead, .highlight, .addNote, .saveFeedback, .copyFeedback, .foldAll, .unfoldAll: "Document"
         }
     }
 
@@ -183,6 +184,7 @@ enum ShortcutAction: String, CaseIterable, Identifiable {
         case .markAllRead: KeyShortcut("u", [.command, .option, .shift])
         case .highlight: KeyShortcut("h", [.command, .control])
         case .addNote: KeyShortcut("n", [.command, .control])
+        case .saveFeedback: KeyShortcut("s")
         case .copyFeedback: KeyShortcut("c", [.command, .shift])
         case .foldAll: KeyShortcut("left", [.command, .option])
         case .unfoldAll: KeyShortcut("right", [.command, .option])

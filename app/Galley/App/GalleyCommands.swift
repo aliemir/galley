@@ -178,6 +178,9 @@ struct GalleyCommands: Commands {
             Button("Add Note to Selection") { model.noteSelection() }
                 .shortcut(.addNote)
                 .disabled(model.current == nil)
+            Button("Save Feedback") { model.saveFeedback() }
+                .shortcut(.saveFeedback)
+                .disabled(model.draftCount == 0)
             Divider()
             Button("Copy File Feedback") { model.copyFeedback() }
                 .shortcut(.copyFeedback)

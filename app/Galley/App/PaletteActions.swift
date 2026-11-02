@@ -128,6 +128,10 @@ extension AppModel {
         let hasSelection = hasFile && pageHasSelection
         add("Highlight Selection", "Document", "highlighter", .highlight, when: hasSelection) { self.highlightSelection() }
         add("Add Note to Selection", "Document", "note.text.badge.plus", .addNote, when: hasSelection) { self.noteSelection() }
+        let drafts = draftCount
+        add(drafts == 1 ? "Save Feedback (1 Draft)" : "Save Feedback (\(drafts) Drafts)", "Document", "square.and.arrow.down", .saveFeedback, when: drafts > 0) {
+            self.saveFeedback()
+        }
         add("Copy File Feedback", "Document", "doc.on.doc", .copyFeedback, when: hasFeedback) { self.copyFeedback() }
         add("Clear File Feedback…", "Document", "trash", when: hasFeedback) { self.clearFeedback() }
         add("Copy Workspace Feedback", "Document", "doc.on.doc", when: workspaceHasFeedback) { self.copyWorkspaceFeedback() }

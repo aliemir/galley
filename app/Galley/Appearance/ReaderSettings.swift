@@ -143,6 +143,9 @@ final class ReaderSettings {
     /// still shows while its bar is open.
     var showFindButton: Bool { didSet { save(showFindButton, "showFindButton") } }
     var showAppearanceButton: Bool { didSet { save(showAppearanceButton, "showAppearanceButton") } }
+    /// Highlights and notes wait as drafts until the reader saves them;
+    /// off, agents see each one as it is made.
+    var draftFeedback: Bool { didSet { save(draftFeedback, "draftFeedback") } }
     /// The Dock icon's palette (`AppIcon.variants`).
     var appIcon: String {
         didSet {
@@ -188,6 +191,7 @@ final class ReaderSettings {
         dockBadge = d.object(forKey: "dockBadge") as? Bool ?? true
         showFindButton = d.object(forKey: "showFindButton") as? Bool ?? true
         showAppearanceButton = d.object(forKey: "showAppearanceButton") as? Bool ?? true
+        draftFeedback = d.object(forKey: "draftFeedback") as? Bool ?? true
     }
 
     private func save(_ value: Any, _ key: String) {

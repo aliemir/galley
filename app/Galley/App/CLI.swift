@@ -120,20 +120,21 @@ nonisolated enum CLI {
     /// otherwise the library file is changed here.
     static func clear(_ arguments: [String]) -> Int32 {
         let addressedOnly = arguments.contains("--addressed")
+        let includeDrafts = arguments.contains("--drafts")
         let paths = arguments.filter { !$0.hasPrefix("-") }.map { absolute($0).path }
         guard !paths.isEmpty else {
             return fail("Name the files or folders to clear, e.g. `galley feedback clear plan.md` or `galley feedback clear .`")
         }
         let result: FeedbackClearing.Result
         if !NSRunningApplication.runningApplications(withBundleIdentifier: bundleIdentifier).isEmpty {
-            guard let answer = FeedbackRequest.send(paths: paths, addressedOnly: addressedOnly) else {
+            guard let answer = FeedbackRequest.send(paths: paths, addressedOnly: addressedOnly, includeDrafts: includeDrafts) else {
                 return fail("Galley did not answer. Try again, or quit Galley and run this again.")
             }
             result = answer
         } else {
             do {
                 var state = try LibraryLocation.read()
-                result = FeedbackClearing.apply(to: &state, paths: paths, addressedOnly: addressedOnly)
+                result = FeedbackClearing.apply(to: &state, paths: paths, addressedOnly: addressedOnly, includeDrafts: includeDrafts)
                 if result.highlights > 0 { try LibraryLocation.write(state) }
             } catch {
                 return fail("Could not change Galley's library: \(error.localizedDescription)")
@@ -268,7 +269,7 @@ nonisolated enum FeedbackRequest {
     static let request = Notification.Name("com.aliemir.galley.clearFeedback")
     static let reply = Notification.Name("com.aliemir.galley.clearedFeedback")
 
-    static func send(paths: [String], addressedOnly: Bool, timeout: TimeInterval = 4) -> FeedbackClearing.Result? {
+    static func send(paths: [String], addressedOnly: Bool, includeDrafts: Bool, timeout: TimeInterval = 4) -> FeedbackClearing.Result? {
         let id = UUID().uuidString
         let center = DistributedNotificationCenter.default()
         var answer: FeedbackClearing.Result?
@@ -277,7 +278,7 @@ nonisolated enum FeedbackRequest {
             answer = FeedbackClearing.Result(highlights: info["highlights"] as? Int ?? 0, files: info["files"] as? Int ?? 0)
         }
         defer { center.removeObserver(observer) }
-        center.postNotificationName(request, object: id, userInfo: ["paths": paths, "addressedOnly": addressedOnly], deliverImmediately: true)
+        center.postNotificationName(request, object: id, userInfo: ["paths": paths, "addressedOnly": addressedOnly, "includeDrafts": includeDrafts], deliverImmediately: true)
         let deadline = Date().addingTimeInterval(timeout)
         while answer == nil, Date() < deadline {
             RunLoop.current.run(mode: .default, before: Date().addingTimeInterval(0.05))

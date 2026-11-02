@@ -12,6 +12,14 @@ nonisolated struct Highlight: Codable, Hashable, Identifiable, Sendable {
     var created = Date()
     /// What the reader wants done about the passage.
     var note: String?
+    /// Still being written: agents see it once the reader saves it. Older
+    /// libraries have no drafts — what is there was always for agents.
+    var draft: Bool?
+    /// When the reader saved it (or made it, with drafts off): what
+    /// `galley feedback --wait` and `--watch` look for.
+    var sent: Date?
+
+    var isDraft: Bool { draft == true }
 }
 
 nonisolated struct FileRecord: Codable, Hashable, Sendable {
@@ -261,8 +269,10 @@ nonisolated enum FeedbackClearing {
         URL(fileURLWithPath: path).resolvingSymlinksInPath().path
     }
 
+    /// Drafts are the reader's work in progress: an agent clearing what it
+    /// dealt with leaves them alone unless `includeDrafts`.
     @discardableResult
-    static func apply(to state: inout LibraryState, paths: [String], addressedOnly: Bool) -> Result {
+    static func apply(to state: inout LibraryState, paths: [String], addressedOnly: Bool, includeDrafts: Bool = false) -> Result {
         var result = Result()
         for index in state.workspaces.indices {
             let workspace = state.workspaces[index]
@@ -270,10 +280,10 @@ nonisolated enum FeedbackClearing {
                 guard let highlights = record.highlights, !highlights.isEmpty else { continue }
                 let path = path(of: id, in: workspace)
                 guard matches(path, paths) else { continue }
-                var kept: [Highlight] = []
+                var kept = includeDrafts ? [] : highlights.filter(\.isDraft)
                 if addressedOnly {
                     let source = WorkspaceScanner.read(URL(fileURLWithPath: path)) ?? ""
-                    kept = highlights.filter { Feedback.isStillPresent($0.text, in: source) }
+                    kept = highlights.filter { (!includeDrafts && $0.isDraft) || Feedback.isStillPresent($0.text, in: source) }
                 }
                 guard kept.count < highlights.count else { continue }
                 result.highlights += highlights.count - kept.count

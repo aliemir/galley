@@ -89,6 +89,11 @@ final class Workspace: Identifiable {
         record?.files.values.reduce(0) { $0 + ($1.highlights?.count ?? 0) } ?? 0
     }
 
+    /// Highlights and notes not saved yet.
+    var draftCount: Int {
+        record?.files.values.reduce(0) { $0 + ($1.highlights?.filter(\.isDraft).count ?? 0) } ?? 0
+    }
+
     /// Unread and changed files, newest first — the "Changed" feed.
     var feed: [DocumentFile] {
         files.filter { (statuses[$0.id] ?? .read) != .read }.sorted { $0.modified > $1.modified }

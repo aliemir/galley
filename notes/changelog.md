@@ -10,6 +10,13 @@ Typo fixes and formatting do not need an entry.
 
 ## 2026-11-02
 
+- Feedback starts as a draft: highlights and notes are dashed on the page
+  (and in the Contents column's list) until the reader saves them with Save
+  Feedback — the top bar's button while drafts wait, ⌘S, the Document menu
+  or the palette — for the whole workspace. Editing a saved note makes it a
+  draft again. Settings → General can turn drafts off. Highlights from
+  before have no draft flag and count as saved. `galley feedback clear`
+  leaves drafts alone unless given `--drafts`
 - Changes can be read one at a time: a tick beside each change bar (shown
   while the pointer is on the change) takes its marks off, and Go → Mark
   Change as Read (⌥⌘J) ticks the change at the top of the view. A file

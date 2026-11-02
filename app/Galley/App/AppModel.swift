@@ -1363,9 +1363,23 @@ final class AppModel {
     /// Adds a highlight; one that grew over existing highlights replaces them.
     private func addHighlight(_ highlight: Highlight, replacing: [String] = []) {
         guard current != nil else { return }
+        var highlight = highlight
+        stamp(&highlight)
         current?.highlights.removeAll { replacing.contains($0.id) }
         current?.highlights.append(highlight)
         saveHighlights()
+    }
+
+    /// A highlight just made or changed: a draft until saved, or with
+    /// drafts off, sent as it is.
+    private func stamp(_ highlight: inout Highlight) {
+        if settings.draftFeedback {
+            highlight.draft = true
+            highlight.sent = nil
+        } else {
+            highlight.draft = nil
+            highlight.sent = Date()
+        }
     }
 
     func removeHighlight(_ id: String) {
@@ -1390,7 +1404,10 @@ final class AppModel {
     func setNote(_ text: String, for id: String) {
         guard let index = current?.highlights.firstIndex(where: { $0.id == id }) else { return }
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard current?.highlights[index].note != (trimmed.isEmpty ? nil : trimmed) else { return }
         current?.highlights[index].note = trimmed.isEmpty ? nil : trimmed
+        // A changed note is unsent again: agents see what was saved.
+        if let current { var highlight = current.highlights[index]; stamp(&highlight); self.current?.highlights[index] = highlight }
         saveHighlights()
     }
 
@@ -1407,6 +1424,36 @@ final class AppModel {
     }
 
     // MARK: Feedback
+
+    /// Highlights and notes in the selected workspace not saved yet.
+    var draftCount: Int { selectedWorkspace?.draftCount ?? 0 }
+
+    /// Saves the selected workspace's drafts: from now on `galley
+    /// feedback` shows them, and a `--wait` or `--watch` for them wakes.
+    func saveFeedback() {
+        guard let workspace = selectedWorkspace, workspace.draftCount > 0 else { NSSound.beep(); return }
+        let now = Date()
+        library.updateWorkspace(workspace.id) { record in
+            for (path, file) in record.files {
+                guard let highlights = file.highlights, highlights.contains(where: \.isDraft) else { continue }
+                record.files[path]?.highlights = highlights.map { highlight in
+                    guard highlight.isDraft else { return highlight }
+                    var sent = highlight
+                    sent.draft = nil
+                    sent.sent = now
+                    return sent
+                }
+            }
+        }
+        // At once, not after the usual pause: someone may be waiting for it.
+        library.flush()
+        workspace.touch()
+        if let current, current.workspaceID == workspace.id {
+            let highlights = workspace.record?.files[current.file.id]?.highlights ?? []
+            self.current?.highlights = highlights
+            reader.setHighlights(highlights)
+        }
+    }
 
     /// Whether the open document, or any file in the selected workspace,
     /// has highlights or notes.
@@ -1488,9 +1535,10 @@ final class AppModel {
             let info = note.userInfo ?? [:]
             let paths = info["paths"] as? [String] ?? []
             let addressedOnly = info["addressedOnly"] as? Bool ?? false
+            let includeDrafts = info["includeDrafts"] as? Bool ?? false
             let id = note.object as? String
             MainActor.assumeIsolated {
-                let result = self?.clearFeedback(under: paths, addressedOnly: addressedOnly) ?? .init()
+                let result = self?.clearFeedback(under: paths, addressedOnly: addressedOnly, includeDrafts: includeDrafts) ?? .init()
                 DistributedNotificationCenter.default().postNotificationName(
                     FeedbackRequest.reply, object: id,
                     userInfo: ["highlights": result.highlights, "files": result.files], deliverImmediately: true
@@ -1541,11 +1589,11 @@ final class AppModel {
     }
 
     /// Clears feedback by path, in the library and on the open page.
-    func clearFeedback(under paths: [String], addressedOnly: Bool) -> FeedbackClearing.Result {
+    func clearFeedback(under paths: [String], addressedOnly: Bool, includeDrafts: Bool = false) -> FeedbackClearing.Result {
         guard !paths.isEmpty else { return .init() }
         var result = FeedbackClearing.Result()
         library.update { state in
-            result = FeedbackClearing.apply(to: &state, paths: paths, addressedOnly: addressedOnly)
+            result = FeedbackClearing.apply(to: &state, paths: paths, addressedOnly: addressedOnly, includeDrafts: includeDrafts)
         }
         guard result.highlights > 0 else { return result }
         library.flush()

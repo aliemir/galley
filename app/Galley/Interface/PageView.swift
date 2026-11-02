@@ -12,6 +12,8 @@ struct PageView: View {
     /// Where the page starts in the window: at the left edge, the tabs keep
     /// clear of the traffic lights and the panel button.
     @State private var pageMinX: CGFloat = 0
+    /// Keeps the Save button up long enough to say it worked.
+    @State private var saveButton = SaveButtonState()
 
     var body: some View {
         ZStack(alignment: .top) {
@@ -59,12 +61,21 @@ struct PageView: View {
                     help: "Copy all feedback in \(workspace.name) for an agent",
                     copy: model.copyWorkspaceFeedback,
                     menu: {
+                        if workspace.draftCount > 0 {
+                            Button("Save Feedback") { model.saveFeedback() }
+                        }
                         Button("Copy Workspace Feedback") { model.copyWorkspaceFeedback() }
                         Divider()
                         Button("Clear All Feedback in \(workspace.name)…") { model.clearWorkspaceFeedback() }
                     },
                     icon: { WorkspaceIcon(workspace: workspace, size: 15) }
                 )
+            }
+            if let workspace = model.selectedWorkspace, workspace.draftCount > 0 || saveButton.isConfirming {
+                SaveFeedbackButton(count: workspace.draftCount, state: saveButton, workspace: workspace.name) {
+                    model.saveFeedback()
+                }
+                .transition(.opacity.combined(with: .scale(scale: 0.9)))
             }
             if model.current?.changes.isEmpty == false {
                 IconButton(systemName: "arrow.down.to.line.compact", help: "Next Change" + Shortcuts.shared.label(.nextChange)) {
@@ -105,6 +116,7 @@ struct PageView: View {
         .frame(height: MainView.bandHeight)
         .padding(.top, 2)
         .animation(.snappy(duration: 0.2), value: model.tabs.count > 1)
+        .animation(.snappy(duration: 0.2), value: (model.selectedWorkspace?.draftCount ?? 0) > 0 || saveButton.isConfirming)
         .background(alignment: .top) { TitleBand() }
         .background(alignment: .top) {
             // Lets text slide under the controls without colliding with them.
@@ -224,6 +236,59 @@ private struct FindBar: View {
 
 /// Copy feedback in one click, with the rest a chevron away: the count and
 /// what it is about on the left, a menu on the right, one shape around both.
+@Observable
+private final class SaveButtonState {
+    var isConfirming = false
+    var reset: Task<Void, Never>?
+}
+
+/// Saves the workspace's drafts, handing them to agents in one go: the one
+/// button on the page in the accent colour, there only while drafts wait.
+private struct SaveFeedbackButton: View {
+    let count: Int
+    let state: SaveButtonState
+    let workspace: String
+    let save: () -> Void
+    @Environment(\.palette) private var palette
+    @State private var isHovered = false
+
+    var body: some View {
+        Button {
+            save()
+            withAnimation(.snappy(duration: 0.15)) { state.isConfirming = true }
+            state.reset?.cancel()
+            state.reset = Task {
+                try? await Task.sleep(for: .seconds(1.4))
+                guard !Task.isCancelled else { return }
+                withAnimation(.easeOut(duration: 0.2)) { state.isConfirming = false }
+            }
+        } label: {
+            HStack(spacing: 5) {
+                Image(systemName: state.isConfirming && count == 0 ? "checkmark" : "square.and.arrow.down")
+                    .font(.system(size: 11, weight: .semibold))
+                    .contentTransition(.symbolEffect(.replace))
+                Text(state.isConfirming && count == 0 ? "Saved" : "Save Feedback")
+                    .font(.system(size: 11.5, weight: .semibold).monospacedDigit())
+                    .contentTransition(.numericText())
+            }
+            .foregroundStyle(palette.accent)
+            .padding(.horizontal, 9)
+            .frame(height: 24)
+            .background(palette.accent.opacity(isHovered ? 0.17 : 0.11), in: Capsule())
+            .contentShape(Capsule())
+        }
+        .buttonStyle(.plain)
+        .onHover { isHovered = $0 }
+        .help(help)
+        .accessibilityLabel(help)
+    }
+
+    private var help: String {
+        let drafts = count == 1 ? "1 draft" : "\(count) drafts"
+        return "Save \(drafts) in \(workspace), for your agents" + Shortcuts.shared.label(.saveFeedback)
+    }
+}
+
 private struct FeedbackButton<Icon: View, Items: View>: View {
     let count: Int
     let help: String
