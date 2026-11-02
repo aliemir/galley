@@ -28,3 +28,8 @@ cp .env.example .env          # notarization key ids and team id
 tools/release.sh 1.0.0 --local   # a signed DMG, nothing published
 tools/release.sh 1.0.0           # notarized and published on GitHub Releases
 ```
+
+## Licence
+
+MIT — see [LICENSE](LICENSE). Bundled third-party code and fonts keep their own
+licences, listed in `app/Galley/Reader/Web/vendor/Acknowledgements.txt`.
