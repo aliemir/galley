@@ -116,7 +116,7 @@ main { padding: 0 24px 96px; }
 
 /* What Galley does, at a glance: a card each, linking to its section. */
 .features {
-  list-style: none; margin: 56px auto 0; padding: 0; max-width: 1100px;
+  list-style: none; margin: 44px auto 0; padding: 0; max-width: 1100px;
   display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px;
 }
 .features a {
@@ -160,7 +160,7 @@ figure.small { max-width: 520px; }
 figure img, figure video { display: block; width: 100%; height: auto; border-radius: 12px; box-shadow: var(--shadow); }
 figure video { background: var(--paper-2); }
 figcaption { max-width: var(--measure); margin: 14px auto 0; font: 400 13.5px/1.5 var(--font-ui); color: var(--ink-3); text-align: center; }
-.hero + figure { margin-top: 56px; }
+.features + figure { margin-top: 56px; }
 
 section { margin-top: 88px; }
 h2 { font: 700 1.9em/1.15 var(--font-body); letter-spacing: -0.012em; margin: 0 0 0.55em; text-wrap: balance; }
