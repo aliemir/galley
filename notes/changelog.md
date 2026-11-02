@@ -10,6 +10,8 @@ Typo fixes and formatting do not need an entry.
 
 ## 2026-11-02
 
+- The Save button is drawn as the feedback buttons beside it — the purple
+  wash, 26 pt, 7 pt corners, ink text — reading "Save", then "Saved"
 - The site covers 1.1: ticking changes, drafts and Save Feedback (with a
   dashed draft mark in the text), `--watch` / `--wait` in the agents
   section, and ⌘S and ⌥⌘J in the keymap

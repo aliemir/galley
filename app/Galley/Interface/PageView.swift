@@ -242,8 +242,8 @@ private final class SaveButtonState {
     var reset: Task<Void, Never>?
 }
 
-/// Saves the workspace's drafts, handing them to agents in one go: the one
-/// button on the page in the accent colour, there only while drafts wait.
+/// Saves the workspace's drafts, handing them to agents in one go. Drawn as
+/// the feedback buttons beside it are; there only while drafts wait.
 private struct SaveFeedbackButton: View {
     let count: Int
     let state: SaveButtonState
@@ -251,6 +251,8 @@ private struct SaveFeedbackButton: View {
     let save: () -> Void
     @Environment(\.palette) private var palette
     @State private var isHovered = false
+
+    private var isDone: Bool { state.isConfirming && count == 0 }
 
     var body: some View {
         Button {
@@ -264,18 +266,26 @@ private struct SaveFeedbackButton: View {
             }
         } label: {
             HStack(spacing: 5) {
-                Image(systemName: state.isConfirming && count == 0 ? "checkmark" : "square.and.arrow.down")
-                    .font(.system(size: 11, weight: .semibold))
-                    .contentTransition(.symbolEffect(.replace))
-                Text(state.isConfirming && count == 0 ? "Saved" : "Save Feedback")
-                    .font(.system(size: 11.5, weight: .semibold).monospacedDigit())
-                    .contentTransition(.numericText())
+                if isDone {
+                    Image(systemName: "checkmark")
+                        .font(.system(size: 11, weight: .semibold))
+                        .foregroundStyle(palette.accent)
+                        .transition(.scale.combined(with: .opacity))
+                } else {
+                    Image(systemName: "square.and.arrow.down")
+                        .font(.system(size: 12.5))
+                }
+                Text(isDone ? "Saved" : "Save")
+                    .font(.system(size: 11.5, weight: .semibold))
             }
-            .foregroundStyle(palette.accent)
-            .padding(.horizontal, 9)
-            .frame(height: 24)
-            .background(palette.accent.opacity(isHovered ? 0.17 : 0.11), in: Capsule())
-            .contentShape(Capsule())
+            .foregroundStyle(isHovered ? palette.ink : palette.ink2)
+            .padding(.horizontal, 8)
+            .frame(height: 26)
+            .background(
+                RoundedRectangle(cornerRadius: 7, style: .continuous)
+                    .fill(palette.feedbackWash.opacity(isHovered ? 1.6 : 1))
+            )
+            .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
         .onHover { isHovered = $0 }
