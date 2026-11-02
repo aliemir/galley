@@ -10,7 +10,8 @@ Typo fixes and formatting do not need an entry.
 
 ## 2026-11-02
 
-- Save Feedback shows a green dot while an agent waits on the workspace with
+- Save Feedback shows a green dot while an agent waits on a folder holding one
+  of the workspace's drafts (so saving reaches it), with
   `galley feedback --wait` or `--watch`, and its tooltip names the agent
   (from the processes above the command: Claude Code, Codex, Gemini CLI…).
   Each waiting command keeps a file in the library's `Watchers` folder,

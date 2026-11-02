@@ -1554,15 +1554,19 @@ final class AppModel {
         }
     }
 
-    /// Who is waiting for feedback on `workspace`: a watcher on its folder,
-    /// on a folder that holds it, or (Opened Files) on one of its files.
+    /// Who is waiting for the drafts in `workspace`: a watcher whose folder
+    /// holds at least one file with a draft — saving reaches it. One on a
+    /// part of the workspace with no drafts would get nothing from a save.
     func watcher(for workspace: Workspace) -> Watchers.Entry? {
-        watchers.first { entry in
-            if workspace.isOpenedFiles {
-                return workspace.files.contains { FeedbackClearing.matches($0.url.path, [entry.path]) }
-            }
-            return FeedbackClearing.matches(workspace.root.path, [entry.path])
-                || FeedbackClearing.matches(entry.path, [workspace.root.path])
+        guard !watchers.isEmpty, let record = workspace.record else { return nil }
+        let drafted = record.files.compactMap { id, file in
+            file.highlights?.contains(where: \.isDraft) == true ? FeedbackClearing.path(of: id, in: record) : nil
+        }
+        guard !drafted.isEmpty else { return nil }
+        return watchers.first { entry in
+            // The whole workspace is watched: every draft is in reach.
+            if !workspace.isOpenedFiles, FeedbackClearing.matches(workspace.root.path, [entry.path]) { return true }
+            return drafted.contains { FeedbackClearing.matches($0, [entry.path]) }
         }
     }
 
