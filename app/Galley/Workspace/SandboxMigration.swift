@@ -8,8 +8,20 @@ nonisolated enum SandboxMigration {
     static let container = URL(fileURLWithPath: NSHomeDirectory())
         .appendingPathComponent("Library/Containers/com.aliemir.galley/Data/Library", isDirectory: true)
 
+    /// Only the installed app's own data is migrated. The container is the
+    /// release's (`com.aliemir.galley`); a Debug build is its own Galley and
+    /// starts empty rather than with a copy of the reader's old library.
+    static var applies: Bool {
+        #if DEBUG
+        false
+        #else
+        true
+        #endif
+    }
+
     /// Settings: every key the container had and the new place lacks.
     static func defaults(_ defaults: UserDefaults = .standard) {
+        guard applies else { return }
         guard !defaults.bool(forKey: "migratedFromSandbox") else { return }
         let plist = container.appendingPathComponent("Preferences/com.aliemir.galley.plist")
         let data: Data
@@ -36,6 +48,7 @@ nonisolated enum SandboxMigration {
     /// The library and its snapshots, into `directory`, unless it already
     /// has a library of its own.
     static func library(into directory: URL) {
+        guard applies else { return }
         let fileManager = FileManager.default
         let source = container.appendingPathComponent("Application Support/Galley", isDirectory: true)
         guard !fileManager.fileExists(atPath: directory.appendingPathComponent("library.json").path),

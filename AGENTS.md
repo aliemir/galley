@@ -160,7 +160,9 @@ simulator ones).
   first unsandboxed launch. macOS guards that container from other processes:
   a Galley started from a terminal (its binary run directly) is the
   terminal's process and cannot read it — start it with `open` when testing
-  the copy.
+  the copy. Release builds only: a Debug build skips it, or it would start
+  with a copy of the reader's old library and settings (test it with
+  `tools/release.sh <version> --local`).
 - **A Debug build is its own Galley.** `com.aliemir.galley.debug`, shown as
   "Galley (Debug)" with the DEBUG-banded icon (its own identifier also gives
   it its own Dock tile — one pinned for the installed app otherwise claims

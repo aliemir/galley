@@ -10,6 +10,8 @@ Typo fixes and formatting do not need an entry.
 
 ## 2026-11-03
 
+- Debug builds skip the sandbox migration: the first separate Debug build had
+  copied the reader's old container library and settings into its own
 - A Debug build is its own Galley: its own settings, its own library
   (`Application Support/Galley Debug`) and its own command, `galley-debug`,
   so it never touches the installed app's marks or settings
