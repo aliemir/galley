@@ -101,7 +101,7 @@ struct AgentSetupView: View {
 
     private var commandDetail: String {
         switch setup.command {
-        case .missing: "Puts `galley` in /usr/local/bin, like VS Code's `code`. Asks for your password if the folder needs it."
+        case .missing: "Puts `\(CLI.commandName)` in /usr/local/bin, like VS Code's `code`. Asks for your password if the folder needs it."
         case .installed(let path): "Installed at \(path)."
         case .elsewhere(let path): "\(path) opens another copy of Galley."
         }

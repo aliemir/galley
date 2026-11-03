@@ -11,19 +11,9 @@ nonisolated enum Preferences {
             return test
         }
         #endif
-        return reader
-    }()
-
-    /// The reader's own settings. A Debug build has its own bundle identifier
-    /// (`com.aliemir.galley.debug`, for a Dock tile of its own) and so its own
-    /// standard domain; it reads and writes the reader's settings here instead,
-    /// as it did when the two shared an identifier.
-    static let reader: UserDefaults = {
-        #if DEBUG
-        return UserDefaults(suiteName: "com.aliemir.galley") ?? .standard
-        #else
+        // A Debug build's own: its identifier, com.aliemir.galley.debug, is
+        // its domain, apart from the installed app's.
         return .standard
-        #endif
     }()
 
     #if DEBUG

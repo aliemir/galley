@@ -8,9 +8,17 @@ nonisolated enum CLI {
     /// Run as a command when called `galley` (the symlink), or with `--cli`.
     static func arguments(_ argv: [String]) -> [String]? {
         if argv.dropFirst().first == "--cli" { return Array(argv.dropFirst(2)) }
-        if let first = argv.first, URL(fileURLWithPath: first).lastPathComponent == "galley" { return Array(argv.dropFirst()) }
+        if let first = argv.first, URL(fileURLWithPath: first).lastPathComponent == commandName { return Array(argv.dropFirst()) }
         return nil
     }
+
+    /// The link's name. A Debug build is `galley-debug`, its own command on
+    /// its own library, so installing it never takes over `galley`.
+    #if DEBUG
+    static let commandName = "galley-debug"
+    #else
+    static let commandName = "galley"
+    #endif
 
     static let usage = """
     galley — the command line for Galley, a reader for what your agents write.
@@ -262,7 +270,7 @@ nonisolated enum CLI {
             return fail("Name the files or folders to clear, e.g. `galley feedback clear plan.md` or `galley feedback clear .`")
         }
         let result: FeedbackClearing.Result
-        if isAppRunning {
+        if !NSRunningApplication.runningApplications(withBundleIdentifier: bundleIdentifier).isEmpty {
             guard let answer = FeedbackRequest.send(paths: paths, addressedOnly: addressedOnly, includeDrafts: includeDrafts) else {
                 return fail("Galley did not answer. Try again, or quit Galley and run this again.")
             }
@@ -291,26 +299,18 @@ nonisolated enum CLI {
         Bundle(url: appURL)?.bundleIdentifier ?? "com.aliemir.galley"
     }
 
-    /// Whether a Galley holds the library open — a release or a Debug build
-    /// (`<id>.debug`), whichever this command is: both read the same library,
-    /// so writing it under either would be overwritten when it next saves.
-    static var isAppRunning: Bool {
-        let base = bundleIdentifier.hasSuffix(".debug") ? String(bundleIdentifier.dropLast(6)) : bundleIdentifier
-        return [base, base + ".debug"].contains { !NSRunningApplication.runningApplications(withBundleIdentifier: $0).isEmpty }
-    }
-
     // MARK: Install
 
     /// A symlink to this binary, named `galley`, in a folder on the PATH.
     static func install(_ folder: String?) -> Int32 {
         let directory = absolute(folder ?? "/usr/local/bin")
-        let target = directory.appendingPathComponent("galley")
+        let target = directory.appendingPathComponent(commandName)
         switch link(at: target) {
         case .done:
             print("Installed \(target.path) → \(executableURL.path)")
             let path = ProcessInfo.processInfo.environment["PATH"]?.split(separator: ":").map(String.init) ?? []
             if !path.contains(directory.path) {
-                print("\(directory.path) is not on your PATH; add it to your shell profile to run `galley` anywhere.")
+                print("\(directory.path) is not on your PATH; add it to your shell profile to run `\(commandName)` anywhere.")
             }
             return 0
         case .occupied:
@@ -403,10 +403,12 @@ nonisolated enum CLI {
 }
 
 /// `galley feedback clear` asking a running Galley to clear: a distributed
-/// notification with the paths, answered by one with the counts.
+/// notification with the paths, answered by one with the counts. Named after
+/// the app's identifier, so a Debug build and the installed app (each with
+/// its own library) never answer each other's command.
 nonisolated enum FeedbackRequest {
-    static let request = Notification.Name("com.aliemir.galley.clearFeedback")
-    static let reply = Notification.Name("com.aliemir.galley.clearedFeedback")
+    static let request = Notification.Name(CLI.bundleIdentifier + ".clearFeedback")
+    static let reply = Notification.Name(CLI.bundleIdentifier + ".clearedFeedback")
 
     static func send(paths: [String], addressedOnly: Bool, includeDrafts: Bool, timeout: TimeInterval = 4) -> FeedbackClearing.Result? {
         let id = UUID().uuidString

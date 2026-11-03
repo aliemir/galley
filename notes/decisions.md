@@ -457,12 +457,15 @@ Dock and ⌘-Tab say "Galley (Debug)"; the bold menu-bar name stays "Galley".
 Release is untouched. One name only: a "Dev" flavour beside it would not say
 what it was.
 
-Debug builds also have their own identifier, `com.aliemir.galley.debug`: the
-Dock matched them to the tile pinned for the installed app (same identifier)
-and showed that tile's icon and name. They keep reading the reader's settings
-through `Preferences.reader` (a suite on `com.aliemir.galley`), and the CLI
-counts either identifier as Galley running, so a Debug `galley feedback clear`
-never writes a library the installed app holds.
+A Debug build is its own Galley: identifier `com.aliemir.galley.debug` (the
+Dock matched a shared identifier to the tile pinned for the installed app and
+showed that tile's icon and name), its own settings domain, its own library
+(`Application Support/Galley Debug`), its own command (`galley-debug`), and
+clear requests named after the identifier. The reader asked for this
+outright; it also ends a Debug build overwriting the installed app's
+library. Briefly tried first: sharing the reader's settings and library
+under the new identifier — rejected, a copy built here should start clean
+and leave the reader's marks alone.
 
 **Rejected:**
 - *Renaming the product in Debug* (`PRODUCT_NAME`): renames `Galley.app`, the
