@@ -172,6 +172,12 @@ simulator ones).
   after the run — quit it once tests finish, and before
   `open`ing a test copy: `open` on an app that is already running only brings
   that copy forward, ignoring the new `--args`.
+- **Debug builds are `com.aliemir.galley.debug`, "Galley (Debug)".** Their own
+  identifier gives them their own Dock tile (a tile pinned for the installed
+  app otherwise claims them) and the DEBUG-banded icon. They still share the
+  reader's library and, through `Preferences.reader`, the reader's settings;
+  the CLI counts either identifier as Galley running. Quit a test copy by
+  the `.debug` id, or the reader's app goes too.
 - **A test copy keeps its own settings.** A debug build launched with
   `-GalleyLibrary` reads and writes `com.aliemir.galley.test` (emptied each
   launch) instead of the reader's preferences, through `Preferences.store` —

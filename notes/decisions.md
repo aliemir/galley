@@ -457,6 +457,13 @@ Dock and ⌘-Tab say "Galley (Debug)"; the bold menu-bar name stays "Galley".
 Release is untouched. One name only: a "Dev" flavour beside it would not say
 what it was.
 
+Debug builds also have their own identifier, `com.aliemir.galley.debug`: the
+Dock matched them to the tile pinned for the installed app (same identifier)
+and showed that tile's icon and name. They keep reading the reader's settings
+through `Preferences.reader` (a suite on `com.aliemir.galley`), and the CLI
+counts either identifier as Galley running, so a Debug `galley feedback clear`
+never writes a library the installed app holds.
+
 **Rejected:**
 - *Renaming the product in Debug* (`PRODUCT_NAME`): renames `Galley.app`, the
   executable and the Swift module, breaking `@testable import Galley`, the test

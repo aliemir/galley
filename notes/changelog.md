@@ -10,6 +10,9 @@ Typo fixes and formatting do not need an entry.
 
 ## 2026-11-03
 
+- Debug builds have their own bundle identifier, `com.aliemir.galley.debug`,
+  so the Dock gives them their own tile instead of lighting the installed
+  app's pinned one. They still use the reader's library and settings
 - Debug builds are "Galley (Debug)" in the Dock and ⌘-Tab and wear the icon
   with a red DEBUG band (`make-icon.swift --debug`), picked colour variants
   included, so a copy built here is never mistaken for the installed one

@@ -262,7 +262,7 @@ nonisolated enum CLI {
             return fail("Name the files or folders to clear, e.g. `galley feedback clear plan.md` or `galley feedback clear .`")
         }
         let result: FeedbackClearing.Result
-        if !NSRunningApplication.runningApplications(withBundleIdentifier: bundleIdentifier).isEmpty {
+        if isAppRunning {
             guard let answer = FeedbackRequest.send(paths: paths, addressedOnly: addressedOnly, includeDrafts: includeDrafts) else {
                 return fail("Galley did not answer. Try again, or quit Galley and run this again.")
             }
@@ -289,6 +289,14 @@ nonisolated enum CLI {
     /// another identifier (someone's own team) still finds itself running.
     static var bundleIdentifier: String {
         Bundle(url: appURL)?.bundleIdentifier ?? "com.aliemir.galley"
+    }
+
+    /// Whether a Galley holds the library open — a release or a Debug build
+    /// (`<id>.debug`), whichever this command is: both read the same library,
+    /// so writing it under either would be overwritten when it next saves.
+    static var isAppRunning: Bool {
+        let base = bundleIdentifier.hasSuffix(".debug") ? String(bundleIdentifier.dropLast(6)) : bundleIdentifier
+        return [base, base + ".debug"].contains { !NSRunningApplication.runningApplications(withBundleIdentifier: $0).isEmpty }
     }
 
     // MARK: Install

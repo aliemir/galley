@@ -69,7 +69,7 @@ gif() {
   echo "wrote $OUT/guide-$name.gif and website/public/images/guide-$name.mp4"
 }
 
-osascript -e 'tell application id "com.aliemir.galley" to quit' 2>/dev/null || true
+osascript -e 'tell application id "com.aliemir.galley.debug" to quit' 2>/dev/null || true
 sleep 1
 rm -rf "$WORK" && mkdir -p "$WORK"
 cp -R app/Fixtures/Showcase "$WORK/Showcase"
@@ -190,5 +190,5 @@ gif columns 7 swipe.slowright wait.1400 swipe.slowright wait.1400 swipe.slowleft
 debug level.1 open.3 wait.1500 scroll.bottom wait.900
 gif pull 5 pull.slow
 
-osascript -e 'tell application id "com.aliemir.galley" to quit' 2>/dev/null || true
+osascript -e 'tell application id "com.aliemir.galley.debug" to quit' 2>/dev/null || true
 echo "done — check $OUT/guide-*.png"
