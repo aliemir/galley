@@ -447,6 +447,21 @@ which only the app writes while it runs.
 - *A count in `library.json`*: the command would write the library the app
   holds — the last-writer-wins problem the CLI avoids by asking the app.
 
+## 2026-11-03 — The waiting agent is named on the button, not in a tooltip
+
+**Chosen:** while an agent waits, Save Feedback reads "Send to Claude Code"
+(the agent's name, or "Send to Agent" when the command could not tell), with
+the green dot beside it. The tooltip keeps the details. The reader saw the
+dot, hovered, and waited out the system tooltip delay to learn what it
+meant; who gets the feedback is worth knowing before the click, not after a
+hover.
+
+**Rejected:**
+- *A faster custom tooltip*: SwiftUI's `.help` delay cannot be shortened
+  per view, and a hand-drawn hover label still asks for a hover.
+- *A popover on hover*: heavy for one line, and popovers opened by hover
+  flicker as the pointer crosses the toolbar.
+
 ## 2026-11-03 — `galley skill install` installs into the project by default
 
 **Chosen:** with no flag, the skill goes into the current folder's

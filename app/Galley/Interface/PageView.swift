@@ -72,8 +72,9 @@ struct PageView: View {
                 )
             }
             if let workspace = model.selectedWorkspace, workspace.draftCount > 0 || saveButton.isConfirming {
+                let watcher = model.watcher(for: workspace)
                 SaveFeedbackButton(count: workspace.draftCount, state: saveButton, workspace: workspace.name,
-                                   waiting: model.watcher(for: workspace).map { $0.agent ?? "An agent" }) {
+                                   isWaited: watcher != nil, agent: watcher?.agent) {
                     model.saveFeedback()
                 }
                 .transition(.opacity.combined(with: .scale(scale: 0.9)))
@@ -249,8 +250,10 @@ private struct SaveFeedbackButton: View {
     let count: Int
     let state: SaveButtonState
     let workspace: String
-    /// The agent waiting for this round ("Claude Code"), if one is.
-    let waiting: String?
+    /// Whether an agent is waiting for this round, and its name
+    /// ("Claude Code") when the command could tell.
+    let isWaited: Bool
+    let agent: String?
     let save: () -> Void
     @Environment(\.palette) private var palette
     @State private var isHovered = false
@@ -279,10 +282,11 @@ private struct SaveFeedbackButton: View {
                     Image(systemName: "square.and.arrow.down")
                         .font(.system(size: 12.5))
                 }
-                Text(isDone ? "Saved" : "Save Feedback")
+                Text(title)
                     .font(.system(size: 11.5, weight: .semibold))
-                if waiting != nil, !isDone {
-                    // Someone is listening: saving reaches them at once.
+                if isWaited, !isDone {
+                    // Someone is listening: saving reaches them at once, and
+                    // the title says who, so it reads without a hover.
                     Circle()
                         .fill(Color(nsColor: .systemGreen))
                         .frame(width: 6, height: 6)
@@ -307,11 +311,16 @@ private struct SaveFeedbackButton: View {
         .accessibilityLabel(help)
     }
 
+    private var title: String {
+        if isDone { return "Saved" }
+        return isWaited ? "Send to \(agent ?? "Agent")" : "Save Feedback"
+    }
+
     private var help: String {
         let drafts = count == 1 ? "1 draft" : "\(count) drafts"
         let shortcut = Shortcuts.shared.label(.saveFeedback)
-        if let waiting {
-            return "\(waiting) is waiting for your feedback: save \(drafts) in \(workspace) and it gets them now" + shortcut
+        if isWaited {
+            return "\(agent ?? "An agent") is waiting for your feedback: save \(drafts) in \(workspace) and it gets them now" + shortcut
         }
         return "Save \(drafts) in \(workspace), for your agents" + shortcut
     }

@@ -97,8 +97,8 @@ feedback in Galley"*. It runs:
 The skill teaches the agent to work through every item, say what it did, and
 clear only what it finished — never your drafts. Ask it to *"keep watching
 for my feedback"* and it waits for each save, acts on it, and waits again.
-While an agent is waiting, a green dot on **Save Feedback** says so — its
-tooltip names the agent.
+While an agent is waiting, the button reads **Send to Claude Code** (or
+whichever agent it is), with a green dot.
 `galley help` lists the rest.
 
 ## Find your way

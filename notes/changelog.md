@@ -10,6 +10,9 @@ Typo fixes and formatting do not need an entry.
 
 ## 2026-11-03
 
+- While an agent waits, Save Feedback reads "Send to Claude Code" (or the
+  agent it is, "Send to Agent" when unknown) beside the green dot, instead of
+  leaving the agent's name to a slow tooltip. The Guide says so
 - Added a shared `Galley` scheme with code coverage off. Without one,
   `xcodebuild test` used Xcode's generated scheme, which gathers coverage and
   instruments the Debug app it builds, so every run of that binary, `--cli`
