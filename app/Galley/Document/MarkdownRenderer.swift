@@ -119,6 +119,10 @@ nonisolated private final class HTMLBuilder {
     var wordCount = 0
     var hiddenComments = 0
     private var slugs: [String: Int] = [:]
+    /// Rendering a link's text, or text between a raw `<a …>` and `</a>`:
+    /// a URL in it is not linked again.
+    private var insideLink = false
+    private var insideRawLink = false
 
     init(baseURL: URL?, preprocessor: Preprocessor) {
         self.baseURL = baseURL
@@ -169,6 +173,7 @@ nonisolated private final class HTMLBuilder {
     }
 
     private func block(_ markup: Markup) -> String {
+        insideRawLink = false
         switch markup {
         case let heading as Heading:
             let inner = inlines(heading.children)
@@ -384,10 +389,17 @@ nonisolated private final class HTMLBuilder {
             let destination = link.destination ?? ""
             let title = link.title.map { " title=\"\(HTML.attribute($0))\"" } ?? ""
             let wiki = destination.hasPrefix("wiki:") ? " class=\"wikilink\"" : ""
-            return "<a href=\"\(HTML.attribute(destination))\"\(title)\(wiki)>\(inlines(link.children))</a>"
+            let wasInside = insideLink
+            insideLink = true
+            let content = inlines(link.children)
+            insideLink = wasInside
+            return "<a href=\"\(HTML.attribute(destination))\"\(title)\(wiki)>\(content)</a>"
         case let image as Markdown.Image:
             return self.image(image)
         case let html as InlineHTML:
+            let tag = html.rawHTML.lowercased()
+            if tag.hasPrefix("<a ") || tag.hasPrefix("<a>") { insideRawLink = true }
+            if tag.hasPrefix("</a") { insideRawLink = false }
             let cleaned = HTMLSanitizer.clean(html.rawHTML, inline: true)
             hiddenComments += cleaned.comments
             return cleaned.html
@@ -398,10 +410,19 @@ nonisolated private final class HTMLBuilder {
         }
     }
 
-    /// Plain text plus the inline extensions that live inside a text run:
-    /// math and footnote tokens, `==highlights==` and `:emoji:` shortcodes.
+    /// A text run, its bare URLs linked (`Autolink`) and shown as written.
     private func text(_ string: String) -> String {
         wordCount += preprocessor.restore(string).split(whereSeparator: { $0.isWhitespace }).count
+        guard !insideLink, !insideRawLink else { return decorated(string) }
+        return Autolink.runs(in: string).map { run in
+            guard let href = run.href else { return decorated(run.text) }
+            return "<a href=\"\(HTML.attribute(href))\">\(HTML.escape(run.text))</a>"
+        }.joined()
+    }
+
+    /// Plain text plus the inline extensions that live inside a text run:
+    /// math and footnote tokens, `==highlights==` and `:emoji:` shortcodes.
+    private func decorated(_ string: String) -> String {
         var html = HTML.escape(string)
         if html.contains("GALLEY") {
             html = Preprocessor.replaceTokens(in: html) { kind, index in

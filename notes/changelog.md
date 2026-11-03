@@ -10,6 +10,10 @@ Typo fixes and formatting do not need an entry.
 
 ## 2026-11-03
 
+- Bare URLs are links, as on GitHub (swift-markdown leaves its autolink
+  extension off): `https://…`, `http://…` and `www.…` in text, with trailing
+  punctuation and unmatched `)` left out, and quoted URLs linked too. Code,
+  raw HTML and link text are left alone (`Autolink`)
 - Tables fit the page instead of pushing it sideways: headers wrap between
   words, code and links break where they must, and a table still too wide
   breaks a long run (a bare URL), then its words (hyphenated), then its

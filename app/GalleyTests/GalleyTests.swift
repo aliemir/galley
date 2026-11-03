@@ -146,6 +146,64 @@ struct RendererTests {
         let doc = renderer.render("a < b & `<script>`")
         #expect(doc.html.contains("a &lt; b &amp; <code>&lt;script&gt;</code>"))
     }
+
+    @Test func bareURLsAreLinked() {
+        let doc = renderer.render("See https://example.com/a?b=1&c=2. Or **www.example.com**.")
+        #expect(doc.html.contains("See <a href=\"https://example.com/a?b=1&amp;c=2\">https://example.com/a?b=1&amp;c=2</a>. Or"))
+        #expect(doc.html.contains("<strong><a href=\"http://www.example.com\">www.example.com</a></strong>."))
+    }
+
+    @Test func urlsInCodeLinksAndHTMLStayAsTheyAre() {
+        let doc = renderer.render("`https://a.com` [https://b.com](https://c.com) <https://d.com> <a href=\"https://e.com\">https://f.com</a>\n\n```\nhttps://g.com\n```")
+        #expect(doc.html.contains("<code>https://a.com</code>"))
+        #expect(doc.html.contains("<a href=\"https://c.com\">https://b.com</a>"))
+        #expect(doc.html.contains("<a href=\"https://d.com\">https://d.com</a>"))
+        #expect(!doc.html.contains("href=\"https://f.com\""))
+        #expect(!doc.html.contains("href=\"https://g.com\""))
+    }
+
+    @Test func urlsKeepTheirTextForEmojiAndHighlights() {
+        let doc = renderer.render("https://x.com/:rocket:/a==b==c")
+        #expect(doc.html.contains(">https://x.com/:rocket:/a==b==c</a>"))
+    }
+}
+
+struct AutolinkTests {
+    private func links(_ text: String) -> [String] {
+        Autolink.runs(in: text).compactMap(\.href)
+    }
+
+    @Test func trailingPunctuationStaysOutside() {
+        #expect(links("Go to https://x.com/a.") == ["https://x.com/a"])
+        #expect(links("Really? https://x.com/a?!") == ["https://x.com/a"])
+        #expect(links("\"https://x.com/a\"") == ["https://x.com/a"])
+        #expect(links("“https://x.com/a”") == ["https://x.com/a"])
+        #expect(links("https://x.com/a&amp;") == ["https://x.com/a"])
+    }
+
+    @Test func parenthesesBalance() {
+        #expect(links("(see https://x.com/a)") == ["https://x.com/a"])
+        #expect(links("https://en.wikipedia.org/wiki/Swift_(programming_language)") == ["https://en.wikipedia.org/wiki/Swift_(programming_language)"])
+        #expect(links("(https://en.wikipedia.org/wiki/Swift_(language)).") == ["https://en.wikipedia.org/wiki/Swift_(language)"])
+    }
+
+    @Test func onlyAtTheStartOfAWord() {
+        #expect(links("foohttps://x.com") == [])
+        #expect(links("_https://x.com_") == ["https://x.com"])
+        #expect(links("http://localhost:3000/api") == ["http://localhost:3000/api"])
+        #expect(links("www.x.com") == ["http://www.x.com"])
+    }
+
+    @Test func notALink() {
+        #expect(links("www. and https:// and https://. and me@example.com") == [])
+        #expect(links("ftp://x.com") == [])
+    }
+
+    @Test func textAroundIsKept() {
+        let runs = Autolink.runs(in: "a https://x.com b https://y.com")
+        #expect(runs.map(\.text).joined() == "a https://x.com b https://y.com")
+        #expect(runs.count == 4)
+    }
 }
 
 struct DiffTests {
