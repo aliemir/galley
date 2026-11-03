@@ -10,6 +10,8 @@ Typo fixes and formatting do not need an entry.
 
 ## 2026-11-03
 
+- A panel swipe that starts at the top or end of a page no longer leaves
+  the page without its bounce (the pull stayed armed)
 - Mark as Unread holds on a page whose end is on screen: the page reports
   reaching the end again on every refresh, which marked it read on leaving
 - Surveyed the implicit state machines across the app, the reader page and

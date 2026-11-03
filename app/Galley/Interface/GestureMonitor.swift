@@ -105,6 +105,8 @@ final class GestureMonitor {
                 case .horizontal?:
                     axis = .horizontal
                     held = []
+                    // A swipe, not a pull: the page gets its bounce back.
+                    clearPullState()
                     model.beginPanelMotion()
                 case .vertical?:
                     axis = .vertical
