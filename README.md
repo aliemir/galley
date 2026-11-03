@@ -103,6 +103,11 @@ Each release carries `appcast.xml`, the feed Galley checks for updates.
 | `tools/` | The release script, the guide's captures, debug drivers, the icon |
 | `notes/` | The idea, decisions and changelog |
 
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for choosing an issue, setting up the
+app or website, checking your change, and submitting a pull request.
+
 ## Licence
 
 MIT — see [LICENSE](LICENSE). Bundled third-party code and fonts keep their own
