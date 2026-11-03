@@ -691,6 +691,8 @@ final class AppModel {
             let delay = transition == "none" ? 0 : 520
             Task {
                 try? await Task.sleep(for: .milliseconds(delay))
+                // Escape in the meantime closed the bar: nothing to light up.
+                guard isFindVisible else { return }
                 await runFind(direction: 0)
             }
         }
