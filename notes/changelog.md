@@ -10,6 +10,10 @@ Typo fixes and formatting do not need an entry.
 
 ## 2026-11-03
 
+- Released Galley 1.3.0 (build 172): tables that fit, links from bare URLs,
+  `galley skill install` into the project, and the four state-machine fixes.
+  Both notarizations accepted; the feed on the newest release lists 1.3.0
+  with its EdDSA signature
 - Bare URLs are links, as on GitHub (swift-markdown leaves its autolink
   extension off): `https://…`, `http://…` and `www.…` in text, with trailing
   punctuation and unmatched `)` left out, and quoted URLs linked too. Code,
