@@ -70,7 +70,7 @@ struct AgentSetupView: View {
                 caption("Then ask your agent")
                 CopyField(text: "Address my feedback in Galley.", monospaced: false)
                 caption("The skill for one project only (.agents and .claude), or its text for other agents")
-                CopyField(text: "galley skill install --project")
+                CopyField(text: "galley skill install")
                 CopyField(text: "galley skill print")
             }
 

@@ -446,3 +446,16 @@ which only the app writes while it runs.
   looks the same as nobody waiting.
 - *A count in `library.json`*: the command would write the library the app
   holds — the last-writer-wins problem the CLI avoids by asking the app.
+
+## 2026-11-03 — `galley skill install` installs into the project by default
+
+**Chosen:** with no flag, the skill goes into the current folder's
+`.agents/skills/galley`, linked from `.claude/skills` (or into a folder
+given as an argument). `--global` puts it in the home folder for every
+project; `--project [folder]` still works and means the default. Running a
+command in a project and having it reach every project was the surprise.
+The app's own button stays global ("Install Globally"): the app has no
+project to put it in.
+
+**Rejected:** keeping global as the default (the reader asked for the
+project), or requiring a flag either way.

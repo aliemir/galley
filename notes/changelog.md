@@ -10,6 +10,8 @@ Typo fixes and formatting do not need an entry.
 
 ## 2026-11-03
 
+- `galley skill install` installs into the current project by default (or a
+  folder given to it); `--global` installs for every project, as no flag did
 - `galley feedback --wait` and `--watch`: a save made just as the command
   starts, or one it could not read on the first try, is no longer missed
 - Closing the find bar right after a page turn no longer lights the

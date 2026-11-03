@@ -30,9 +30,11 @@ nonisolated enum CLI {
                                        under folders; --addressed clears only passages that
                                        are no longer in the text, --drafts drafts too
       galley install [folder]          Put `galley` on the PATH (default: /usr/local/bin)
-      galley skill install [--global | --project [folder] | --dir folder]
+      galley skill install [folder] [--global | --dir folder]
                                        Install the agent skill that teaches agents to read
-                                       your feedback: in ~/.agents/skills (Codex and others),
+                                       your feedback, in the project's .agents/skills
+                                       (default: the current folder), linked for Claude Code;
+                                       --global puts it in ~/.agents/skills for every project,
                                        linked for Claude Code and Gemini CLI when present
       galley skill print               Print the skill, for agents that keep skills elsewhere
       galley help                      This text
@@ -337,7 +339,7 @@ nonisolated enum CLI {
     // MARK: Skill
 
     static func skill(_ arguments: [String]) -> Int32 {
-        guard let action = arguments.first else { return fail("Usage: galley skill install [--global | --project [folder] | --dir folder], or galley skill print") }
+        guard let action = arguments.first else { return fail("Usage: galley skill install [folder] [--global | --dir folder], or galley skill print") }
         if action == "print" {
             print(AgentSkill.text, terminator: "")
             return 0
@@ -350,16 +352,11 @@ nonisolated enum CLI {
                 print("Installed the Galley skill: \(file.path)")
                 return 0
             }
-            let root: URL
-            let isProject: Bool
-            if let index = options.firstIndex(of: "--project") {
-                let next = index + 1 < options.count && !options[index + 1].hasPrefix("-") ? options[index + 1] : "."
-                root = absolute(next)
-                isProject = true
-            } else {
-                root = AgentSkill.home
-                isProject = false
-            }
+            // The project by default: a skill in the home folder reaches
+            // every project, so it is asked for by name (`--global`).
+            // `--project [folder]` still works.
+            let isProject = !options.contains("--global")
+            let root = isProject ? absolute(options.first { !$0.hasPrefix("-") } ?? ".") : AgentSkill.home
             let agents = try AgentSkill.install(in: root, isProject: isProject)
             let place = (root.appendingPathComponent(AgentSkill.canonical).path as NSString).abbreviatingWithTildeInPath
             print("Installed the Galley skill in \(place)")

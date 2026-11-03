@@ -1619,7 +1619,7 @@ final class AppModel {
             inform("The skill could not be installed", problem)
         } else {
             let agents = agents.skillAgents.isEmpty ? "Agents that read ~/.agents/skills" : ListFormatter.localizedString(byJoining: agents.skillAgents)
-            inform("The Galley skill is installed", "\(agents) can now read your feedback with `galley feedback` in every project. For one project only, run `galley skill install --project` in it.")
+            inform("The Galley skill is installed", "\(agents) can now read your feedback with `galley feedback` in every project. For one project only, run `galley skill install` in it.")
         }
     }
 
