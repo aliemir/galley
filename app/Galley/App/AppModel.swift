@@ -797,8 +797,11 @@ final class AppModel {
     private func leaveCurrent(markingRead: Bool? = nil) {
         guard let current, let workspace = currentWorkspace else { return }
         // A real look: reached the end, or stayed long enough to read some.
-        // "Mark as Unread" pushes `openedAt` into the future to opt out.
-        let lookedAtIt = current.reachedEnd || Date().timeIntervalSince(current.openedAt) > 2.5
+        // "Mark as Unread" pushes `openedAt` into the future to opt out of
+        // both: the page reports the end again on every refresh, so a short
+        // page would otherwise be read again on leaving.
+        let lookedAtIt = current.openedAt != .distantFuture
+            && (current.reachedEnd || Date().timeIntervalSince(current.openedAt) > 2.5)
         // Ticking changes one by one says the reader is going through them
         // themselves: the ones left are not read just by leaving.
         let ticking = workspace.record?.files[current.file.id]?.seenChanges?.isEmpty == false && !current.changes.isEmpty

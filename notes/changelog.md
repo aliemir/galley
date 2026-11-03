@@ -10,6 +10,8 @@ Typo fixes and formatting do not need an entry.
 
 ## 2026-11-03
 
+- Mark as Unread holds on a page whose end is on screen: the page reports
+  reaching the end again on every refresh, which marked it read on leaving
 - Surveyed the implicit state machines across the app, the reader page and
   the CLI (`notes/state-machines.md`): which lifecycles hide in loose
   flags, sentinels and timers, which deserve an explicit enum, and the
