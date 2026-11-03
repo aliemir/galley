@@ -10,6 +10,9 @@ Typo fixes and formatting do not need an entry.
 
 ## 2026-11-03
 
+- Debug builds are "Galley (Debug)" in the Dock and ⌘-Tab and wear the icon
+  with a red DEBUG band (`make-icon.swift --debug`), picked colour variants
+  included, so a copy built here is never mistaken for the installed one
 - While an agent waits, Save Feedback reads "Send to Claude Code" (or the
   agent it is, "Send to Agent" when unknown) beside the green dot, instead of
   leaving the agent's name to a slow tooltip. The Guide says so

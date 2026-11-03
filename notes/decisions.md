@@ -447,6 +447,26 @@ which only the app writes while it runs.
 - *A count in `library.json`*: the command would write the library the app
   holds — the last-writer-wins problem the CLI avoids by asking the app.
 
+## 2026-11-03 — Debug builds are "Galley (Debug)" with a banded icon
+
+**Chosen:** the Debug configuration sets `INFOPLIST_KEY_CFBundleDisplayName =
+"Galley (Debug)"` and `ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon-Debug`
+(the standard sheet with a red DEBUG band, from `make-icon.swift --debug`). A
+colour variant picked in Settings gets the same band at runtime in Debug. The
+Dock and ⌘-Tab say "Galley (Debug)"; the bold menu-bar name stays "Galley".
+Release is untouched. One name only: a "Dev" flavour beside it would not say
+what it was.
+
+**Rejected:**
+- *Renaming the product in Debug* (`PRODUCT_NAME`): renames `Galley.app`, the
+  executable and the Swift module, breaking `@testable import Galley`, the test
+  host, `pkill -x Galley` and every script path.
+- *A build script rewriting `CFBundleName`* for the menu bar: it works, but
+  needs a stamp output to get past the script sandbox — too much machinery for
+  one label. `INFOPLIST_KEY_CFBundleName` and `CFBundleName` in the partial
+  `Info.plist` are both ignored; the generated key wins.
+- *A launch-time env*: it can swap the Dock icon but not the name.
+
 ## 2026-11-03 — The waiting agent is named on the button, not in a tooltip
 
 **Chosen:** while an agent waits, Save Feedback reads "Send to Claude Code"

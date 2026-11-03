@@ -120,8 +120,10 @@ screencapture -x -o -l <id> shot.png
 app/…/Debug/Galley.app/Contents/MacOS/Galley --cli help
 app/…/Debug/Galley.app/Contents/MacOS/Galley --cli feedback app/Fixtures/Showcase
 
-# redraw the app icon (and its colour variants with --variants)
+# redraw the app icon (and its colour variants with --variants); --debug draws
+# the DEBUG-banded set Debug builds wear, so they never pass for the installed one
 swift tools/make-icon.swift app/Galley/Assets.xcassets/AppIcon.appiconset
+swift tools/make-icon.swift --debug app/Galley/Assets.xcassets/AppIcon-Debug.appiconset
 
 # website — landing, privacy, support
 cd website && npm run dev      # npm run deploy to ship (both build Tailwind first)
