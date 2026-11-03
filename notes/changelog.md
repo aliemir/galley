@@ -10,6 +10,10 @@ Typo fixes and formatting do not need an entry.
 
 ## 2026-11-03
 
+- Tables fit the page instead of pushing it sideways: headers wrap between
+  words, code and links break where they must, and a table still too wide
+  breaks a long run (a bare URL), then its words (hyphenated), then its
+  headers — re-checked as the window resizes (`fitTables` in reader.js)
 - `galley skill install` installs into the current project by default (or a
   folder given to it); `--global` installs for every project, as no flag did
 - `galley feedback --wait` and `--watch`: a save made just as the command

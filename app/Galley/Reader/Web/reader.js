@@ -247,7 +247,37 @@
   let gutterRuns = [];
   const runOf = new WeakMap();
 
+  /// A table wider than the column even with its code and links broken
+  /// lets more break, a step at a time, so the page never scrolls
+  /// sideways: first the cells holding a run too long for any line (a bare
+  /// URL, a long identifier), then, if that is not enough (many columns of
+  /// long words), every word in the body, and last the headers. Measured
+  /// from the natural width each time, as a wider window may fit it whole
+  /// again; all tables together, so a page of them lays out a few times,
+  /// not a few per table.
+  function fitTables() {
+    const tables = $$('#content table');
+    if (!tables.length) return;
+    for (const table of tables) {
+      table.classList.remove('tight', 'tighter');
+      for (const cell of table.querySelectorAll('td.long')) cell.classList.remove('long');
+    }
+    const overflowing = () => tables.filter((table) => table.offsetWidth > table.parentElement.clientWidth + 1);
+    const wide = overflowing();
+    if (!wide.length) return;
+    for (const table of wide) {
+      for (const cell of table.querySelectorAll('td')) {
+        if (cell.textContent.split(/\s+/).some((run) => run.length > 24)) cell.classList.add('long');
+      }
+    }
+    for (const table of overflowing()) table.classList.add('tight');
+    // Still too wide (many columns, a narrow window): the headers too.
+    for (const table of overflowing()) table.classList.add('tighter');
+  }
+
   function layoutGutter() {
+    // Tables settle first: the bars are placed from where blocks end up.
+    fitTables();
     const gutter = $('#gutter');
     if (!gutter) return;
     const pageTop = $('#page').getBoundingClientRect().top;

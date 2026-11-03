@@ -270,8 +270,15 @@ th {
   color: var(--ink-2); text-align: left; border-bottom: 1px solid var(--ink-3);
 }
 th, td { padding: .55em .9em .55em 0; vertical-align: top; overflow-wrap: break-word; hyphens: manual; -webkit-hyphens: manual; }
-th { white-space: nowrap; }
-td code { white-space: nowrap; }
+/* A table fits the column, never scrolls sideways: headers wrap between
+   words, and code and links (a path, a URL), which have no breaks of their
+   own, break where they must. Words of text stay whole unless the table
+   still overflows: then `fitTables` (reader.js) breaks a long run (`long`),
+   then every word in the body (`tight`), hyphenated where it can be, and
+   last the headers (`tighter`). Headers and code are never hyphenated. */
+td a, td.long, table.tight td, table.tighter th { overflow-wrap: anywhere; }
+table.tight td { hyphens: auto; -webkit-hyphens: auto; }
+table.tight td code { hyphens: manual; -webkit-hyphens: manual; }
 /* Key symbols in running text (⇧⌘C), in the face macOS menus use. */
 .keys { font-family: -apple-system, system-ui, sans-serif; font-size: .9em; letter-spacing: .04em; }
 th:last-child, td:last-child { padding-right: 0; }
