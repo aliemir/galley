@@ -10,6 +10,8 @@ Typo fixes and formatting do not need an entry.
 
 ## 2026-11-03
 
+- Added a contribution guide covering app and website setup, safe unit testing,
+  and the issue-to-PR workflow, linked from the README
 - Released Galley 1.3.0 (build 172): tables that fit, links from bare URLs,
   `galley skill install` into the project, and the four state-machine fixes.
   Both notarizations accepted; the feed on the newest release lists 1.3.0
