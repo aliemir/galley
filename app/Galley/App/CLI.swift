@@ -106,13 +106,16 @@ nonisolated enum CLI {
             index += 1
         }
         let target = absolute(paths.first ?? ".")
+        // Dated before it is read: a save landing between the two is then
+        // a change `--wait` sees, not one that slips past both.
+        let modified = modificationDate(LibraryLocation.directory.appendingPathComponent("library.json"))
         let state: LibraryState
         do {
             state = try LibraryLocation.read()
         } catch {
             return fail("Galley has no library yet: open a folder in Galley first.")
         }
-        if options.mode != .now { return waitForSaves(from: state, under: target, options) }
+        if options.mode != .now { return waitForSaves(from: state, modified: modified, under: target, options) }
 
         let files = collect(state, under: target, includeDrafts: options.includeDrafts)
         if options.json {
@@ -141,13 +144,13 @@ nonisolated enum CLI {
     /// prints what that save added, and exits. `--watch`: prints each save
     /// as it comes, until stopped. A save is told by the highlights it
     /// stamps: one whose id and save time were not there before.
-    static func waitForSaves(from state: LibraryState, under target: URL, _ options: FeedbackOptions) -> Int32 {
+    static func waitForSaves(from state: LibraryState, modified: Date?, under target: URL, _ options: FeedbackOptions) -> Int32 {
         let library = LibraryLocation.directory.appendingPathComponent("library.json")
         // Galley shows the reader that someone is waiting for this.
         let presence = Watchers.Presence(path: target.path)
         defer { presence.stop() }
+        var modified = modified
         var known = saves(in: state, under: target)
-        var modified = modificationDate(library)
         let deadline = options.timeout.map { Date().addingTimeInterval($0) }
         while true {
             if let deadline, Date() >= deadline {
@@ -159,9 +162,9 @@ nonisolated enum CLI {
             presence.beat()
             let now = modificationDate(library)
             guard now != modified else { continue }
-            modified = now
-            // Mid-write or briefly missing: the next look will have it.
+            // Mid-write or briefly missing: the next look tries again.
             guard let state = try? LibraryLocation.read() else { continue }
+            modified = now
             let current = saves(in: state, under: target)
             let new = current.subtracting(known)
             known.formUnion(current)

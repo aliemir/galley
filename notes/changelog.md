@@ -10,6 +10,8 @@ Typo fixes and formatting do not need an entry.
 
 ## 2026-11-03
 
+- `galley feedback --wait` and `--watch`: a save made just as the command
+  starts, or one it could not read on the first try, is no longer missed
 - Closing the find bar right after a page turn no longer lights the
   matches up again on the new page
 - A panel swipe that starts at the top or end of a page no longer leaves
