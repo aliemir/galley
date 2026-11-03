@@ -203,6 +203,11 @@ simulator ones).
   the target automatically, and an `Info.plist` there gets copied as a resource
   as well as generated — failing the build with
   `Multiple commands produce ... Info.plist`.
+- **The shared scheme keeps code coverage off.** `xcodebuild test` builds the
+  Debug app the CLI and debug drivers run, and a coverage build makes every
+  launch write `default.profraw` into the working directory. Leave
+  `codeCoverageEnabled = "NO"` in `Galley.xcscheme`; to measure coverage, pass
+  `-enableCodeCoverage YES` for that one run.
 - **Synchronized groups mean the folder is the target.** New Swift files in
   `app/<Target>/` are compiled with no pbxproj edit. The flip side is that any
   stray file in there is bundled too.
