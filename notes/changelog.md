@@ -8,6 +8,15 @@ Typo fixes and formatting do not need an entry.
 
 <!-- newest entries go directly below this line -->
 
+## 2026-11-03
+
+- Surveyed the implicit state machines across the app, the reader page and
+  the CLI (`notes/state-machines.md`): which lifecycles hide in loose
+  flags, sentinels and timers, which deserve an explicit enum, and the
+  fifteen bugs they cause today (Mark as Unread undone at the page end, a
+  stuck `pull-armed`, `pendingRestore` leaking between workspaces, a stale
+  page transition, closing a tab quitting the app, among them)
+
 ## 2026-11-02
 
 - Released Galley 1.2.0 (build 159): the waiting-agent dot on Save
