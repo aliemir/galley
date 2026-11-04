@@ -10,6 +10,11 @@ Typo fixes and formatting do not need an entry.
 
 ## 2026-11-04
 
+- Released Galley 1.4.0 (build 194): Save Feedback names the waiting agent,
+  and the heading-title and search-snippet fixes. Both notarizations
+  accepted; the feed on the newest release lists 1.4.0. GitHub answered the
+  push and the release with transient 500/502s, so the last steps (push,
+  tag, `gh release`) were finished by hand from `build/release/`
 - File-title scanning tracks code fence characters and lengths, so headings
   inside code stay ignored until a valid matching closing fence
 - Search snippets strip nested quote and list prefixes, including task lists,
