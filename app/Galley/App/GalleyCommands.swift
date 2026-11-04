@@ -6,123 +6,128 @@ struct GalleyCommands: Commands {
     let model: AppModel
 
     var body: some Commands {
-        CommandGroup(replacing: .newItem) {
-            Button("New Tab…") {
-                // The palette picks what the tab shows; Escape opens nothing.
-                model.quickOpenSearchesText = false
-                model.quickOpenOpensTab = true
-                model.isQuickOpenVisible = true
-            }
-            .shortcut(.newTab)
-            .disabled(model.workspaces.isEmpty)
-            Button("Open…") { model.openFolderPanel() }
-                .shortcut(.open)
-            Button("Go to File…") {
-                model.quickOpenSearchesText = false
-                model.isQuickOpenVisible.toggle()
-            }
-                .shortcut(.goToFile)
+        // An SDK before Xcode 27's takes at most 10 commands in one builder
+        // block ("extra arguments at positions #11, #12"); grouping keeps the
+        // top level under that. Group adds nothing to the menus themselves.
+        Group {
+            CommandGroup(replacing: .newItem) {
+                Button("New Tab…") {
+                    // The palette picks what the tab shows; Escape opens nothing.
+                    model.quickOpenSearchesText = false
+                    model.quickOpenOpensTab = true
+                    model.isQuickOpenVisible = true
+                }
+                .shortcut(.newTab)
                 .disabled(model.workspaces.isEmpty)
-            Button("Search All Files…") {
-                model.quickOpenSearchesText = true
-                model.isQuickOpenVisible = true
-            }
-            .shortcut(.searchAllFiles)
-            .disabled(model.workspaces.isEmpty)
-            Button("Go to Section…") {
-                model.quickOpenSearchesText = false
-                model.isQuickOpenVisible = true
-                model.quickOpenSeed = "#"
-            }
-            .shortcut(.goToSection)
-            .disabled(model.current == nil)
-            Button("All Actions…") {
-                model.quickOpenSearchesText = false
-                model.quickOpenSeed = ">"
-                model.isQuickOpenVisible = true
-            }
-            .shortcut(.allActions)
-        }
-        CommandGroup(after: .newItem) {
-            Divider()
-            Button("Open in Default App") { model.openInEditor() }
-                .shortcut(.openInDefaultApp)
+                Button("Open…") { model.openFolderPanel() }
+                    .shortcut(.open)
+                Button("Go to File…") {
+                    model.quickOpenSearchesText = false
+                    model.isQuickOpenVisible.toggle()
+                }
+                    .shortcut(.goToFile)
+                    .disabled(model.workspaces.isEmpty)
+                Button("Search All Files…") {
+                    model.quickOpenSearchesText = true
+                    model.isQuickOpenVisible = true
+                }
+                .shortcut(.searchAllFiles)
+                .disabled(model.workspaces.isEmpty)
+                Button("Go to Section…") {
+                    model.quickOpenSearchesText = false
+                    model.isQuickOpenVisible = true
+                    model.quickOpenSeed = "#"
+                }
+                .shortcut(.goToSection)
                 .disabled(model.current == nil)
-            Button("Reveal in Finder") { model.revealInFinder() }
-                .shortcut(.revealInFinder)
-                .disabled(model.selectedWorkspace == nil)
-            Button("Copy Path") { model.copyPath() }
-                .shortcut(.copyPath)
-                .disabled(model.current == nil)
-        }
-        CommandGroup(replacing: .saveItem) {
-            Button(model.tabs.count > 1 ? "Close Tab" : "Close Window") { model.closeTabOrWindow() }
-                .shortcut(.closeTab)
-            Button("Close Other Tabs") { if let id = model.activeTabID { model.closeOtherTabs(id) } }
-                .shortcut(.closeOtherTabs)
-                .disabled(model.tabs.count < 2)
-        }
-        CommandGroup(replacing: .printItem) {
-            Button("Print…") { model.printPage() }
-                .shortcut(.print)
-                .disabled(model.current == nil)
-        }
+                Button("All Actions…") {
+                    model.quickOpenSearchesText = false
+                    model.quickOpenSeed = ">"
+                    model.isQuickOpenVisible = true
+                }
+                .shortcut(.allActions)
+            }
+            CommandGroup(after: .newItem) {
+                Divider()
+                Button("Open in Default App") { model.openInEditor() }
+                    .shortcut(.openInDefaultApp)
+                    .disabled(model.current == nil)
+                Button("Reveal in Finder") { model.revealInFinder() }
+                    .shortcut(.revealInFinder)
+                    .disabled(model.selectedWorkspace == nil)
+                Button("Copy Path") { model.copyPath() }
+                    .shortcut(.copyPath)
+                    .disabled(model.current == nil)
+            }
+            CommandGroup(replacing: .saveItem) {
+                Button(model.tabs.count > 1 ? "Close Tab" : "Close Window") { model.closeTabOrWindow() }
+                    .shortcut(.closeTab)
+                Button("Close Other Tabs") { if let id = model.activeTabID { model.closeOtherTabs(id) } }
+                    .shortcut(.closeOtherTabs)
+                    .disabled(model.tabs.count < 2)
+            }
+            CommandGroup(replacing: .printItem) {
+                Button("Print…") { model.printPage() }
+                    .shortcut(.print)
+                    .disabled(model.current == nil)
+            }
 
-        CommandGroup(after: .textEditing) {
-            Divider()
-            Button("Find…") {
-                model.showFind()
-                model.findFocusRequest += 1
+            CommandGroup(after: .textEditing) {
+                Divider()
+                Button("Find…") {
+                    model.showFind()
+                    model.findFocusRequest += 1
+                }
+                .shortcut(.find)
+                .disabled(model.current == nil)
+                Button("Find Next") { Task { await model.runFind(direction: 1) } }
+                    .shortcut(.findNext)
+                    .disabled(model.findQuery.isEmpty)
+                Button("Find Previous") { Task { await model.runFind(direction: -1) } }
+                    .shortcut(.findPrevious)
+                    .disabled(model.findQuery.isEmpty)
             }
-            .shortcut(.find)
-            .disabled(model.current == nil)
-            Button("Find Next") { Task { await model.runFind(direction: 1) } }
-                .shortcut(.findNext)
-                .disabled(model.findQuery.isEmpty)
-            Button("Find Previous") { Task { await model.runFind(direction: -1) } }
-                .shortcut(.findPrevious)
-                .disabled(model.findQuery.isEmpty)
-        }
 
-        CommandGroup(before: .toolbar) {
-            // ⌘1–⌘3 by default, numbered by the columns' places.
-            ForEach(PanelColumn.arrangement) { column in
-                Toggle(column.title, isOn: Binding(
-                    get: { model.isShowing(column) },
-                    set: { model.setColumn(column, visible: $0) }
+            CommandGroup(before: .toolbar) {
+                // ⌘1–⌘3 by default, numbered by the columns' places.
+                ForEach(PanelColumn.arrangement) { column in
+                    Toggle(column.title, isOn: Binding(
+                        get: { model.isShowing(column) },
+                        set: { model.setColumn(column, visible: $0) }
+                    ))
+                    .shortcut(column.shortcutAction)
+                }
+                Button(model.visibleColumns.isEmpty ? "Show Panels" : "Hide All Panels") { model.togglePanels() }
+                    .shortcut(.togglePanels)
+                Button("Show Next Panel") { model.stepLevel(1) }
+                    .shortcut(.showNextPanel)
+                Button("Hide Last Panel") { model.stepLevel(-1) }
+                    .shortcut(.hideLastPanel)
+                Toggle("Workspaces as Icons", isOn: Binding(
+                    get: { model.settings.workspacesAsIcons },
+                    set: { value in withAnimation(.galleyPanel) { model.settings.workspacesAsIcons = value } }
                 ))
-                .shortcut(column.shortcutAction)
+                .shortcut(.workspacesAsIcons)
+                Divider()
+                Button("Bigger Text") { model.settings.adjustFontSize(by: 1) }
+                    .shortcut(.biggerText)
+                Button("Smaller Text") { model.settings.adjustFontSize(by: -1) }
+                    .shortcut(.smallerText)
+                Button("Actual Size") { model.settings.fontSize = 17 }
+                    .shortcut(.actualSize)
+                Divider()
+                Toggle("Mark Changes", isOn: Binding(
+                    get: { model.settings.showChanges },
+                    set: { model.settings.showChanges = $0 }
+                ))
+                .shortcut(.markChanges)
+                Toggle("Show Hidden Comments", isOn: Binding(
+                    get: { model.settings.showComments },
+                    set: { model.settings.showComments = $0 }
+                ))
+                .shortcut(.showComments)
+                Divider()
             }
-            Button(model.visibleColumns.isEmpty ? "Show Panels" : "Hide All Panels") { model.togglePanels() }
-                .shortcut(.togglePanels)
-            Button("Show Next Panel") { model.stepLevel(1) }
-                .shortcut(.showNextPanel)
-            Button("Hide Last Panel") { model.stepLevel(-1) }
-                .shortcut(.hideLastPanel)
-            Toggle("Workspaces as Icons", isOn: Binding(
-                get: { model.settings.workspacesAsIcons },
-                set: { value in withAnimation(.galleyPanel) { model.settings.workspacesAsIcons = value } }
-            ))
-            .shortcut(.workspacesAsIcons)
-            Divider()
-            Button("Bigger Text") { model.settings.adjustFontSize(by: 1) }
-                .shortcut(.biggerText)
-            Button("Smaller Text") { model.settings.adjustFontSize(by: -1) }
-                .shortcut(.smallerText)
-            Button("Actual Size") { model.settings.fontSize = 17 }
-                .shortcut(.actualSize)
-            Divider()
-            Toggle("Mark Changes", isOn: Binding(
-                get: { model.settings.showChanges },
-                set: { model.settings.showChanges = $0 }
-            ))
-            .shortcut(.markChanges)
-            Toggle("Show Hidden Comments", isOn: Binding(
-                get: { model.settings.showComments },
-                set: { model.settings.showComments = $0 }
-            ))
-            .shortcut(.showComments)
-            Divider()
         }
 
         CommandGroup(before: .windowList) {
