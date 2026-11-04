@@ -718,7 +718,8 @@ struct FeedbackClearingTests {
     }
 
     @Test func runsAsACommandOnlyWhenCalledGalley() {
-        #expect(CLI.arguments(["/usr/local/bin/galley", "feedback"]) == ["feedback"])
+        // `galley`, or `galley-debug` for a Debug build (as tests are).
+        #expect(CLI.arguments(["/usr/local/bin/\(CLI.commandName)", "feedback"]) == ["feedback"])
         #expect(CLI.arguments(["/Applications/Galley.app/Contents/MacOS/Galley", "--cli", "help"]) == ["help"])
         #expect(CLI.arguments(["/Applications/Galley.app/Contents/MacOS/Galley"]) == nil)
     }

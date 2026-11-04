@@ -219,8 +219,16 @@ nonisolated enum LibraryLocation {
         }
         #endif
         return FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
-            .appendingPathComponent("Galley", isDirectory: true)
+            .appendingPathComponent(folderName, isDirectory: true)
     }
+
+    /// A Debug build keeps a library of its own, so one built here never
+    /// touches the installed app's highlights, notes or pins.
+    #if DEBUG
+    static let folderName = "Galley Debug"
+    #else
+    static let folderName = "Galley"
+    #endif
 
     static var isThrowaway: Bool {
         #if DEBUG

@@ -2,9 +2,12 @@
 // one of them washed and flagged by a change bar in the margin — and writes
 // every size the macOS asset catalog needs.
 // Usage: swift tools/make-icon.swift app/Galley/Assets.xcassets/AppIcon.appiconset
+//        swift tools/make-icon.swift --debug app/Galley/Assets.xcassets/AppIcon-Debug.appiconset
 //        swift tools/make-icon.swift --variants app/Galley/Assets.xcassets
-// The second form draws the same sheet in each palette below, as image sets
-// (`AppIconVariant-<id>`) for Settings → App Icon; the Dock shows the pick.
+// `--debug` adds a DEBUG band along the foot, for Debug builds, so a copy
+// built here never looks like the installed one. `--variants` draws the
+// same sheet in each palette below, as image sets (`AppIconVariant-<id>`)
+// for Settings → App Icon; the Dock shows the pick.
 import AppKit
 
 /// One way to colour the sheet: paper top and bottom, ink, the changed
@@ -80,11 +83,36 @@ func drawIcon(in ctx: CGContext, _ palette: Palette = variants[0]) {
     ctx.fillPath()
     ctx.restoreGState()
 
+    if debugBand { drawDebugBand(in: ctx, clippedTo: shape) }
+
     // A hairline edge so the tile holds its shape on light backgrounds.
     ctx.addPath(shape)
     ctx.setStrokeColor(color(0x000000, 0.08))
     ctx.setLineWidth(2)
     ctx.strokePath()
+}
+
+/// Debug builds' mark: a red band across the foot of the tile, lettered
+/// DEBUG. Mirrored for the colour variants in `AppIcon.swift`; keep the two
+/// alike.
+func drawDebugBand(in ctx: CGContext, clippedTo shape: CGPath) {
+    ctx.saveGState()
+    ctx.addPath(shape)
+    ctx.clip()
+    ctx.setFillColor(color(0xE5484D))
+    ctx.fill(CGRect(x: 100, y: 100, width: 824, height: 190))
+    ctx.restoreGState()
+
+    let text = NSAttributedString(string: "DEBUG", attributes: [
+        .font: NSFont.systemFont(ofSize: 112, weight: .heavy),
+        .foregroundColor: NSColor.white,
+        .kern: 10,
+    ])
+    let size = text.size()
+    NSGraphicsContext.saveGraphicsState()
+    NSGraphicsContext.current = NSGraphicsContext(cgContext: ctx, flipped: false)
+    text.draw(at: CGPoint(x: 512 - size.width / 2, y: 195 - size.height / 2))
+    NSGraphicsContext.restoreGraphicsState()
 }
 
 func render(pixels: Int, _ palette: Palette = variants[0]) -> Data {
@@ -99,8 +127,12 @@ func render(pixels: Int, _ palette: Palette = variants[0]) -> Data {
     return rep.representation(using: .png, properties: [:])!
 }
 
-if CommandLine.arguments.dropFirst().first == "--variants" {
-    let catalog = URL(fileURLWithPath: CommandLine.arguments.dropFirst(2).first ?? ".")
+var arguments = Array(CommandLine.arguments.dropFirst())
+let debugBand = arguments.first == "--debug"
+if debugBand { arguments.removeFirst() }
+
+if arguments.first == "--variants" {
+    let catalog = URL(fileURLWithPath: arguments.dropFirst().first ?? ".")
     for palette in variants {
         let set = catalog.appendingPathComponent("AppIconVariant-\(palette.id).imageset")
         try! FileManager.default.createDirectory(at: set, withIntermediateDirectories: true)
@@ -122,7 +154,8 @@ if CommandLine.arguments.dropFirst().first == "--variants" {
     exit(0)
 }
 
-let output = URL(fileURLWithPath: CommandLine.arguments.dropFirst().first ?? ".")
+let output = URL(fileURLWithPath: arguments.first ?? ".")
+try! FileManager.default.createDirectory(at: output, withIntermediateDirectories: true)
 var images: [String] = []
 for (points, scale) in [(16, 1), (16, 2), (32, 1), (32, 2), (128, 1), (128, 2), (256, 1), (256, 2), (512, 1), (512, 2)] {
     let name = "icon_\(points)x\(points)\(scale == 2 ? "@2x" : "").png"

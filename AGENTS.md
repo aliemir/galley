@@ -115,13 +115,16 @@ tools/capture-guide.sh
 swift tools/window-bounds.swift Galley     # id layer x,y,w,h title
 screencapture -x -o -l <id> shot.png
 
-# the galley command (the app binary in command mode); GALLEY_LIBRARY=<dir>
-# points a debug build at a throwaway library instead of the reader's
+# the galley command (the app binary in command mode; a Debug build's reads the
+# Debug library, and installs as galley-debug); GALLEY_LIBRARY=<dir> points it
+# at a throwaway library instead
 app/…/Debug/Galley.app/Contents/MacOS/Galley --cli help
 app/…/Debug/Galley.app/Contents/MacOS/Galley --cli feedback app/Fixtures/Showcase
 
-# redraw the app icon (and its colour variants with --variants)
+# redraw the app icon (and its colour variants with --variants); --debug draws
+# the DEBUG-banded set Debug builds wear, so they never pass for the installed one
 swift tools/make-icon.swift app/Galley/Assets.xcassets/AppIcon.appiconset
+swift tools/make-icon.swift --debug app/Galley/Assets.xcassets/AppIcon-Debug.appiconset
 
 # website — landing, privacy, support
 cd website && npm run dev      # npm run deploy to ship (both build Tailwind first)
@@ -157,17 +160,26 @@ simulator ones).
   first unsandboxed launch. macOS guards that container from other processes:
   a Galley started from a terminal (its binary run directly) is the
   terminal's process and cannot read it — start it with `open` when testing
-  the copy.
-- **One Galley at a time.** Each running copy keeps the whole library in
-  memory and writes `library.json` in full, so two copies (a test build
-  launched by its binary while the user's is open) overwrite each other's
-  highlights, notes and pins — last writer wins. `pkill -x Galley` before
-  launching a test build, and don't drive the app while the user is using
-  it (check `ioreg -c IOHIDSystem` idle time). Test highlights and notes on
-  fixture files the user has not marked up. `xcodebuild test` launches the
-  debug app as its test host on the reader's real library unless given
-  `TEST_RUNNER_GALLEY_LIBRARY` (see Commands), and can leave it running
-  after the run — quit it once tests finish, and before
+  the copy. Release builds only: a Debug build skips it, or it would start
+  with a copy of the reader's old library and settings (test it with
+  `tools/release.sh <version> --local`).
+- **A Debug build is its own Galley.** `com.aliemir.galley.debug`, shown as
+  "Galley (Debug)" with the DEBUG-banded icon (its own identifier also gives
+  it its own Dock tile — one pinned for the installed app otherwise claims
+  it). It has its own settings (its identifier's domain), its own library
+  (`~/Library/Application Support/Galley Debug`) and its own command,
+  `galley-debug`; clear requests are named after the identifier, so neither
+  app answers the other's command. It never touches the reader's highlights,
+  notes, pins or settings. Quit it by the `.debug` id (`pkill -x Galley`
+  quits the reader's app too).
+- **One Galley per library.** Each running copy keeps the whole library in
+  memory and writes `library.json` in full, so two copies on one library
+  (two Debug copies, or a Debug copy and its test host) overwrite each
+  other's highlights, notes and pins — last writer wins. Don't drive the app
+  while the user is using it (check `ioreg -c IOHIDSystem` idle time).
+  `xcodebuild test` launches the debug app as its test host on the Debug
+  library unless given `TEST_RUNNER_GALLEY_LIBRARY` (see Commands), and can
+  leave it running after the run — quit it once tests finish, and before
   `open`ing a test copy: `open` on an app that is already running only brings
   that copy forward, ignoring the new `--args`.
 - **A test copy keeps its own settings.** A debug build launched with
@@ -175,7 +187,7 @@ simulator ones).
   launch) instead of the reader's preferences, through `Preferences.store` —
   every settings read and write goes through it, `@AppStorage` included
   (`store: Preferences.store`). Launch arguments (`-lightTheme sepia`) still
-  apply. Without `-GalleyLibrary`, a debug build is the reader's app.
+  apply. Without `-GalleyLibrary`, a debug build uses the Debug settings and library.
 - **A test copy installs into its own home.** The palette and Settings can
   install the agent skill into `~/.agents`, `~/.claude` and `~/.gemini`. Launch
   test copies with `GALLEY_HOME=<throwaway dir>` (debug builds only) so an

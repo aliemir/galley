@@ -11,6 +11,8 @@ nonisolated enum Preferences {
             return test
         }
         #endif
+        // A Debug build's own: its identifier, com.aliemir.galley.debug, is
+        // its domain, apart from the installed app's.
         return .standard
     }()
 

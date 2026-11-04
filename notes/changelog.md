@@ -12,9 +12,23 @@ Typo fixes and formatting do not need an entry.
 
 - File titles taken from headings omit optional closing hashes, keeping
   literal and escaped hashes intact
+- The menu commands build with Xcode 26.4: its SDK takes at most 10 commands
+  in one builder block, and the top level had 12. The File, Edit and View
+  additions sit in a `Group`; the menus are unchanged (checked item by item)
 
 ## 2026-11-03
 
+- Debug builds skip the sandbox migration: the first separate Debug build had
+  copied the reader's old container library and settings into its own
+- A Debug build is its own Galley: its own settings, its own library
+  (`Application Support/Galley Debug`) and its own command, `galley-debug`,
+  so it never touches the installed app's marks or settings
+- Debug builds have their own bundle identifier, `com.aliemir.galley.debug`,
+  so the Dock gives them their own tile instead of lighting the installed
+  app's pinned one
+- Debug builds are "Galley (Debug)" in the Dock and ⌘-Tab and wear the icon
+  with a red DEBUG band (`make-icon.swift --debug`), picked colour variants
+  included, so a copy built here is never mistaken for the installed one
 - While an agent waits, Save Feedback reads "Send to Claude Code" (or the
   agent it is, "Send to Agent" when unknown) beside the green dot, instead of
   leaving the agent's name to a slow tooltip. The Guide says so

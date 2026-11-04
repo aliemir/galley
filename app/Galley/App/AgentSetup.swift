@@ -37,7 +37,7 @@ final class AgentSetup {
         let fileManager = FileManager.default
         var found = CommandStatus.missing
         for folder in Self.folders {
-            let link = folder.appendingPathComponent("galley")
+            let link = folder.appendingPathComponent(CLI.commandName)
             guard let destination = try? fileManager.destinationOfSymbolicLink(atPath: link.path) else { continue }
             let target = URL(fileURLWithPath: destination, relativeTo: folder).standardizedFileURL.resolvingSymlinksInPath()
             if target.path == CLI.executableURL.path {
@@ -69,12 +69,12 @@ final class AgentSetup {
         defer { refresh() }
         // A link to another copy goes first, wherever it is.
         if case .elsewhere(let path) = command, let problem = remove(path) { return problem }
-        let link = URL(fileURLWithPath: "/usr/local/bin/galley")
+        let link = URL(fileURLWithPath: "/usr/local/bin").appendingPathComponent(CLI.commandName)
         switch CLI.link(at: link) {
         case .done:
             return nil
         case .occupied:
-            return "/usr/local/bin/galley is another program; remove it first."
+            return "\(link.path) is another program; remove it first."
         case .denied:
             return Self.asAdministrator("mkdir -p /usr/local/bin && ln -sfn \(Self.quoted(CLI.executableURL.path)) \(Self.quoted(link.path))")
         }
