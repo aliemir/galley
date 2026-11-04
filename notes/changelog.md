@@ -10,6 +10,8 @@ Typo fixes and formatting do not need an entry.
 
 ## 2026-11-04
 
+- File titles taken from headings omit optional closing hashes, keeping
+  literal and escaped hashes intact
 - The menu commands build with Xcode 26.4: its SDK takes at most 10 commands
   in one builder block, and the top level had 12. The File, Edit and View
   additions sit in a `Group`; the menus are unchanged (checked item by item)
