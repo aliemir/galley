@@ -483,6 +483,40 @@ struct TextSearchTests {
         #expect(TextSearch.clean("- [x] Read [the plan](plan.md) `now`") == "Read the plan now")
         #expect(TextSearch.clean("| Free | 20 |") == "Free · 20")
     }
+
+    @Test(arguments: [
+        ("> - [x] Read the plan", "Read the plan"),
+        ("> > Read the plan", "Read the plan"),
+        (">>Read the plan", "Read the plan"),
+        ("  > 1. Read the plan", "Read the plan"),
+        ("> 2) [ ] Read the plan", "Read the plan"),
+        ("- > + [X] Read the plan", "Read the plan"),
+        ("> - ## Read the plan", "Read the plan"),
+        ("> | Free | 20 |", "Free · 20"),
+        ("> > ", ""),
+        ("Read > the plan", "Read > the plan"),
+        ("-5 is negative", "-5 is negative"),
+        ("1.5 is a decimal", "1.5 is a decimal"),
+        ("\\> Read the plan", "\\> Read the plan"),
+        ("\\- Read the plan", "\\- Read the plan"),
+        ("# - Read the plan", "- Read the plan"),
+        ("> # > Read the plan", "> Read the plan"),
+        ("> `> Read the plan`", "> Read the plan"),
+    ])
+    func cleansNestedPrefixes(source: String, expected: String) {
+        #expect(TextSearch.clean(source) == expected)
+    }
+
+    @Test func nestedSnippetKeepsSearchMatches() throws {
+        let document = TextSearch.Document(
+            key: "nested", title: "Checklist",
+            text: "> - [x] Read [the plan](plan.md) `now`", modified: .now
+        )
+        let hit = try #require(TextSearch.search("plan", in: [document]).first)
+        let snippet = try #require(hit.snippets.first)
+        #expect(snippet.plain == "Read the plan now")
+        #expect(snippet.parts.contains(.init(text: "plan", isMatch: true)))
+    }
 }
 
 struct TextSearchWordTests {

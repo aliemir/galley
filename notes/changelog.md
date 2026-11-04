@@ -10,6 +10,8 @@ Typo fixes and formatting do not need an entry.
 
 ## 2026-11-04
 
+- Search snippets strip nested quote and list prefixes, including task lists,
+  while preserving literal punctuation and search match highlights
 - The menu commands build with Xcode 26.4: its SDK takes at most 10 commands
   in one builder block, and the top level had 12. The File, Edit and View
   additions sit in a `Group`; the menus are unchanged (checked item by item)
