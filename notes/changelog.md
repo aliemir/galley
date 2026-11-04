@@ -8,6 +8,11 @@ Typo fixes and formatting do not need an entry.
 
 <!-- newest entries go directly below this line -->
 
+## 2026-11-04
+
+- File titles taken from headings omit optional closing hashes, keeping
+  literal and escaped hashes intact
+
 ## 2026-11-03
 
 - While an agent waits, Save Feedback reads "Send to Claude Code" (or the

@@ -38,6 +38,40 @@ struct PrettyNameTests {
     }
 }
 
+struct WorkspaceScannerHeadingTests {
+    @Test(arguments: [
+        ("# Real title ###", "Real title"),
+        ("# Real title ###   ", "Real title"),
+        ("# Real title\t###\t", "Real title"),
+        ("# Real title ###\r\n", "Real title"),
+        ("# Real title #", "Real title"),
+        ("# C#", "C#"),
+        ("# C# ###", "C#"),
+        ("# Topic#", "Topic#"),
+        ("# Topic###", "Topic###"),
+        ("# Title \\###", "Title \\###"),
+        ("# Title #\\##", "Title #\\##"),
+        ("# Title ### text", "Title ### text"),
+        ("# Title ###\u{00a0}", "Title ###"),
+        ("# Title ###*", "Title ###"),
+        ("# **Title** ###", "Title"),
+    ])
+    func extractsHeading(source: String, expected: String) throws {
+        #expect(try firstHeading(in: source) == expected)
+    }
+
+    @Test func closingHashesAloneLeaveNoTitle() throws {
+        #expect(try firstHeading(in: "# ###") == nil)
+    }
+
+    private func firstHeading(in source: String) throws -> String? {
+        let url = FileManager.default.temporaryDirectory.appendingPathComponent("galley-heading-\(UUID().uuidString).md")
+        try source.write(to: url, atomically: true, encoding: .utf8)
+        defer { try? FileManager.default.removeItem(at: url) }
+        return WorkspaceScanner.firstHeading(of: url)
+    }
+}
+
 struct RendererTests {
     let renderer = MarkdownRenderer(baseURL: URL(fileURLWithPath: "/tmp/docs"))
 
