@@ -18,10 +18,12 @@ Galley is a native macOS app. You need a Mac with Xcode, and macOS 15 or later
 to run it. Follow [Build it yourself](README.md#build-it-yourself) for project
 setup and local signing. Release credentials are not needed to contribute.
 
-A normal development build uses the same library as the released app at
-`~/Library/Application Support/Galley`. Quit the released app before running
-your build: concurrent copies can overwrite each other's highlights and notes.
-Use the [Showcase workspace](app/Fixtures/Showcase) for manual checks.
+A Debug build is its own Galley ("Galley (Debug)", with a DEBUG-banded icon):
+its own settings, its own library at `~/Library/Application Support/Galley
+Debug`, and its own command, `galley-debug`. It runs beside the released app
+without touching its highlights, notes or settings. Two Debug copies at once
+still share a library and can overwrite each other's marks. Use the
+[Showcase workspace](app/Fixtures/Showcase) for manual checks.
 
 Galley never writes to Markdown files. Highlights and notes belong in its
 library; preserve that boundary when changing app behavior.

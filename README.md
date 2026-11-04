@@ -65,8 +65,11 @@ packages resolve on the first build; everything else is in the repo.
    xcodebuild -project app/Galley.xcodeproj -scheme Galley -destination 'platform=macOS' build
    ```
 
-A build of your own keeps its library in `~/Library/Application Support/Galley`,
-the same place as the released app, so run one or the other at a time.
+A Debug build is its own Galley, shown as **Galley (Debug)** with a red DEBUG
+band on its icon. It keeps its own settings and its own library
+(`~/Library/Application Support/Galley Debug`), and installs its command as
+`galley-debug`, so it runs beside the released app without touching its
+highlights, notes or settings.
 
 ### Signing a build for others
 
