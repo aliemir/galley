@@ -10,6 +10,8 @@ Typo fixes and formatting do not need an entry.
 
 ## 2026-11-04
 
+- File-title scanning tracks code fence characters and lengths, so headings
+  inside code stay ignored until a valid matching closing fence
 - Search snippets strip nested quote and list prefixes, including task lists,
   while preserving literal punctuation and search match highlights
 - File titles taken from headings omit optional closing hashes, keeping

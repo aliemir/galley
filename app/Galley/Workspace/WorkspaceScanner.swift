@@ -118,11 +118,29 @@ nonisolated enum WorkspaceScanner {
         guard let data = try? handle.read(upToCount: 4096) else { return nil }
         let text = String(decoding: data, as: UTF8.self)
         let body = FrontMatter.split(text).body
-        var inFence = false
-        for line in body.split(separator: "\n", omittingEmptySubsequences: false).prefix(60) {
-            let trimmed = line.trimmingCharacters(in: .whitespaces)
-            if trimmed.hasPrefix("```") || trimmed.hasPrefix("~~~") { inFence.toggle() }
-            if !inFence, trimmed.hasPrefix("# ") {
+        var fence: (character: Character, length: Int)?
+        for line in body.components(separatedBy: "\n").prefix(60) {
+            let content = line.trimmingCharacters(in: .newlines)
+            let indentation = content.prefix(while: { $0 == " " }).count
+            let fenceLine = content.dropFirst(indentation)
+            if let open = fence {
+                let run = fenceLine.prefix(while: { $0 == open.character })
+                if indentation <= 3, run.count >= open.length,
+                   fenceLine.dropFirst(run.count).allSatisfy({ $0 == " " || $0 == "\t" }) {
+                    fence = nil
+                }
+                continue
+            }
+            if indentation <= 3, let character = fenceLine.first, character == "`" || character == "~" {
+                let length = fenceLine.prefix(while: { $0 == character }).count
+                // Backtick fence info strings cannot contain backticks.
+                if length >= 3, character == "~" || !fenceLine.dropFirst(length).contains("`") {
+                    fence = (character, length)
+                    continue
+                }
+            }
+            let trimmed = content.trimmingCharacters(in: .whitespaces)
+            if trimmed.hasPrefix("# ") {
                 // Closing hashes need a space or tab before them and only
                 // spaces or tabs after them. Strip them before inline marks.
                 let heading = line.trimmingCharacters(in: .newlines)

@@ -64,6 +64,40 @@ struct WorkspaceScannerHeadingTests {
         #expect(try firstHeading(in: "# ###") == nil)
     }
 
+    @Test(arguments: [
+        "```text\n~~~\n# Fake title\n```\n# Real title",
+        "~~~text\n```\n# Fake title\n~~~\n# Real title",
+        "````text\n```\n# Fake title\n````\n# Real title",
+        "~~~~text\n~~~\n# Fake title\n~~~~\n# Real title",
+        "```text\n```still code\n# Fake title\n```\n# Real title",
+        "```text\n    ```\n# Fake title\n```\n# Real title",
+        "```text\n```\u{00a0}\n# Fake title\n```\n# Real title",
+        "```text\n# Fake title\n`````\n# Real title",
+        "   ~~~text\n# Fake title\n   ~~~ \t\n# Real title",
+        "```text\r\n# Fake title\r\n```\r\n# Real title",
+        "```not`a`fence\n# Real title",
+        "---\nexample: ```\n---\n~~~\n# Fake title\n~~~\n# Real title",
+    ])
+    func ignoresHeadingsUntilAMatchingFenceCloses(source: String) throws {
+        #expect(try firstHeading(in: source) == "Real title")
+    }
+
+    @Test(arguments: [
+        "```text\n# Fake title",
+        "~~~text\n```\n# Fake title",
+        "````text\n```\n# Fake title",
+    ])
+    func unclosedFencesHideHeadings(source: String) throws {
+        #expect(try firstHeading(in: source) == nil)
+    }
+
+    @Test func headingScanKeepsItsBounds() throws {
+        let lines = ["```"] + Array(repeating: "code", count: 57) + ["```", "# Real title"]
+        #expect(try firstHeading(in: lines.joined(separator: "\n")) == "Real title")
+        #expect(try firstHeading(in: "\n" + lines.joined(separator: "\n")) == nil)
+        #expect(try firstHeading(in: String(repeating: "a", count: 4096) + "\n# Real title") == nil)
+    }
+
     private func firstHeading(in source: String) throws -> String? {
         let url = FileManager.default.temporaryDirectory.appendingPathComponent("galley-heading-\(UUID().uuidString).md")
         try source.write(to: url, atomically: true, encoding: .utf8)
