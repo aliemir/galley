@@ -123,7 +123,11 @@ nonisolated enum WorkspaceScanner {
             let trimmed = line.trimmingCharacters(in: .whitespaces)
             if trimmed.hasPrefix("```") || trimmed.hasPrefix("~~~") { inFence.toggle() }
             if !inFence, trimmed.hasPrefix("# ") {
-                let title = trimmed.dropFirst(2).trimmingCharacters(in: .whitespaces)
+                // Closing hashes need a space or tab before them and only
+                // spaces or tabs after them. Strip them before inline marks.
+                let heading = line.trimmingCharacters(in: .newlines)
+                    .replacingOccurrences(of: #"[ \t]+#+[ \t]*$"#, with: "", options: .regularExpression)
+                let title = heading.trimmingCharacters(in: .whitespaces).dropFirst(2).trimmingCharacters(in: .whitespaces)
                     .replacingOccurrences(of: #"[*_`]"#, with: "", options: .regularExpression)
                 return title.isEmpty ? nil : title
             }
