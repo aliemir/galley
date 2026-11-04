@@ -106,7 +106,10 @@ nonisolated enum TextSearch {
     static func clean(_ line: String) -> String {
         var text = line
         let rules: [(String, String)] = [
-            (#"^\s*(#{1,6}\s+|>\s*|[-*+]\s+(\[[ xX]\]\s+)?|\d+[.)]\s+)"#, ""),
+            // Strip nested containers before the heading, whose content
+            // may itself start with a literal quote or list marker.
+            (#"^(?:\s*(?:>\s*|(?:[-*+]|\d+[.)])\s+(?:\[[ xX]\]\s+)?))+"#, ""),
+            (#"^\s*#{1,6}\s+"#, ""),
             (#"!?\[([^\]]*)\]\([^)]*\)"#, "$1"),
             (#"\*\*|__|`|~~|==|<[^>]+>"#, ""),
             (#"\s*\|\s*"#, " · "),
