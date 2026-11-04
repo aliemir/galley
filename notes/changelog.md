@@ -10,6 +10,8 @@ Typo fixes and formatting do not need an entry.
 
 ## 2026-11-04
 
+- Search snippets strip nested quote and list prefixes, including task lists,
+  while preserving literal punctuation and search match highlights
 - File titles taken from headings omit optional closing hashes, keeping
   literal and escaped hashes intact
 - The menu commands build with Xcode 26.4: its SDK takes at most 10 commands
