@@ -10,6 +10,8 @@ Typo fixes and formatting do not need an entry.
 
 ## 2026-11-04
 
+- File-title scanning tracks code fence characters and lengths, so headings
+  inside code stay ignored until a valid matching closing fence
 - File titles taken from headings omit optional closing hashes, keeping
   literal and escaped hashes intact
 - The menu commands build with Xcode 26.4: its SDK takes at most 10 commands
